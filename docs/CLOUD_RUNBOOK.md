@@ -2,7 +2,9 @@
 
 The scripts create source-controlled infrastructure configuration but never
 commit generated project state, credentials, service YAML, image digests, or
-evidence captures.
+evidence captures. Capture first lands in a temporary directory and is packaged
+as SHA-256-addressed JSON objects. Offline verification performs no network or
+credential access.
 
 ```bash
 set -a
@@ -12,6 +14,8 @@ export CONTINUUM_GIT_SHA="$(git rev-parse HEAD)"
 bash scripts/cloud/bootstrap.sh
 bash scripts/cloud/build-deploy.sh
 export CONTINUUM_EVIDENCE_DIR="artifacts/cloud/$(date -u +%Y%m%dT%H%M%SZ)"
+export CONTINUUM_RUN_ID='<run returned by the cloud scenario>'
+export CONTINUUM_TRACE_ID='<trace correlated with that run>'
 bash scripts/cloud/run-smoke.sh
 python3 scripts/cloud/verify-evidence.py "$CONTINUUM_EVIDENCE_DIR"
 ```

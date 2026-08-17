@@ -2,7 +2,7 @@
 .github
 .venv
 artifacts
-__pycache__
+**/__pycache__
 *.pyc
 *.sqlite3
 *.jsonl

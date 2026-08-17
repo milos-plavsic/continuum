@@ -68,3 +68,22 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   What to build: Isolated C0–C6 runner, report schema/digest, claims and non-claims.
   Acceptance: All 21 declared local cases pass without importing cloud/live-model evidence.
   Verify: `python3 scripts/run_conformance.py`.
+
+## Google Cloud proof extension — autonomous
+
+- [x] **13. Make cloud delivery and execution durable**
+  What to build: transactional leases, outbox retries, inbox dedupe, execution reconciliation.
+  Acceptance: crash/redelivery/concurrency tests prove one provider effect under the declared adapter contract.
+  Verify: focused Google binding tests.
+- [x] **14. Implement authenticated cloud orchestration**
+  What to build: workload-derived agent identity, strict Pub/Sub envelope validation, live ADK investigation path, and separately authorized verifier role.
+  Acceptance: caller-supplied identity cannot alter authority; malformed evidence fails before mutation.
+  Verify: cloud API tests with injected token/model/provider adapters.
+- [x] **15. Implement semantic offline cloud verification**
+  What to build: content-addressed bundle checks for Cloud Run, Firestore, Pub/Sub, Vertex, trace, identity, and contract evidence.
+  Acceptance: complete golden evidence passes; absence is NOT_ASSESSED; contradictions and mutations fail.
+  Verify: offline verifier fixture tests with network and credentials unavailable.
+- [x] **16. Close the reproducible cloud-proof loop**
+  What to build: collector/runbook/deployment wiring and adapter-level end-to-end smoke fixture.
+  Acceptance: clean checkout can deploy or produce an honest NOT_ASSESSED report without fabricated cloud state.
+  Verify: full tests, container smoke, shell validation, secret audit.

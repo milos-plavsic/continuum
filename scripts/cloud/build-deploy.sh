@@ -41,7 +41,8 @@ push_identity="continuum-pubsub-push@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.c
 gcloud run services add-iam-policy-binding "$control_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" \
   --member "serviceAccount:$push_identity" --role roles/run.invoker >/dev/null
 
-common_env="CONTINUUM_CONTROL_AUDIENCE=$control_url,CONTINUUM_PUBSUB_PUSH_IDENTITY=$push_identity"
+full_subscription="projects/$CONTINUUM_PROJECT_ID/subscriptions/$subscription"
+common_env="CONTINUUM_CONTROL_AUDIENCE=$control_url,CONTINUUM_PUBSUB_PUSH_IDENTITY=$push_identity,CONTINUUM_PUSH_SUBSCRIPTION=$full_subscription"
 gcloud run services update "$control_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" --update-env-vars "$common_env" >/dev/null
 
 if gcloud pubsub subscriptions describe "$subscription" --project "$CONTINUUM_PROJECT_ID" >/dev/null 2>&1; then

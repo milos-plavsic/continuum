@@ -47,3 +47,22 @@
   `uv` environment, and a non-root Cloud Run-compatible container image.
 - Verified 20 tests, a real Uvicorn HTTP smoke run, Docker build, and container
   health response. Cloud IAM and deployed evidence remain separate gates.
+
+## Google Cloud proof extension
+
+- Added Firestore-backed execution and outbox leases, stale-worker fencing,
+  UNKNOWN-to-reconciliation handling, retry scheduling, and inbox substitution
+  detection. The declared guarantee remains bounded to reconcilable adapters.
+- Tightened Pub/Sub ingestion around exact subscription, canonical payload,
+  matching attributes, and verified push identity before any inbox mutation.
+- Added workload-derived agent identity, a lazy live Google ADK/Gemini path,
+  non-authoritative typed proposals, and a separate verifier-role endpoint that
+  recomputes contract linkage under its own workload identity.
+- Replaced presence-only evidence checks with semantic offline predicates for
+  Cloud Run, Firestore, Pub/Sub redelivery, Vertex AI, trace continuity, and the
+  contract export. Complete golden evidence passes; absence stays NOT_ASSESSED;
+  contradictions and content mutation fail.
+- Added a temporary-capture, content-addressed bundle packager and wired the
+  full Pub/Sub subscription resource into deployment. Verified 40 tests before
+  final integration, shell syntax, compilation, secret patterns, and a complete
+  container build. No live Google Cloud evidence is claimed without deployment.
