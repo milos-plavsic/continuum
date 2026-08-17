@@ -1,0 +1,15 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://continuum.dev/schema/0.1/conformance-report.schema.json",
+  "type":"object",
+  "required":["schema_version","suite","implementation","profile","cases","levels","highest_level","claims","non_claims","report_digest"],
+  "properties":{
+    "schema_version":{"const":"continuity-conformance-report/0.1-draft"},
+    "profile":{"type":"string"},
+    "highest_level":{"enum":["C0","C1","C2","C3","C4","C5","C6",null]},
+    "cases":{"type":"array","items":{"type":"object","required":["id","level","status","assertion","observed","duration_ms","evidence_sha256"]}},
+    "levels":{"type":"object"},"suite":{"type":"object"},"implementation":{"type":"object"},
+    "claims":{"type":"object"},"non_claims":{"type":"array","items":{"type":"string"}},
+    "report_digest":{"type":"object","required":["alg","value"]}
+  }
+}

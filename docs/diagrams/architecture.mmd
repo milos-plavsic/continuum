@@ -1,0 +1,39 @@
+flowchart LR
+  O[Operator / incident view]
+  subgraph GCP[Google Cloud deployment boundary]
+    CP[Continuum control plane\nGoogle ADK orchestration]
+    REG[Registry projection\nstatus + epoch + digest]
+    EVT[(Firestore\nappend-only events + projections)]
+    PS[Pub/Sub\nat-least-once events]
+    GEM[Vertex AI\nGemini 3.5+ proposals]
+    AG1[Agent v17\nCloud Run identity A]
+    AG2[Agent v18\nCloud Run identity B]
+    MG[Memory gateway\ngrant filter before retrieval]
+    AX[Action gateway\nepoch + policy + idempotency]
+    OT[Cloud Trace / Logging\nOpenTelemetry]
+    CC[Continuity Contract\nportable artifacts]
+    IV[Independent verifier / attestor]
+  end
+  EXT[(Sandbox vendor registry)]
+
+  O -->|start / approve / inspect| CP
+  CP -->|append + project| EVT
+  EVT -->|outbox event| PS
+  PS -->|missed expectation| CP
+  CP -->|cited evidence only| GEM
+  GEM -->|typed proposal; no authority| CP
+  CP -->|resolve eligible successor| REG
+  AG1 -. stale epoch denied .-> AX
+  AG1 -. revoked grant denied .-> MG
+  AG2 -->|scoped retrieval| MG
+  AG2 -->|decision + epoch + key| AX
+  AX -->|one reconcilable effect| EXT
+  EVT -->|obligation + evidence digests| CC
+  REG -->|grant + manifest + revocation proof| CC
+  AX -->|execution receipt| CC
+  EXT -->|independent provider observation| IV
+  CC -->|complete artifact chain| IV
+  IV -->|continuity attestation| CC
+  CP --> OT
+  PS --> OT
+  AX --> OT

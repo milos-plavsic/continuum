@@ -29,3 +29,22 @@ For every future incorporation, record:
 
 Standard open-source frameworks and libraries must remain declared through the
 project's dependency manifests and license notices.
+
+## August 17, 2026 implementation note
+
+The deterministic succession core, fixtures, tests, documentation, Mermaid
+diagram source, and rendering/evaluation scripts were authored new in this
+repository during the submission period. The deterministic runtime uses only
+the Python standard library. Design patterns such as fencing tokens, idempotency keys,
+transactional outbox, optimistic concurrency, least-privilege capabilities, and
+saga-style roll-forward recovery are established industry patterns rather than
+copied project material. No source or assets from RecallOps, LineageGuard, or
+another project were incorporated.
+
+## Continuity Contract implementation note
+
+The Continuity Contract Profile 0.1-draft, restricted canonicalization profile,
+schema, golden vector, artifact builders, bundle verifier, Ed25519 adapter, and
+cumulative conformance harness were authored new for Continuum on August 17,
+2026. The optional `cryptography` dependency is declared in `pyproject.toml` and
+is used only for standard Ed25519 primitives; no third-party source was copied.

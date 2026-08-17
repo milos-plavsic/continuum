@@ -46,6 +46,38 @@ Promise Ledger ----> Negative Space Sentinel
 This is a hypothesis, not a locked design. Validate current service availability
 and hackathon access before implementation.
 
+## Reference implementation boundary
+
+The repository's deterministic reference path implements the domain protocol
+with a JSONL append-only event adapter and a separately persisted SQLite sandbox
+provider. These are reproducible substitutes for local evaluation, not claims
+of deployed Google infrastructure. The corresponding production ports are:
+
+| Reference boundary | Google Cloud target |
+|---|---|
+| JSONL events and in-memory projection | Firestore events, transactional projections, and outbox |
+| Deterministic delivery/replay | Pub/Sub at-least-once delivery |
+| Recorded typed investigation evidence | Google ADK agent using Gemini 3.5+ on Vertex AI |
+| Logical service identity and epoch | Cloud Run user-managed identity plus gateway fencing |
+| Local timeline | OpenTelemetry to Cloud Trace and Logging |
+| SQLite vendor registry | Controlled, reconcilable external provider adapter |
+
+The core remains deterministic and dependency-free. Cloud adapters must preserve
+the same contracts and pass adapter conformance tests before their evidence can
+be marked complete.
+
+## Portable protocol boundary
+
+The Continuity Contract sits outside the runtime projections. It exports six
+content-addressed artifacts: obligation, authority grant, succession manifest,
+revocation proof, execution receipt, and continuity attestation. Internal
+Firestore documents or Python dataclasses are not wire contracts.
+
+The executor produces a receipt but cannot attest its own success. A separately
+authorized verifier reads provider state, resolves every referenced digest, and
+issues a verified, failed, or inconclusive attestation. Signatures bind content
+to a key; deployment trust policy determines whether that key is authoritative.
+
 ## Shared primitives
 
 - Append-only event envelope
