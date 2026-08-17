@@ -19,9 +19,16 @@ class _Store:
         if current and current["event_digest"] != item["event_digest"]:
             raise ValueError("MESSAGE_ID_CONTENT_CONFLICT")
         if current:
+            current["delivery_count"] = current.get("delivery_count", 1) + 1
             return False
-        self.messages[item["message_id"]] = item
+        self.messages[item["message_id"]] = {**item, "delivery_count": 1}
         return True
+
+    def mark_inbox_processed(self, **item):
+        self.messages[item["message_id"]]["status"] = "PROCESSED"
+
+    def inbox_record(self, message_id):
+        return self.messages.get(message_id)
 
 
 def _payload(event, message_id="m1"):
@@ -57,6 +64,16 @@ class CloudAppTests(unittest.TestCase):
         self.assertEqual(self.client.post("/pubsub/push", json=_payload(event), headers=headers).status_code, 204)
         self.assertEqual(self.client.post("/pubsub/push", json=_payload(event), headers=headers).status_code, 204)
         self.assertEqual(len(self.store.messages), 1)
+
+    def test_marked_event_forces_one_real_pubsub_redelivery(self):
+        event = {"event_id": "e-redelivery", "event_type": "expectation.missed",
+                 "correlation_id": "trace", "run_id": "run-redelivery",
+                 "redelivery_probe": True}
+        headers = {"Authorization": "Bearer signed-token"}
+        with patch.dict(os.environ, {"CONTINUUM_FORCE_REDELIVERY": "1"}):
+            self.assertEqual(self.client.post("/pubsub/push", json=_payload(event), headers=headers).status_code, 503)
+            self.assertEqual(self.client.post("/pubsub/push", json=_payload(event), headers=headers).status_code, 204)
+        self.assertEqual(self.store.inbox_record("m1")["delivery_count"], 2)
 
     def test_push_rejects_wrong_workload_identity(self):
         client = TestClient(create_cloud_app(store=self.store, role="control",
@@ -100,6 +117,8 @@ class CloudAppTests(unittest.TestCase):
         result = agent.post("/internal/attempt-action", json={"actor": "forged@example.com"}).json()
         self.assertEqual(result["role"], "agent-v17")
         self.assertEqual(result["actor"], "v17@example.com")
+        memory = agent.post("/internal/attempt-memory", json={"actor": "forged@example.com"}).json()
+        self.assertEqual(memory["actor"], "v17@example.com")
 
     def test_live_investigation_is_injected_typed_and_workload_derived(self):
         observed = {}

@@ -87,3 +87,22 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   What to build: collector/runbook/deployment wiring and adapter-level end-to-end smoke fixture.
   Acceptance: clean checkout can deploy or produce an honest NOT_ASSESSED report without fabricated cloud state.
   Verify: full tests, container smoke, shell validation, secret audit.
+
+## Deployment-complete vertical slice — autonomous
+
+- [x] **17. Implement the durable cloud scenario service**
+  What to build: control commands that persist the canonical lifecycle, invoke the live investigator, enforce predecessor denials, execute/reconcile the successor effect, and request independent verification.
+  Acceptance: one run produces linked Firestore/provider/contract observations without client-authored success fields.
+  Verify: black-box service tests over injected durable ports.
+- [x] **18. Implement complete evidence capture**
+  What to build: read-only collector for the exact run's Cloud Run, Firestore, Pub/Sub/log, Vertex, trace, identity, build, and contract objects.
+  Acceptance: collector output maps directly to all semantic verifier predicates; partial capture remains NOT_ASSESSED.
+  Verify: command-construction and content-addressed packaging tests.
+- [x] **19. Lock deployment security and observability**
+  What to build: narrow service invocation bindings, verifier read-only access, structured trace/run correlation, readiness, and immutable deployment metadata.
+  Acceptance: no public service, key file, request-trusted identity, or executor self-verification path.
+  Verify: deployment-script static tests and API security tests.
+- [x] **20. Release-grade verification and handoff**
+  What to build: one-command local proof, one-command cloud run/capture/verify flow, complete runbook, provenance/build notes, and claim matrix.
+  Acceptance: clean test/container/audit run and explicit external deployment prerequisite only.
+  Verify: full suite plus generated local artifacts and clean Git state after commit.

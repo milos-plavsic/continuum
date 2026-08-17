@@ -26,11 +26,12 @@ standard and not yet a third-party interoperability claim.
 
 ## Status
 
-The repository now contains a deterministic local reference implementation of
-the winning succession vertical slice. It proves the protocol and governed
-boundaries without credentials. Google Cloud deployment, live Gemini/ADK
-conformance, and Cloud Observability evidence remain explicit pre-submission
-gates; local results are not presented as cloud proof.
+The repository contains both a deterministic local reference implementation and
+a production-composed Google Cloud vertical slice. The cloud path uses Cloud
+Run identities, Firestore, Pub/Sub redelivery, Google ADK with Gemini 3.6 Flash,
+independent verification, and exact-run evidence capture. A cloud claim remains
+an explicit deployment gate: local results are never presented as proof that a
+Google project was deployed.
 
 ## Run the reference scenario
 
@@ -54,6 +55,14 @@ python3 -m unittest discover -s tests -v
 python3 scripts/run_evaluation.py
 python3 scripts/run_conformance.py
 python3 scripts/generate_contract_bundle.py
+```
+
+Or run the complete local release gate in one command. It proves the signature
+invariants in an isolated temporary workspace and separately reports whether
+the external Google Cloud deployment prerequisites are configured:
+
+```bash
+uv run python scripts/release_gate.py
 ```
 
 The evaluation writes `artifacts/evaluation/report.json` and distinguishes
@@ -91,6 +100,7 @@ remain IAM-authenticated and use a separate operator boundary.
 - [Golden contract vector](examples/continuity-contract/golden-obligation.json)
 - [Google reference binding](docs/GOOGLE_BINDING.md)
 - [Google Cloud deployment runbook](docs/CLOUD_RUNBOOK.md)
+- [Evidence-backed claim matrix](docs/CLAIMS.md)
 
 ## License
 

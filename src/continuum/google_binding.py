@@ -71,12 +71,19 @@ class FirestoreContinuityStore:
                 stored = existing.to_dict()
                 if stored["event_digest"] != event_digest or stored["event_id"] != event_id:
                     raise ValueError("MESSAGE_ID_CONTENT_CONFLICT")
+                txn.update(reference, {"delivery_count": stored.get("delivery_count", 1) + 1,
+                                       "last_received_at": received_at})
                 return False
             txn.create(reference, {"event_digest": event_digest, "event_id": event_id,
-                                   "received_at": received_at, "status": "RECEIVED"})
+                                   "received_at": received_at, "status": "RECEIVED",
+                                   "delivery_count": 1})
             return True
 
         return accept(transaction)
+
+    def inbox_record(self, message_id: str) -> dict[str, Any] | None:
+        snapshot = self.client.collection("continuity_inbox").document(message_id).get()
+        return snapshot.to_dict() if snapshot.exists else None
 
     def mark_inbox_processed(self, *, message_id: str, event_digest: str,
                              processed_at: str) -> None:

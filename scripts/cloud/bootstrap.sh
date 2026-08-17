@@ -29,9 +29,27 @@ for account in continuum-control continuum-v17 continuum-v18 continuum-verifier 
 done
 
 control="continuum-control@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
+verifier="continuum-verifier@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
+push_identity="continuum-pubsub-push@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
 for role in roles/datastore.user roles/pubsub.publisher roles/aiplatform.user; do
   gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" --member "serviceAccount:$control" --role "$role" --condition=None >/dev/null
 done
+
+# The independent verifier can resolve persisted evidence, but cannot publish,
+# execute, or call Vertex. Its application role is additionally enforced by the
+# verifier-only HTTP surface.
+gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
+  --member "serviceAccount:$verifier" --role roles/datastore.viewer --condition=None >/dev/null
+
+# Pub/Sub's managed service agent needs permission to mint an OIDC token as the
+# dedicated push identity. Do not grant this to the runtime identities.
+project_number="$(gcloud projects describe "$CONTINUUM_PROJECT_ID" --format='value(projectNumber)')"
+[[ "$project_number" =~ ^[0-9]+$ ]] || { echo "Could not resolve project number" >&2; exit 2; }
+pubsub_service_agent="service-$project_number@gcp-sa-pubsub.iam.gserviceaccount.com"
+gcloud iam service-accounts add-iam-policy-binding "$push_identity" \
+  --project "$CONTINUUM_PROJECT_ID" \
+  --member "serviceAccount:$pubsub_service_agent" \
+  --role roles/iam.serviceAccountTokenCreator >/dev/null
 
 if ! gcloud pubsub topics describe "$topic" --project "$CONTINUUM_PROJECT_ID" >/dev/null 2>&1; then
   gcloud pubsub topics create "$topic" --project "$CONTINUUM_PROJECT_ID"

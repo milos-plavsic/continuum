@@ -66,3 +66,25 @@
   full Pub/Sub subscription resource into deployment. Verified 40 tests before
   final integration, shell syntax, compilation, secret patterns, and a complete
   container build. No live Google Cloud evidence is claimed without deployment.
+
+## Deployment-complete vertical slice
+
+- Added a server-owned, resumable cloud scenario with Firestore phase CAS and
+  append-only observations. The public command accepts only a run identifier;
+  evidence, model proposal, policy, authority, provider state, artifacts, and
+  verification are obtained from configured production ports.
+- Wired the production composition to immutable canonical incident events,
+  authenticated v18 ADK/Gemini investigation, persisted epoch fencing, an
+  idempotent Firestore sandbox provider with read reconciliation, six observed
+  contract artifacts, and an independently authenticated verifier service.
+- Added deliberate Pub/Sub redelivery for one marked lifecycle event, durable
+  inbox deduplication, and structured exact-run evidence records. The collector
+  retries boundedly for asynchronous logs, packages only the 12 mandatory
+  objects, and the offline verifier recomputes the full six-artifact bundle.
+- Hardened deployment with digest pinning, exact private invocation policies,
+  a validated single operator principal, scoped verifier read access, OIDC push
+  identity, fail-closed readiness, and correlated run/trace metadata.
+- Added one-command local and cloud proof entry points plus an explicit claim
+  matrix. Local verification can complete without credentials; cloud PASS still
+  requires an authenticated project because this workspace has no `gcloud`
+  installation or configured Google Cloud account.

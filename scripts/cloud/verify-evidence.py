@@ -13,6 +13,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 from continuum.contract import canonical_bytes
+from continuum.standard import verify_bundle
 
 MANDATORY = {
     "cloud-run-control", "cloud-run-v17", "cloud-run-v18", "cloud-run-verifier",
@@ -107,7 +108,7 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
     match = re.search(r"gemini-(\d+)(?:\.(\d+))?", model or "")
     if not match or (int(match.group(1)), int(match.group(2) or 0)) < (3, 5):
         errors.append("VERTEX_MODEL_TOO_OLD")
-    if vertex.get("service_account") != objects["cloud-run-control"].get("service_account"):
+    if vertex.get("service_account") != objects["cloud-run-v18"].get("service_account"):
         errors.append("VERTEX_IDENTITY_MISMATCH")
     citations = vertex.get("evidence_event_ids")
     if not isinstance(citations, list) or event_id not in citations:
@@ -128,6 +129,24 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
     _same(contract.get("status"), "PASS", "CONTRACT_NOT_PASSING", errors)
     if not isinstance(contract.get("report_digest"), dict):
         errors.append("CONTRACT_REPORT_DIGEST_MISSING")
+    cloud_bundle = contract.get("bundle")
+    if not isinstance(cloud_bundle, dict):
+        errors.append("CONTRACT_BUNDLE_MISSING")
+    else:
+        try:
+            verify_bundle(cloud_bundle)
+        except (KeyError, TypeError, ValueError):
+            errors.append("CONTRACT_BUNDLE_INVALID")
+        if cloud_bundle.get("profile") != "reference-google-cloud":
+            errors.append("CONTRACT_PROFILE_INVALID")
+        attestations = [artifact for artifact in cloud_bundle.get("artifacts", [])
+                        if isinstance(artifact, dict) and artifact.get("artifact_type") == "continuity_attestation"]
+        if len(attestations) != 1 or attestations[0].get("body", {}).get("outcome") != "VERIFIED":
+            errors.append("CONTRACT_ATTESTATION_NOT_VERIFIED")
+        expected_contract_digest = {"alg": "sha-256",
+                                    "value": sha256(canonical_bytes(cloud_bundle)).hexdigest()}
+        if contract.get("report_digest") != expected_contract_digest:
+            errors.append("CONTRACT_REPORT_DIGEST_MISMATCH")
     return sorted(set(errors))
 
 

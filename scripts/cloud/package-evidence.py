@@ -17,6 +17,12 @@ from continuum.contract import canonical_bytes
 
 NON_CLAIMS = ["global_credential_revocation", "tamper_proof",
               "third_party_interoperability", "universal_exactly_once"]
+EVIDENCE_OBJECTS = {
+    "cloud-run-control", "cloud-run-v17", "cloud-run-v18", "cloud-run-verifier",
+    "firestore-event", "firestore-projection", "firestore-outbox",
+    "pubsub-publish", "pubsub-deliveries", "vertex-call", "trace-export",
+    "contract-export",
+}
 
 
 def _now() -> str:
@@ -32,6 +38,8 @@ def package(source: Path, destination: Path, *, project: str, region: str,
     objects_dir.mkdir(exist_ok=True)
     objects = []
     for path in sorted(source.glob("*.json")):
+        if path.stem not in EVIDENCE_OBJECTS:
+            continue
         data = path.read_bytes()
         digest = sha256(data).hexdigest()
         target = objects_dir / digest
@@ -47,7 +55,7 @@ def package(source: Path, destination: Path, *, project: str, region: str,
               "scope": {"project_id": project, "region": region, "run_id": run_id,
                         "trace_id": trace_id, "git_commit": git_commit,
                         "protocol": "continuum/0.1-draft"},
-              "collector": {"name": "continuum-cloud-evidence", "version": "0.1",
+              "collector": {"name": "continuum-cloud-evidence", "version": "0.2",
                             "started_at": _now(), "finished_at": _now()},
               "objects": objects, "collection_errors": [],
               "declared_non_claims": NON_CLAIMS}

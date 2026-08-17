@@ -102,7 +102,7 @@ def independent_contract_verifier(payload: dict[str, Any], workload_identity: st
         artifact for artifact in bundle["artifacts"]
         if artifact["artifact_type"] == "continuity_attestation")
     declared = attestation["body"]["verification"]["verifier_principal"]
-    if declared != workload_identity:
+    if declared not in {workload_identity, f"mailto:{workload_identity}"}:
         raise ValueError("VERIFIER_IDENTITY_MISMATCH")
     return {"status": "PASS", "outcome": attestation["body"]["outcome"],
             "attestation_digest": attestation["digest"],

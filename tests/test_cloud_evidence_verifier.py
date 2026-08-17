@@ -9,6 +9,7 @@ import tempfile
 import unittest
 
 from continuum.contract import canonical_bytes
+from continuum.standard import build_contract_bundle
 
 
 SCRIPT = Path(__file__).parents[1] / "scripts" / "cloud" / "verify-evidence.py"
@@ -24,13 +25,15 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
         self.directory = Path(self.temp.name)
         self.scope = {"project_id": "continuum-proof", "region": "us-central1",
                       "run_id": "run-001", "trace_id": "a" * 32,
-                      "git_commit": "1" * 40, "protocol": "continuity-contract/0.1"}
+                      "git_commit": "1" * 40, "protocol": "continuum/0.1-draft"}
         image = "sha256:" + "2" * 64
         build = {"git_commit": self.scope["git_commit"], "protocol": self.scope["protocol"]}
         run = lambda role, account: {"project_id": self.scope["project_id"],
                                      "region": self.scope["region"], "role": role,
                                      "ready": True, "service_account": account,
                                      "image_digest": image, "build_info": build}
+        contract_bundle = build_contract_bundle(self.directory / "contract-fixture")
+        contract_bundle["profile"] = "reference-google-cloud"
         self.objects = {
             "cloud-run-control": run("control", "control@example.iam.gserviceaccount.com"),
             "cloud-run-v17": run("agent-v17", "v17@example.iam.gserviceaccount.com"),
@@ -45,13 +48,15 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
                 {"message_id": "msg-001", "delivery_id": "delivery-2"}]},
             "vertex-call": {"run_id": "run-001", "provider": "vertex-ai",
                             "model": "gemini-3.6-flash",
-                            "service_account": "control@example.iam.gserviceaccount.com",
+                            "service_account": "v18@example.iam.gserviceaccount.com",
                             "evidence_event_ids": ["evt-001"]},
             "trace-export": {"run_id": "run-001", "trace_id": "a" * 32,
                              "spans": [{"name": name} for name in
                                        ("investigation", "policy", "succession", "verification")]},
-            "contract-export": {"run_id": "run-001", "protocol": "continuity-contract/0.1",
-                                "status": "PASS", "report_digest": {"alg": "sha-256", "value": "3" * 64}},
+            "contract-export": {"run_id": "run-001", "protocol": "continuum/0.1-draft",
+                                "status": "PASS", "bundle": contract_bundle,
+                                "report_digest": {"alg": "sha-256",
+                                                  "value": sha256(canonical_bytes(contract_bundle)).hexdigest()}},
         }
 
     def tearDown(self):

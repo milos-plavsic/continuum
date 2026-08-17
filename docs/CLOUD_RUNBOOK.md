@@ -14,16 +14,27 @@ export CONTINUUM_GIT_SHA="$(git rev-parse HEAD)"
 bash scripts/cloud/bootstrap.sh
 bash scripts/cloud/build-deploy.sh
 export CONTINUUM_EVIDENCE_DIR="artifacts/cloud/$(date -u +%Y%m%dT%H%M%SZ)"
-export CONTINUUM_RUN_ID='<run returned by the cloud scenario>'
-export CONTINUUM_TRACE_ID='<trace correlated with that run>'
-bash scripts/cloud/run-smoke.sh
-python3 scripts/cloud/verify-evidence.py "$CONTINUUM_EVIDENCE_DIR"
+bash scripts/cloud/run-cloud-proof.sh
 ```
 
 Copy `deploy/cloud.env.example` to an ignored `deploy/cloud.env` and provide a
 real project, region, and Firestore location. The deployment uses one immutable
 image for four private Cloud Run services with distinct user-managed identities:
 control, v17, v18, and independent verifier. Pub/Sub push uses a fifth identity.
+Set `CONTINUUM_OPERATOR_MEMBER` to one exact IAM member (for example,
+`user:operator@example.com`) permitted to start and inspect control-plane runs.
+The deployment replaces the control invoker policy with only that operator and
+the dedicated Pub/Sub push identity.
+
+`run-cloud-proof.sh` derives a fresh run and trace identifier, obtains an
+audience-bound operator ID token, invokes the server-owned scenario command,
+requires independent `PASS`, then performs read-only exact-run collection and
+offline semantic verification. It never places the token in the evidence
+bundle or writes it to disk.
+Every revision is pinned to an Artifact Registry digest and exposes the source
+commit, digest, deployment ID, protocol version, Cloud Run revision, and service
+name through `/build-info`. `/ready` fails closed when immutable metadata or a
+role-specific configuration value is absent.
 
 ## Evidence interpretation
 
@@ -37,7 +48,19 @@ contradiction returns `FAIL`; absence never becomes a false pass.
 
 - Never set `GOOGLE_APPLICATION_CREDENTIALS` on Cloud Run.
 - Services remain private; grant `roles/run.invoker` narrowly.
+- Authenticated service URLs retain default ingress so control-to-worker calls
+  work without pretending a VPC path exists; IAM, not network reachability, is
+  the demonstrated access boundary.
+- Deployment replaces each invocation policy: only Pub/Sub may invoke control,
+  and only control may invoke v17, v18, or the verifier. Stale public or group
+  bindings are not preserved.
 - v17 and v18 receive no direct Firestore or Pub/Sub roles.
 - The control identity receives only datastore, publishing, and Vertex AI roles.
+- The independent verifier receives `roles/datastore.viewer` only; it cannot
+  mutate evidence, publish lifecycle events, execute actions, or call Vertex.
+- Pub/Sub token minting is scoped to the dedicated push service account and the
+  Google-managed Pub/Sub service agent.
+- Requests may carry `X-Continuum-Run-ID` and W3C `traceparent`; the service
+  validates them and emits structured correlation logs and response headers.
 - Run `gcloud` commands from an explicitly selected project and review the IAM
   bindings before deployment.

@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${CONTINUUM_PROJECT_ID:?set CONTINUUM_PROJECT_ID}"
+: "${CONTINUUM_REGION:?set CONTINUUM_REGION}"
+: "${CONTINUUM_GIT_SHA:?set CONTINUUM_GIT_SHA to the deployed commit}"
+: "${CONTINUUM_EVIDENCE_DIR:?set CONTINUUM_EVIDENCE_DIR to a new artifacts/cloud path}"
+
+control_service="${CONTINUUM_CONTROL_SERVICE:-continuum-control}"
+control_url="$(gcloud run services describe "$control_service" --project "$CONTINUUM_PROJECT_ID" \
+  --region "$CONTINUUM_REGION" --format='value(status.url)')"
+[[ "$control_url" == https://* ]] || { echo "Control service URL unavailable" >&2; exit 2; }
+
+run_id="${CONTINUUM_RUN_ID:-run-$(date -u +%Y%m%dT%H%M%SZ)}"
+[[ "$run_id" =~ ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$ ]] || {
+  echo "CONTINUUM_RUN_ID is invalid" >&2; exit 2;
+}
+trace_id="$(PYTHONPATH=src python3 - "$run_id" <<'PY'
+from hashlib import sha256
+import sys
+from continuum.contract import canonical_bytes
+command = {"run_id": sys.argv[1], "tenant_id": "acme",
+           "obligation_id": "vendor-compliance-042", "predecessor": "v17",
+           "predecessor_epoch": 41, "successor": "v18", "successor_epoch": 42,
+           "idempotency_key": "vendor-042:create:v1"}
+print(sha256(canonical_bytes(command)).hexdigest()[:32])
+PY
+)"
+token="$(gcloud auth print-identity-token --audiences="$control_url")"
+response_file="$(mktemp)"
+trap 'rm -f -- "$response_file"' EXIT
+
+printf 'header = "Authorization: Bearer %s"\n' "$token" | \
+curl --config - --fail-with-body --silent --show-error --request POST "$control_url/cloud-smoke/start" \
+  --header 'Content-Type: application/json' \
+  --header "X-Continuum-Run-ID: $run_id" \
+  --header "traceparent: 00-$trace_id-0000000000000001-01" \
+  --data "{\"run_id\":\"$run_id\"}" >"$response_file"
+
+python3 - "$response_file" <<'PY'
+import json, pathlib, sys
+result = json.loads(pathlib.Path(sys.argv[1]).read_text())
+verification = result.get("verification", {})
+if (result.get("phase") != "VERIFIED" or verification.get("status") != "PASS"
+        or verification.get("outcome") != "VERIFIED"):
+    raise SystemExit("cloud scenario did not reach independent PASS")
+PY
+
+export CONTINUUM_RUN_ID="$run_id" CONTINUUM_TRACE_ID="$trace_id"
+bash scripts/cloud/run-smoke.sh
