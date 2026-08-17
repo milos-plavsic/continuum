@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://continuum.dev/schema/0.1/authority_grant.json","allOf":[{"$ref":"contract.schema.json"},{"properties":{"artifact_type":{"const":"authority_grant"}}}]}

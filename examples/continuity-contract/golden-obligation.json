@@ -1,0 +1,25 @@
+{
+  "protocol": "continuum/0.1-draft",
+  "artifact_type": "obligation",
+  "schema": "https://continuum.dev/schema/0.1/obligation.json",
+  "artifact_id": "urn:continuum:obligation:golden",
+  "issued_at": "2026-08-17T10:00:00Z",
+  "issuer": "urn:continuum:principal:test",
+  "body": {
+    "tenant_id": "test",
+    "subject": "golden vector",
+    "revision": 1,
+    "owner": {"principal_id": "urn:continuum:principal:test:agent:v1", "authority_domain": "urn:continuum:authority:test:agent", "epoch": 1},
+    "description": "Canonical digest vector",
+    "deadline": "2026-08-17T11:00:00Z",
+    "completion_criteria": [],
+    "allowed_effects": [],
+    "compensation": {"mode": "NONE"},
+    "status": "OPEN"
+  },
+  "required_features": [],
+  "extensions": {},
+  "signatures": [],
+  "digest": {"alg": "sha-256", "value": "92ca54af049cb97734b56171a14161aad5d45d9a5b3d72e5b965abe9e8d2a174"}
+}
+

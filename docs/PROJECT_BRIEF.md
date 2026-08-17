@@ -6,6 +6,12 @@ Enterprise agents know how to start. Continuum teaches them how to fail,
 recover, improve, and retire safely without abandoning commitments, leaking
 memory, or repeating consequential actions.
 
+Continuum implements the proposed **Continuity Contract**: a portable protocol
+for proving that institutional obligations, scoped authority, and authorized
+context survived an agent lifecycle transition. Succession Protocol remains the
+product headline; the contract is its vendor-neutral boundary and conformance
+language.
+
 ## Competition fit
 
 - Event: All Things Agentic Hackathon
@@ -32,7 +38,8 @@ Judging weights:
    promotes a defense only after independent evaluation.
 7. Succession Protocol transfers valid commitments and authorized memory to a
    replacement, then revokes and retires the compromised agent.
-8. The successor completes the original obligation exactly once.
+8. The successor completes the original obligation with one externally observed
+   effect under the demonstrated gateway and provider failure model.
 
 ## Four-minute demo narrative
 
@@ -41,8 +48,9 @@ document never arrives, but no explicit error is emitted. Continuum detects the
 absence, investigates it, blocks conflicting destructive actions, learns a
 verified defense against the triggering attack, retires the compromised agent,
 and transfers the legitimate commitment to a successor. The successor finishes
-the workflow exactly once while the former identity and revoked memory visibly
-fail. The UI presents the complete evidence and OpenTelemetry timeline.
+the workflow with one verified provider effect while the former identity and
+revoked memory visibly fail. The UI presents the complete evidence, Continuity
+Attestation, and OpenTelemetry timeline.
 
 ## Scope discipline
 
@@ -62,6 +70,10 @@ Narrow, demonstrable implementation:
 
 One event model, one policy gateway, one evidence ledger, one operator UI, and
 one end-to-end scenario must serve all five capabilities.
+
+The hackathon demo proves one Google Cloud reference binding. Protocol
+portability is demonstrated through machine-readable artifacts and conformance
+tests, not multiple shallow framework integrations.
 
 ## Required submission evidence
 

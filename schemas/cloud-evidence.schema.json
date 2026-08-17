@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://continuum.dev/schema/cloud-evidence/0.1",
+  "type":"object","additionalProperties":false,
+  "required":["schema","bundle_id","captured_at","profile","scope","collector","objects","collection_errors","declared_non_claims","bundle_digest"],
+  "properties":{
+    "schema":{"const":"continuum/cloud-evidence/0.1"},
+    "bundle_id":{"type":"string","format":"uri"},
+    "captured_at":{"type":"string","format":"date-time"},
+    "profile":{"const":"reference-google-cloud"},
+    "scope":{"type":"object","required":["project_id","region","run_id","trace_id","git_commit","protocol"]},
+    "collector":{"type":"object","required":["name","version","started_at","finished_at"]},
+    "objects":{"type":"array","items":{"type":"object","required":["object_id","kind","source_authority","media_type","sha256","size","collected_at"]}},
+    "collection_errors":{"type":"array"},
+    "declared_non_claims":{"type":"array","items":{"type":"string"}},
+    "bundle_digest":{"type":"object","required":["alg","value"]}
+  }
+}
