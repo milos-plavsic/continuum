@@ -1,0 +1,39 @@
+{
+  "plugin": "devpost-hackathon",
+  "version": 2,
+  "hackathon": {
+    "slug": "allthingsagentichackathon",
+    "name": "All Things Agentic Hackathon",
+    "url": "https://allthingsagentichackathon.devpost.com/",
+    "selected": true,
+    "source": "known"
+  },
+  "participant": {
+    "name": "Milos Plavsic",
+    "display_name": "Milos"
+  },
+  "project": {
+    "name": "Continuum",
+    "summary": "Institutional agent continuity system for safe failure, recovery, improvement, and retirement.",
+    "ai_usage": "",
+    "codex_usage": ""
+  },
+  "current_stage": "resources",
+  "completed_stages": [
+    "start-hackathon",
+    "review"
+  ],
+  "rules_acknowledged": true,
+  "learning": {
+    "status": "not-started",
+    "current_step": "",
+    "completed_steps": [],
+    "plan_file": "",
+    "checklist_file": ""
+  },
+  "submission": {
+    "draft_file": "devpost-submission.md",
+    "status": "not-started"
+  },
+  "next_command": "resources"
+}
