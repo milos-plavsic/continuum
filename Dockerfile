@@ -13,4 +13,4 @@ RUN pip install --no-cache-dir '.[web,google,signatures]' \
 
 USER continuum
 EXPOSE 8080
-CMD ["sh", "-c", "exec uvicorn continuum.api:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "module=continuum.api:app; if [ -n \"${CONTINUUM_ROLE:-}\" ]; then module=continuum.cloud_app:app; fi; exec uvicorn \"$module\" --host 0.0.0.0 --port ${PORT}"]

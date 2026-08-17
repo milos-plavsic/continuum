@@ -90,6 +90,7 @@ remain IAM-authenticated and use a separate operator boundary.
 - [Conformance levels](docs/CONFORMANCE.md)
 - [Golden contract vector](examples/continuity-contract/golden-obligation.json)
 - [Google reference binding](docs/GOOGLE_BINDING.md)
+- [Google Cloud deployment runbook](docs/CLOUD_RUNBOOK.md)
 
 ## License
 

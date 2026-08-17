@@ -5,3 +5,4 @@ __pycache__/
 artifacts/
 *.sqlite3
 .env
+deploy/cloud.env

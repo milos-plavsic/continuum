@@ -21,6 +21,13 @@ The source adapters are implemented, but the `reference-google-cloud` profile
 cannot pass until real project IDs, revisions, identities, Firestore writes,
 Pub/Sub redelivery, Vertex AI calls, and traces are captured from deployment.
 
+The cloud surface includes authenticated wrapped-push decoding, message-ID and
+payload-digest conflict detection, Firestore execution reservation/outcome
+records, transactional event/projection/outbox writes, and an at-least-once
+outbox dispatcher. The offline evidence verifier uses no Google credentials or
+network access and returns `NOT_ASSESSED` rather than inferring cloud truth from
+source code or missing captures.
+
 Official implementation references:
 
 - https://google.github.io/agents-cli/guide/project-structure/
