@@ -1,0 +1,13 @@
+.git
+.github
+.venv
+artifacts
+__pycache__
+*.pyc
+*.sqlite3
+*.jsonl
+.env
+terraform.tfstate*
+*.tfvars
+docs
+tests

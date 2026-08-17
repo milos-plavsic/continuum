@@ -26,3 +26,6 @@ Target the normal run at 3:45 to retain latency margin.
 Pre-open authenticated console tabs. A stalled dependency must remain visibly
 pending or fail closed; never substitute prerecorded output.
 
+The runnable cockpit is served by `continuum.api:app`. Its signature controls
+call server-side proof endpoints; the browser does not fabricate epochs,
+denials, effect counts, manifests, or attestation outcomes.

@@ -17,9 +17,19 @@ google = [
   "google-cloud-firestore>=2.28,<3",
   "google-cloud-pubsub>=2,<3"
 ]
+web = [
+  "fastapi>=0.116,<1",
+  "uvicorn[standard]>=0.35,<1"
+]
+test = [
+  "httpx>=0.28,<1"
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+continuum = ["static/*.html"]

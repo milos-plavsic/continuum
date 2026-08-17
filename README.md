@@ -59,6 +59,21 @@ python3 scripts/generate_contract_bundle.py
 The evaluation writes `artifacts/evaluation/report.json` and distinguishes
 observed local results from pending live-model and Google Cloud evidence.
 
+## Run the incident cockpit
+
+Install the locked web environment and start the loopback-only demo server:
+
+```bash
+uv sync --extra web --extra test --extra signatures
+uv run python scripts/run_demo_server.py
+```
+
+Open `http://127.0.0.1:8080`. The UI starts a fresh canonical incident and
+exposes the signature proof controls: stale v17 action, revoked v17 memory,
+successor effect, redelivery, and the exact six-artifact contract bundle.
+Mutation endpoints are disabled unless `CONTINUUM_DEMO_MODE=1`; Cloud Run must
+remain IAM-authenticated and use a separate operator boundary.
+
 ## Documentation
 
 - [Project brief](docs/PROJECT_BRIEF.md)

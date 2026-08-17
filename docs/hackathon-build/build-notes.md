@@ -36,3 +36,14 @@
   transactional Firestore event/projection/outbox adapter, canonical Pub/Sub
   publisher, and Cloud Run ID-token verifier. These adapters are implemented but
   their cloud profile remains unassessed until deployed evidence exists.
+
+## Incident cockpit round
+
+- Added a same-origin FastAPI control plane and a no-build vanilla incident
+  cockpit for the signature moment.
+- The UI reads server-produced evidence and exposes live predecessor action,
+  predecessor memory, redelivery, and contract-bundle proof controls.
+- Added fail-closed demo-mode gating, health/build metadata, API tests, a locked
+  `uv` environment, and a non-root Cloud Run-compatible container image.
+- Verified 20 tests, a real Uvicorn HTTP smoke run, Docker build, and container
+  health response. Cloud IAM and deployed evidence remain separate gates.
