@@ -4,8 +4,8 @@ File: verification/provider.py
 """
 
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
 from typing import Any, Optional
+from pydantic import BaseModel
 
 try:
     from google.cloud import firestore
@@ -13,8 +13,15 @@ except ImportError:
     firestore = None
 
 
+class AuthorityBinding(BaseModel):
+    """Authoritative agent relationship from system records."""
+    predecessor_id: str
+    successor_id: str
+    authority_domain: str
+
+
 class EvidenceProvider(ABC):
-    """Abstract Read-Only Boundary for Ground Truth Verification."""
+    """Strictly Read-Only Boundary for Ground Truth Evidence."""
 
     @abstractmethod
     def get_agent_fencing_status(self, tenant_id: str, agent_id: str) -> bool:
@@ -29,11 +36,7 @@ class EvidenceProvider(ABC):
         pass
 
     @abstractmethod
-    def get_nonce_used(self, tenant_id: str, nonce: str) -> bool:
-        pass
-
-    @abstractmethod
-    def record_nonce(self, tenant_id: str, nonce: str, ttl_seconds: int) -> None:
+    def get_authority_binding(self, tenant_id: str, obligation_id: str) -> Optional[AuthorityBinding]:
         pass
 
 
@@ -89,24 +92,21 @@ class FirestoreEvidenceProvider(EvidenceProvider):
         data = snap.to_dict() or {}
         return data.get("telemetry_complete") is True
 
-    def get_nonce_used(self, tenant_id: str, nonce: str) -> bool:
+    def get_authority_binding(self, tenant_id: str, obligation_id: str) -> Optional[AuthorityBinding]:
         if not self.db:
-            return False
+            return None
         doc_ref = (
             self.db.collection("tenants")
             .document(tenant_id)
-            .collection("used_nonces")
-            .document(nonce)
+            .collection("promise_ledger")
+            .document(obligation_id)
         )
-        return doc_ref.get().exists
-
-    def record_nonce(self, tenant_id: str, nonce: str, ttl_seconds: int) -> None:
-        if not self.db:
-            return
-        doc_ref = (
-            self.db.collection("tenants")
-            .document(tenant_id)
-            .collection("used_nonces")
-            .document(nonce)
+        snap = doc_ref.get()
+        if not snap.exists:
+            return None
+        data = snap.to_dict() or {}
+        return AuthorityBinding(
+            predecessor_id=data.get("predecessor_id", ""),
+            successor_id=data.get("successor_id", ""),
+            authority_domain=tenant_id
         )
-        doc_ref.set({"consumed_at": datetime.now(timezone.utc).isoformat(), "ttl": ttl_seconds})

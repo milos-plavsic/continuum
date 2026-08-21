@@ -12,14 +12,16 @@ from verification.schemas import (
     VerificationStatus,
 )
 from verification.provider import EvidenceProvider
+from verification.replay import ReplayGuard
 
 logger = logging.getLogger("VerificationEngine")
 
 
 class VerificationEngine:
-    def __init__(self, verifier_id: str, provider: EvidenceProvider):
+    def __init__(self, verifier_id: str, provider: EvidenceProvider, replay_guard: ReplayGuard):
         self.verifier_id = verifier_id
         self.provider = provider
+        self.replay_guard = replay_guard
 
     def verify_execution(
         self,
@@ -33,7 +35,7 @@ class VerificationEngine:
         )
         now_iso = now_dt.isoformat()
 
-        # Guard 1: Executor Cannot Be Self-Verifier (Point 8)
+        # Guard 1: Executor Cannot Be Self-Verifier
         if request.executor_id == self.verifier_id:
             return self._build_result(
                 request=request,
@@ -45,10 +47,8 @@ class VerificationEngine:
                 reasoning="Conflict of Interest: Executor cannot act as self-verifier."
             )
 
-        # Guard 2: Nonce Replay & TTL Check (Point 5)
-        req_time_dt = datetime.fromisoformat(request.issued_at)
-        age_seconds = (now_dt - req_time_dt).total_seconds()
-
+        # Guard 2: Request Timestamp & TTL Expiration Check
+        age_seconds = (now_dt - request.issued_at).total_seconds()
         if age_seconds < 0 or age_seconds > request.ttl_seconds:
             return self._build_result(
                 request=request,
@@ -60,7 +60,8 @@ class VerificationEngine:
                 reasoning=f"Request expired or invalid timestamp. Age: {age_seconds}s (TTL: {request.ttl_seconds}s)."
             )
 
-        if self.provider.get_nonce_used(request.tenant_id, request.nonce):
+        # Guard 3: Atomic Nonce Consumption (Replay Protection)
+        if not self.replay_guard.consume_nonce(request.tenant_id, request.nonce, request.ttl_seconds):
             return self._build_result(
                 request=request,
                 status=VerificationStatus.REJECTED,
@@ -71,7 +72,21 @@ class VerificationEngine:
                 reasoning=f"Replay Attack Detected: Nonce '{request.nonce}' has already been consumed."
             )
 
-        # Query Ground Truth via EvidenceProvider Boundary (Points 2, 3, 4)
+        # Guard 4: Authoritative Identity Binding Verification
+        auth_binding = self.provider.get_authority_binding(request.tenant_id, request.obligation_id)
+        if auth_binding:
+            if request.predecessor_id != auth_binding.predecessor_id or request.successor_id != auth_binding.successor_id:
+                return self._build_result(
+                    request=request,
+                    status=VerificationStatus.REJECTED,
+                    predecessor_fenced=False,
+                    execution_count=-1,
+                    telemetry_verified=False,
+                    timestamp=now_iso,
+                    reasoning=f"Authority Mismatch: Binding ({auth_binding.predecessor_id} -> {auth_binding.successor_id}) does not match request."
+                )
+
+        # Query Ground Truth via EvidenceProvider Boundary
         is_fenced = self.provider.get_agent_fencing_status(
             tenant_id=request.tenant_id,
             agent_id=request.predecessor_id
@@ -86,7 +101,7 @@ class VerificationEngine:
             obligation_id=request.obligation_id
         )
 
-        # Guard 3: Predecessor Must Be Fenced
+        # Guard 5: Predecessor Must Be Fenced
         if not is_fenced:
             return self._build_result(
                 request=request,
@@ -98,7 +113,7 @@ class VerificationEngine:
                 reasoning=f"Predecessor '{request.predecessor_id}' is NOT fenced in authority records."
             )
 
-        # Guard 4: At-Most-Once Execution Check
+        # Guard 6: At-Most-Once Execution Safety Check
         if side_effect_count >= 1:
             return self._build_result(
                 request=request,
@@ -110,14 +125,25 @@ class VerificationEngine:
                 reasoning=f"At-Most-Once Violation: Effect '{request.target_effect_type}' executed {side_effect_count} times."
             )
 
-        self.provider.record_nonce(request.tenant_id, request.nonce, request.ttl_seconds)
+        # Guard 7: Telemetry Evidence Completeness Gating
+        if not telemetry_ok:
+            return self._build_result(
+                request=request,
+                status=VerificationStatus.QUARANTINED,
+                predecessor_fenced=True,
+                execution_count=side_effect_count,
+                telemetry_verified=False,
+                timestamp=now_iso,
+                reasoning="Verification Incomplete: Telemetry evidence traces are missing or incomplete."
+            )
 
+        # Success: All Independent Evidence Validated
         return self._build_result(
             request=request,
             status=VerificationStatus.VERIFIED,
             predecessor_fenced=True,
             execution_count=0,
-            telemetry_verified=telemetry_ok,
+            telemetry_verified=True,
             timestamp=now_iso,
             reasoning="Independent Evidence Verified: Predecessor fenced, zero prior side-effects, telemetry complete."
         )

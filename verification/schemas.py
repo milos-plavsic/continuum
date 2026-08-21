@@ -7,14 +7,15 @@ from datetime import datetime, timezone
 from enum import Enum
 import hashlib
 import json
-from typing import Dict, Any, List, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class VerificationStatus(str, Enum):
     VERIFIED = "VERIFIED"
     REJECTED = "REJECTED"
     QUARANTINED = "QUARANTINED"
+    INCONCLUSIVE = "INCONCLUSIVE"
 
 
 class VerificationRequest(BaseModel):
@@ -28,8 +29,15 @@ class VerificationRequest(BaseModel):
     successor_id: str
     target_effect_type: str
     nonce: str
-    issued_at: str
-    ttl_seconds: int = 300
+    issued_at: datetime
+    ttl_seconds: int = Field(default=300, gt=0, le=86400)
+
+    @field_validator("issued_at")
+    @classmethod
+    def ensure_utc(cls, v: datetime) -> datetime:
+        if v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v.astimezone(timezone.utc)
 
 
 class VerificationResult(BaseModel):
@@ -52,9 +60,9 @@ class VerificationResult(BaseModel):
 
     def canonical_bytes(self) -> bytes:
         """
-        Continuum Contract 1.0 Canonicalization Rule:
-        Serializes schema fields with lexicographically sorted keys and compact
-        separators (',', ':') excluding the digest field itself.
+        Contract 1.0 Deterministic Canonical JSON Serialization:
+        Serializes schema fields with lexicographically sorted keys, compact
+        separators (',', ':'), UTF-8 encoding, excluding the digest field.
         """
         data = self.model_dump(exclude={"digest"}, mode="json")
         canonical_json = json.dumps(
