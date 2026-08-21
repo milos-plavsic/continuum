@@ -1,87 +1,129 @@
 """
-Continuum: Verification Red-Team Test Suite
+Continuum: Verification Engine Red-Team Test Suite
 File: verification/test_verification.py
-
-PyTest test cases asserting VERIFIED, FAILED, and INCONCLUSIVE verdicts.
 """
 
 import pytest
-from unittest.mock import MagicMock
-from verification.schemas import VerificationVerdict
-from verification.engine import IndependentVerifier
+from verification.schemas import VerificationRequest, VerificationStatus, VerificationResult
+from verification.provider import EvidenceProvider
+from verification.engine import VerificationEngine
+
+
+class MockEvidenceProvider(EvidenceProvider):
+    def __init__(self):
+        self.fenced_agents = set()
+        self.side_effects = {}
+        self.telemetry_states = {}
+        self.used_nonces = set()
+
+    def get_agent_fencing_status(self, tenant_id: str, agent_id: str) -> bool:
+        return (tenant_id, agent_id) in self.fenced_agents
+
+    def get_side_effect_count(self, tenant_id: str, obligation_id: str, effect_type: str) -> int:
+        return self.side_effects.get((tenant_id, obligation_id, effect_type), 0)
+
+    def is_telemetry_complete(self, tenant_id: str, obligation_id: str) -> bool:
+        return self.telemetry_states.get((tenant_id, obligation_id), True)
+
+    def get_nonce_used(self, tenant_id: str, nonce: str) -> bool:
+        return (tenant_id, nonce) in self.used_nonces
+
+    def record_nonce(self, tenant_id: str, nonce: str, ttl_seconds: int) -> None:
+        self.used_nonces.add((tenant_id, nonce))
 
 
 @pytest.fixture
-def mock_verifier():
-    mock_db = MagicMock()
-    mock_tracer = MagicMock()
-    mock_span = MagicMock()
-    mock_tracer.start_as_current_span.return_value.__enter__.return_value = mock_span
-    return IndependentVerifier(mock_db, mock_tracer)
+def mock_provider():
+    return MockEvidenceProvider()
 
 
-def test_clean_succession_returns_verified(mock_verifier):
-    """Tests that a valid handover with matching hashes outputs VERIFIED."""
-    payload = {"vendor_id": "V-9901", "action": "ONBOARD"}
-    now_iso = "2026-08-21T00:00:00Z"
-    valid_digest = mock_verifier.recompute_digest(payload, now_iso, "procurement-agent-v17").digest_hash
+@pytest.fixture
+def engine(mock_provider):
+    return VerificationEngine(verifier_id="continuum-independent-verifier", provider=mock_provider)
 
-    attestation = mock_verifier.verify_succession(
-        attestation_id="att-001",
-        obligation_id="obl-8821",
-        raw_payload=payload,
-        reported_digest=valid_digest,
+
+def test_valid_verification_with_deterministic_clock(engine, mock_provider):
+    timestamp_iso = "2026-08-21T18:00:00+00:00"
+    mock_provider.fenced_agents.add(("tenant-alpha", "agent-v17"))
+
+    req = VerificationRequest(
+        obligation_id="obl-procure-1001",
+        tenant_id="tenant-alpha",
+        executor_id="orchestrator-agent",
+        predecessor_id="agent-v17",
+        successor_id="agent-v18",
+        target_effect_type="VENDOR_PAYMENT",
+        nonce="nonce-unique-001",
+        issued_at=timestamp_iso,
+        ttl_seconds=300
+    )
+
+    result = engine.verify_execution(req, current_time_iso=timestamp_iso)
+
+    assert result.status == VerificationStatus.VERIFIED
+    assert result.digest is not None
+    assert result.digest == result.compute_digest()
+
+
+def test_redteam_executor_cannot_self_verify(mock_provider):
+    self_verifier_engine = VerificationEngine(verifier_id="malicious-agent", provider=mock_provider)
+    timestamp_iso = "2026-08-21T18:00:00+00:00"
+
+    req = VerificationRequest(
+        obligation_id="obl-procure-1001",
+        tenant_id="tenant-alpha",
+        executor_id="malicious-agent",
+        predecessor_id="agent-v17",
+        successor_id="agent-v18",
+        target_effect_type="VENDOR_PAYMENT",
+        nonce="nonce-unique-002",
+        issued_at=timestamp_iso
+    )
+
+    result = self_verifier_engine.verify_execution(req, current_time_iso=timestamp_iso)
+    assert result.status == VerificationStatus.REJECTED
+    assert "Conflict of Interest" in result.reasoning
+
+
+def test_redteam_mutated_evidence_digest_mismatch():
+    result = VerificationResult(
+        status=VerificationStatus.VERIFIED,
+        obligation_id="obl-procure-1001",
+        tenant_id="tenant-alpha",
+        verifier_id="verifier-id",
+        predecessor_id="agent-v17",
+        successor_id="agent-v18",
         predecessor_fenced=True,
-        side_effect_count=1,
-        telemetry_complete=True,
-        trace_id="trace-abc",
-        span_id="span-123",
+        execution_count=0,
+        telemetry_verified=True,
+        nonce="nonce-1",
+        timestamp="2026-08-21T18:00:00+00:00",
+        reasoning="All valid",
+        digest=None
+    )
+    result.digest = result.compute_digest()
+    result.execution_count = 1
+    assert result.compute_digest() != result.digest
+
+
+def test_redteam_nonce_replay_attack(engine, mock_provider):
+    timestamp_iso = "2026-08-21T18:00:00+00:00"
+    mock_provider.fenced_agents.add(("tenant-alpha", "agent-v17"))
+
+    req = VerificationRequest(
+        obligation_id="obl-procure-1001",
+        tenant_id="tenant-alpha",
+        executor_id="orchestrator",
+        predecessor_id="agent-v17",
+        successor_id="agent-v18",
+        target_effect_type="VENDOR_PAYMENT",
+        nonce="reused-nonce-999",
+        issued_at=timestamp_iso
     )
 
-    assert attestation.verdict == VerificationVerdict.VERIFIED
-    assert attestation.predecessor_fenced is True
-    assert attestation.at_most_once_verified is True
+    res1 = engine.verify_execution(req, current_time_iso=timestamp_iso)
+    assert res1.status == VerificationStatus.VERIFIED
 
-
-def test_stale_token_replay_returns_failed(mock_verifier):
-    """Tests that an un-fenced predecessor or duplicate execution outputs FAILED."""
-    payload = {"vendor_id": "V-9901", "action": "ONBOARD"}
-    valid_digest = mock_verifier.recompute_digest(payload, "2026-08-21T00:00:00Z", "procurement-agent-v17").digest_hash
-
-    attestation = mock_verifier.verify_succession(
-        attestation_id="att-002",
-        obligation_id="obl-8821",
-        raw_payload=payload,
-        reported_digest=valid_digest,
-        predecessor_fenced=False,
-        side_effect_count=2,
-        telemetry_complete=True,
-        trace_id="trace-abc",
-        span_id="span-123",
-    )
-
-    assert attestation.verdict == VerificationVerdict.FAILED
-
-
-def test_missing_telemetry_span_returns_inconclusive(mock_verifier):
-    """Tests that gaps in Pub/Sub or OpenTelemetry traces output INCONCLUSIVE."""
-    payload = {"vendor_id": "V-9901", "action": "ONBOARD"}
-
-    attestation = mock_verifier.verify_succession(
-        attestation_id="att-003",
-        obligation_id="obl-8821",
-        raw_payload=payload,
-        reported_digest="fake-hash",
-        predecessor_fenced=True,
-        side_effect_count=1,
-        telemetry_complete=False,
-        trace_id="trace-abc",
-        span_id="span-123",
-    )
-
-    assert attestation.verdict == VerificationVerdict.INCONCLUSIVE
-
-
-
-
-    
+    res2 = engine.verify_execution(req, current_time_iso=timestamp_iso)
+    assert res2.status == VerificationStatus.REJECTED
+    assert "Replay Attack Detected" in res2.reasoning

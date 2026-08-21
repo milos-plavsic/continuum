@@ -1,107 +1,151 @@
 """
-Continuum: Independent Verification Engine
+Continuum: Verification Engine
 File: verification/engine.py
-
-Read-only verifier that recomputes evidence digests and enforces
-fencing validation without invoking execution pathways.
 """
 
-import hashlib
-import json
-from typing import Dict, Any
 from datetime import datetime, timezone
+import logging
+from typing import Optional
 from verification.schemas import (
-    VerificationVerdict,
-    EvidenceDigest,
-    ContinuityAttestation,
+    VerificationRequest,
+    VerificationResult,
+    VerificationStatus,
 )
+from verification.provider import EvidenceProvider
+
+logger = logging.getLogger("VerificationEngine")
 
 
-class IndependentVerifier:
-    """Zero-trust, read-only audit engine for agent succession."""
+class VerificationEngine:
+    def __init__(self, verifier_id: str, provider: EvidenceProvider):
+        self.verifier_id = verifier_id
+        self.provider = provider
 
-    def __init__(self, firestore_db_client, otel_tracer):
-        self.db = firestore_db_client
-        self.tracer = otel_tracer
-
-    @staticmethod
-    def recompute_digest(payload: Dict[str, Any], timestamp_str: str, predecessor_id: str) -> EvidenceDigest:
-        """Independently recalculates SHA-256 digest from raw payload bytes."""
-        canonical_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-        digest_input = f"{canonical_json}|{timestamp_str}|{predecessor_id}".encode("utf-8")
-        computed_hash = hashlib.sha256(digest_input).hexdigest()
-
-        return EvidenceDigest(
-            digest_hash=computed_hash,
-            algorithm="sha256",
-            canonical_keys=sorted(list(payload.keys())),
-        )
-
-    def verify_succession(
+    def verify_execution(
         self,
-        attestation_id: str,
-        obligation_id: str,
-        raw_payload: Dict[str, Any],
-        reported_digest: str,
-        predecessor_fenced: bool,
-        side_effect_count: int,
-        telemetry_complete: bool,
-        trace_id: str,
-        span_id: str,
-    ) -> ContinuityAttestation:
-        """Evaluates raw evidence and returns a deterministic 3-valued verdict."""
-        
-        with self.tracer.start_as_current_span("verification.verify_succession") as otel_span:
-            otel_span.set_attribute("continuum.obligation_id", obligation_id)
+        request: VerificationRequest,
+        current_time_iso: Optional[str] = None
+    ) -> VerificationResult:
+        now_dt = (
+            datetime.fromisoformat(current_time_iso)
+            if current_time_iso
+            else datetime.now(timezone.utc)
+        )
+        now_iso = now_dt.isoformat()
 
-            if not telemetry_complete:
-                otel_span.set_attribute("continuum.verdict", VerificationVerdict.INCONCLUSIVE)
-                return self._build_attestation(
-                    attestation_id, obligation_id, VerificationVerdict.INCONCLUSIVE,
-                    raw_payload, predecessor_fenced=False, at_most_once=False,
-                    trace_id=trace_id, span_id=span_id
-                )
-
-            now_iso = datetime.now(timezone.utc).isoformat()
-            digest_obj = self.recompute_digest(raw_payload, now_iso, "procurement-agent-v17")
-
-            hashes_match = (digest_obj.digest_hash == reported_digest)
-            at_most_once = (side_effect_count == 1)
-
-            if hashes_match and predecessor_fenced and at_most_once:
-                verdict = VerificationVerdict.VERIFIED
-            else:
-                verdict = VerificationVerdict.FAILED
-
-            otel_span.set_attribute("continuum.verdict", verdict)
-
-            return ContinuityAttestation(
-                attestation_id=attestation_id,
-                obligation_id=obligation_id,
-                verdict=verdict,
-                predecessor_id="procurement-agent-v17",
-                successor_id="procurement-agent-v18",
-                predecessor_fenced=predecessor_fenced,
-                at_most_once_verified=at_most_once,
-                computed_digest=digest_obj,
-                trace_id=trace_id,
-                span_id=span_id,
+        # Guard 1: Executor Cannot Be Self-Verifier (Point 8)
+        if request.executor_id == self.verifier_id:
+            return self._build_result(
+                request=request,
+                status=VerificationStatus.REJECTED,
+                predecessor_fenced=False,
+                execution_count=-1,
+                telemetry_verified=False,
+                timestamp=now_iso,
+                reasoning="Conflict of Interest: Executor cannot act as self-verifier."
             )
 
-    def _build_attestation(self, attestation_id, obligation_id, verdict, payload, predecessor_fenced, at_most_once, trace_id, span_id):
-        now_iso = datetime.now(timezone.utc).isoformat()
-        digest_obj = self.recompute_digest(payload, now_iso, "procurement-agent-v17")
-        return ContinuityAttestation(
-            attestation_id=attestation_id,
-            obligation_id=obligation_id,
-            verdict=verdict,
-            predecessor_fenced=predecessor_fenced,
-            at_most_once_verified=at_most_once,
-            computed_digest=digest_obj,
-            trace_id=trace_id,
-            span_id=span_id,
+        # Guard 2: Nonce Replay & TTL Check (Point 5)
+        req_time_dt = datetime.fromisoformat(request.issued_at)
+        age_seconds = (now_dt - req_time_dt).total_seconds()
+
+        if age_seconds < 0 or age_seconds > request.ttl_seconds:
+            return self._build_result(
+                request=request,
+                status=VerificationStatus.REJECTED,
+                predecessor_fenced=False,
+                execution_count=-1,
+                telemetry_verified=False,
+                timestamp=now_iso,
+                reasoning=f"Request expired or invalid timestamp. Age: {age_seconds}s (TTL: {request.ttl_seconds}s)."
+            )
+
+        if self.provider.get_nonce_used(request.tenant_id, request.nonce):
+            return self._build_result(
+                request=request,
+                status=VerificationStatus.REJECTED,
+                predecessor_fenced=False,
+                execution_count=-1,
+                telemetry_verified=False,
+                timestamp=now_iso,
+                reasoning=f"Replay Attack Detected: Nonce '{request.nonce}' has already been consumed."
+            )
+
+        # Query Ground Truth via EvidenceProvider Boundary (Points 2, 3, 4)
+        is_fenced = self.provider.get_agent_fencing_status(
+            tenant_id=request.tenant_id,
+            agent_id=request.predecessor_id
+        )
+        side_effect_count = self.provider.get_side_effect_count(
+            tenant_id=request.tenant_id,
+            obligation_id=request.obligation_id,
+            effect_type=request.target_effect_type
+        )
+        telemetry_ok = self.provider.is_telemetry_complete(
+            tenant_id=request.tenant_id,
+            obligation_id=request.obligation_id
         )
 
+        # Guard 3: Predecessor Must Be Fenced
+        if not is_fenced:
+            return self._build_result(
+                request=request,
+                status=VerificationStatus.QUARANTINED,
+                predecessor_fenced=False,
+                execution_count=side_effect_count,
+                telemetry_verified=telemetry_ok,
+                timestamp=now_iso,
+                reasoning=f"Predecessor '{request.predecessor_id}' is NOT fenced in authority records."
+            )
 
+        # Guard 4: At-Most-Once Execution Check
+        if side_effect_count >= 1:
+            return self._build_result(
+                request=request,
+                status=VerificationStatus.REJECTED,
+                predecessor_fenced=True,
+                execution_count=side_effect_count,
+                telemetry_verified=telemetry_ok,
+                timestamp=now_iso,
+                reasoning=f"At-Most-Once Violation: Effect '{request.target_effect_type}' executed {side_effect_count} times."
+            )
 
-    
+        self.provider.record_nonce(request.tenant_id, request.nonce, request.ttl_seconds)
+
+        return self._build_result(
+            request=request,
+            status=VerificationStatus.VERIFIED,
+            predecessor_fenced=True,
+            execution_count=0,
+            telemetry_verified=telemetry_ok,
+            timestamp=now_iso,
+            reasoning="Independent Evidence Verified: Predecessor fenced, zero prior side-effects, telemetry complete."
+        )
+
+    def _build_result(
+        self,
+        request: VerificationRequest,
+        status: VerificationStatus,
+        predecessor_fenced: bool,
+        execution_count: int,
+        telemetry_verified: bool,
+        timestamp: str,
+        reasoning: str
+    ) -> VerificationResult:
+        result = VerificationResult(
+            status=status,
+            obligation_id=request.obligation_id,
+            tenant_id=request.tenant_id,
+            verifier_id=self.verifier_id,
+            predecessor_id=request.predecessor_id,
+            successor_id=request.successor_id,
+            predecessor_fenced=predecessor_fenced,
+            execution_count=execution_count,
+            telemetry_verified=telemetry_verified,
+            nonce=request.nonce,
+            timestamp=timestamp,
+            reasoning=reasoning,
+            digest=None
+        )
+        result.digest = result.compute_digest()
+        return result

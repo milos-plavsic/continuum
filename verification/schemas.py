@@ -1,60 +1,70 @@
 """
-Continuum: Independent Verification & Evidence-Chain Evaluation
+Continuum: Verification Schemas & Canonicalization
 File: verification/schemas.py
-
-Pydantic v2 data models for zero-trust evidence digests, fencing records,
-and three-valued continuity attestations.
 """
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, Any, List
+import hashlib
+import json
+from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field, ConfigDict
 
 
-class VerificationVerdict(str, Enum):
-    """Explicit three-valued verification outcome enum."""
+class VerificationStatus(str, Enum):
     VERIFIED = "VERIFIED"
-    FAILED = "FAILED"
-    INCONCLUSIVE = "INCONCLUSIVE"
+    REJECTED = "REJECTED"
+    QUARANTINED = "QUARANTINED"
 
 
-class EvidenceDigest(BaseModel):
-    """Cryptographic payload digest recomputed from raw event logs."""
-    model_config = ConfigDict(extra="forbid")
-
-    digest_hash: str = Field(..., description="SHA-256 hash of canonicalized payload")
-    algorithm: str = Field("sha256", description="Hash algorithm used for verification")
-    canonical_keys: List[str] = Field(..., description="Sorted keys included in canonicalization")
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-
-class ContinuityAttestation(BaseModel):
-    """
-    Independent Evidence-Chain Attestation proving safe agent succession,
-    zero-knowledge memory quarantine, and at-most-once execution.
-    """
+class VerificationRequest(BaseModel):
+    """Execution request payload evaluated against ground-truth evidence."""
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    attestation_id: str = Field(..., description="Unique UUID4 identifier for this verification record")
-    obligation_id: str = Field(..., description="Target obligation tracking ID from the Promise Ledger")
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    verdict: VerificationVerdict = Field(..., description="VERIFIED | FAILED | INCONCLUSIVE")
+    obligation_id: str
+    tenant_id: str
+    executor_id: str
+    predecessor_id: str
+    successor_id: str
+    target_effect_type: str
+    nonce: str
+    issued_at: str
+    ttl_seconds: int = 300
 
-    predecessor_id: str = Field("procurement-agent-v17", description="ID of quarantined predecessor")
-    successor_id: str = Field("procurement-agent-v18", description="ID of clean successor agent")
-    
-    predecessor_fenced: bool = Field(..., description="True if predecessor tokens are verified REVOKED")
-    at_most_once_verified: bool = Field(..., description="True if side effect execution count == 1")
-    
-    computed_digest: EvidenceDigest = Field(..., description="Recomputed digest object")
-    
-    trace_id: str = Field(..., description="OpenTelemetry Trace ID for cross-cloud verification")
-    span_id: str = Field(..., description="OpenTelemetry Span ID recording the attestation event")
 
-    def to_firestore_dict(self) -> Dict[str, Any]:
-        """Serializes attestation for Firestore storage."""
-        data = self.model_dump(mode="json")
-        data["timestamp"] = self.timestamp.isoformat()
-        return data
-    
+class VerificationResult(BaseModel):
+    """Canonical verification output payload with immutable digest binding."""
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    status: VerificationStatus
+    obligation_id: str
+    tenant_id: str
+    verifier_id: str
+    predecessor_id: str
+    successor_id: str
+    predecessor_fenced: bool
+    execution_count: int
+    telemetry_verified: bool
+    nonce: str
+    timestamp: str
+    reasoning: str
+    digest: Optional[str] = None
+
+    def canonical_bytes(self) -> bytes:
+        """
+        Continuum Contract 1.0 Canonicalization Rule:
+        Serializes schema fields with lexicographically sorted keys and compact
+        separators (',', ':') excluding the digest field itself.
+        """
+        data = self.model_dump(exclude={"digest"}, mode="json")
+        canonical_json = json.dumps(
+            data,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False
+        )
+        return canonical_json.encode("utf-8")
+
+    def compute_digest(self) -> str:
+        """Computes SHA-256 digest over Contract 1.0 canonical bytes."""
+        return hashlib.sha256(self.canonical_bytes()).hexdigest()
