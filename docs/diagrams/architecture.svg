@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Continuum deployed Google Cloud architecture</title>
+  <desc id="desc">The canonical succession run flows through a private Cloud Run control plane, Firestore, Pub/Sub redelivery, a Google ADK successor using Gemini 3.6 Flash, an exactly-once effect, and an independent verifier. A revoked predecessor is denied and all evidence is correlated in Cloud Logging and Trace.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#0F172A" flood-opacity=".10"/></filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#64748B"/></marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#7C3AED"/></marker>
+    <style>
+      .title{font:700 34px Inter,Arial,sans-serif;fill:#0F172A}.subtitle{font:400 17px Inter,Arial,sans-serif;fill:#475569}.zone{font:700 13px Inter,Arial,sans-serif;letter-spacing:1.8px;fill:#64748B}.name{font:700 18px Inter,Arial,sans-serif;fill:#172033}.body{font:400 14px Inter,Arial,sans-serif;fill:#475569}.pill{font:600 12px Inter,Arial,sans-serif}.step{font:700 13px Inter,Arial,sans-serif;fill:#334155}.edge{fill:none;stroke:#64748B;stroke-width:2.2;marker-end:url(#arrow)}.edge2{fill:none;stroke:#7C3AED;stroke-width:2.2;marker-end:url(#arrow-purple)}.dash{fill:none;stroke:#64748B;stroke-width:2;stroke-dasharray:7 7;marker-end:url(#arrow)}
+    </style>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#F8FAFC"/>
+  <text id="continuum-architecture" x="70" y="66" class="title">Continuum · Succession Protocol</text>
+  <text x="70" y="98" class="subtitle">A deployed, evidence-first control plane that preserves one obligation across agent failure—without duplicating authority or side effects.</text>
+
+  <rect x="280" y="135" width="1570" height="865" rx="24" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+  <rect x="280" y="135" width="1570" height="52" rx="24" fill="#EEF4FF"/>
+  <path d="M280 163v24h1570v-24" fill="#EEF4FF"/>
+  <text x="315" y="168" class="zone" fill="#1D4ED8">GOOGLE CLOUD · DEPLOYED REFERENCE BINDING</text>
+
+  <text x="330" y="224" class="zone">1 · DURABLE ORCHESTRATION</text>
+  <line x1="330" y1="237" x2="1778" y2="237" stroke="#E2E8F0"/>
+  <text x="330" y="489" class="zone">2 · GOVERNED SUCCESSION AND ACTION</text>
+  <line x1="330" y1="502" x2="1778" y2="502" stroke="#E2E8F0"/>
+  <text x="330" y="757" class="zone">3 · INDEPENDENT ASSURANCE</text>
+  <line x1="330" y1="770" x2="1778" y2="770" stroke="#E2E8F0"/>
+
+  <!-- Operator -->
+  <rect x="45" y="292" width="185" height="112" rx="16" fill="#FFF7ED" stroke="#C2410C" stroke-width="2" filter="url(#shadow)"/>
+  <text x="137" y="329" text-anchor="middle" class="name" fill="#7C2D12">OPERATOR</text>
+  <text x="137" y="355" text-anchor="middle" class="body">IAM-authenticated</text>
+  <rect x="78" y="372" width="119" height="22" rx="11" fill="#FFEDD5"/><text x="137" y="388" text-anchor="middle" class="pill" fill="#9A3412">START + INSPECT</text>
+
+  <!-- Top row -->
+  <g filter="url(#shadow)"><rect x="330" y="270" width="270" height="128" rx="16" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="2"/></g>
+  <text x="465" y="307" text-anchor="middle" class="name" fill="#1E3A8A">CONTROL PLANE</text><text x="465" y="333" text-anchor="middle" class="body">ledger · policy · fencing</text><text x="465" y="357" text-anchor="middle" class="body">idempotency · reconciliation</text>
+  <rect x="386" y="371" width="158" height="22" rx="11" fill="#DBEAFE"/><text x="465" y="387" text-anchor="middle" class="pill" fill="#1D4ED8">PRIVATE CLOUD RUN</text>
+
+  <g filter="url(#shadow)"><rect x="690" y="270" width="270" height="128" rx="16" fill="#ECFDF5" stroke="#047857" stroke-width="2"/></g>
+  <text x="825" y="307" text-anchor="middle" class="name" fill="#065F46">FIRESTORE</text><text x="825" y="333" text-anchor="middle" class="body">events · projections · outbox</text><text x="825" y="357" text-anchor="middle" class="body">authority · run journal · receipt</text>
+  <rect x="747" y="371" width="156" height="22" rx="11" fill="#D1FAE5"/><text x="825" y="387" text-anchor="middle" class="pill" fill="#047857">APPEND-ONLY STATE</text>
+
+  <g filter="url(#shadow)"><rect x="1050" y="270" width="270" height="128" rx="16" fill="#ECFDF5" stroke="#047857" stroke-width="2"/></g>
+  <text x="1185" y="307" text-anchor="middle" class="name" fill="#065F46">PUB/SUB</text><text x="1185" y="333" text-anchor="middle" class="body">OIDC-authenticated push</text><text x="1185" y="357" text-anchor="middle" class="body">at-least-once delivery</text>
+  <rect x="1118" y="371" width="134" height="22" rx="11" fill="#D1FAE5"/><text x="1185" y="387" text-anchor="middle" class="pill" fill="#047857">REDELIVERY × 2</text>
+
+  <g filter="url(#shadow)"><rect x="1410" y="270" width="300" height="128" rx="16" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="2"/></g>
+  <text x="1560" y="307" text-anchor="middle" class="name" fill="#1E3A8A">CONTROL PUSH ROUTE</text><text x="1560" y="333" text-anchor="middle" class="body">same control-plane identity</text><text x="1560" y="357" text-anchor="middle" class="body">idempotent reconciliation</text>
+  <rect x="1480" y="371" width="160" height="22" rx="11" fill="#DBEAFE"/><text x="1560" y="387" text-anchor="middle" class="pill" fill="#1D4ED8">AUTHENTICATED</text>
+
+  <!-- Action row -->
+  <g filter="url(#shadow)"><rect x="330" y="535" width="270" height="145" rx="16" fill="#F5F3FF" stroke="#7C3AED" stroke-width="2"/></g>
+  <text x="465" y="573" text-anchor="middle" class="name" fill="#5B21B6">PREDECESSOR · v17</text><text x="465" y="600" text-anchor="middle" class="body">epoch 41 · revoked</text><text x="465" y="625" text-anchor="middle" class="body">post-succession action denied</text>
+  <rect x="374" y="645" width="182" height="25" rx="12" fill="#FEE2E2"/><text x="465" y="662" text-anchor="middle" class="pill" fill="#B91C1C">STALE_EPOCH · DENIED</text>
+
+  <g filter="url(#shadow)"><rect x="690" y="535" width="270" height="145" rx="16" fill="#F8FAFC" stroke="#475569" stroke-width="2"/></g>
+  <text x="825" y="573" text-anchor="middle" class="name">CLOUD LOGGING + TRACE</text><text x="825" y="600" text-anchor="middle" class="body">run ID · trace ID · revision</text><text x="825" y="625" text-anchor="middle" class="body">identity · attempt · verdict</text>
+  <rect x="747" y="645" width="156" height="25" rx="12" fill="#E2E8F0"/><text x="825" y="662" text-anchor="middle" class="pill" fill="#334155">CORRELATED PROOF</text>
+
+  <g filter="url(#shadow)"><rect x="1050" y="535" width="270" height="145" rx="16" fill="#F5F3FF" stroke="#7C3AED" stroke-width="2"/></g>
+  <text x="1185" y="573" text-anchor="middle" class="name" fill="#5B21B6">VERTEX AI</text><text x="1185" y="600" text-anchor="middle" class="body">Gemini 3.6 Flash</text><text x="1185" y="625" text-anchor="middle" class="body">typed proposal · never authority</text>
+  <rect x="1123" y="645" width="124" height="25" rx="12" fill="#EDE9FE"/><text x="1185" y="662" text-anchor="middle" class="pill" fill="#6D28D9">REAL MODEL CALL</text>
+
+  <g filter="url(#shadow)"><rect x="1410" y="535" width="300" height="145" rx="16" fill="#F5F3FF" stroke="#7C3AED" stroke-width="2"/></g>
+  <text x="1560" y="573" text-anchor="middle" class="name" fill="#5B21B6">SUCCESSOR · v18</text><text x="1560" y="600" text-anchor="middle" class="body">epoch 42 · Google ADK investigator</text><text x="1560" y="625" text-anchor="middle" class="body">scoped evidence · workload identity</text>
+  <rect x="1484" y="645" width="152" height="25" rx="12" fill="#EDE9FE"/><text x="1560" y="662" text-anchor="middle" class="pill" fill="#6D28D9">PRIVATE CLOUD RUN</text>
+
+  <!-- Assurance row -->
+  <g filter="url(#shadow)"><rect x="690" y="805" width="270" height="140" rx="16" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="2"/></g>
+  <text x="825" y="843" text-anchor="middle" class="name" fill="#1E3A8A">EFFECT GATEWAY</text><text x="825" y="870" text-anchor="middle" class="body">one sandbox external effect</text><text x="825" y="895" text-anchor="middle" class="body">despite two deliveries</text>
+  <rect x="748" y="913" width="154" height="25" rx="12" fill="#DBEAFE"/><text x="825" y="930" text-anchor="middle" class="pill" fill="#1D4ED8">IDEMPOTENT · × 1</text>
+
+  <g filter="url(#shadow)"><rect x="1050" y="805" width="270" height="140" rx="16" fill="#FDF2F8" stroke="#BE185D" stroke-width="2"/></g>
+  <text x="1185" y="843" text-anchor="middle" class="name" fill="#9D174D">INDEPENDENT VERIFIER</text><text x="1185" y="870" text-anchor="middle" class="body">read-only service identity</text><text x="1185" y="895" text-anchor="middle" class="body">no execution · no Vertex permission</text>
+  <rect x="1124" y="913" width="122" height="25" rx="12" fill="#FCE7F3"/><text x="1185" y="930" text-anchor="middle" class="pill" fill="#BE185D">VERDICT · PASS</text>
+
+  <g filter="url(#shadow)"><rect x="1410" y="805" width="300" height="140" rx="16" fill="#FDF2F8" stroke="#BE185D" stroke-width="2"/></g>
+  <text x="1560" y="843" text-anchor="middle" class="name" fill="#9D174D">CONTINUITY CONTRACT</text><text x="1560" y="870" text-anchor="middle" class="body">grant · manifest · revocation</text><text x="1560" y="895" text-anchor="middle" class="body">receipt · attestation</text>
+  <rect x="1471" y="913" width="178" height="25" rx="12" fill="#FCE7F3"/><text x="1560" y="930" text-anchor="middle" class="pill" fill="#BE185D">CONTENT-ADDRESSED</text>
+
+  <!-- Flow arrows -->
+  <path class="edge" d="M230 348 H330"/><text x="280" y="333" text-anchor="middle" class="step">1 · START</text>
+  <path class="edge" d="M600 334 H690"/><text x="645" y="319" text-anchor="middle" class="step">2 · PERSIST</text>
+  <path class="edge" d="M960 334 H1050"/><text x="1005" y="319" text-anchor="middle" class="step">3 · PUBLISH</text>
+  <path class="edge" d="M1320 334 H1410"/><text x="1365" y="312" text-anchor="middle" class="step">4 · DELIVER</text><text x="1365" y="329" text-anchor="middle" class="step">+ REDELIVER</text>
+  <path class="edge2" d="M1560 398 V535"/><text x="1580" y="470" class="step">5 · SCOPED EVIDENCE</text>
+  <path class="edge2" d="M1410 600 H1320"/><path class="edge2" d="M1320 620 H1410"/><text x="1365" y="582" text-anchor="middle" class="step">ADK + GEMINI</text>
+  <path class="edge" d="M465 398 V535"/><text x="485" y="470" class="step">STALE ACTION</text>
+  <path class="edge" d="M1518 680 V730 H825 V805"/><text x="1165" y="720" text-anchor="middle" class="step">6 · IDEMPOTENCY KEY → ONE EFFECT</text>
+  <path class="edge" d="M960 875 H1050"/><text x="1005" y="850" text-anchor="middle" class="step">7 · SIX-ARTIFACT</text><text x="1005" y="868" text-anchor="middle" class="step">VERIFY</text>
+  <path class="edge" d="M1320 875 H1410"/><text x="1365" y="859" text-anchor="middle" class="step">8 · ATTEST</text>
+  <path class="dash" d="M1410 370 H1360 V460 H825 V535"/><text x="1115" y="449" text-anchor="middle" class="step">ALL COMPONENTS EMIT CORRELATED EVIDENCE</text>
+
+  <text x="70" y="1040" class="subtitle">Canonical invariant: after succession, only epoch 42 may act; redelivery cannot duplicate the effect; verification is performed by a separately permissioned service.</text>
+</svg>

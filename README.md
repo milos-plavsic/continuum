@@ -93,8 +93,10 @@ remain IAM-authenticated and use a separate operator boundary.
 - [Agent Registry](docs/AGENT_REGISTRY.md)
 - [Deterministic evaluation](docs/EVALUATION.md)
 - [Four-minute demo](docs/DEMO_SCRIPT.md)
-- [Google Cloud proof plan](docs/CLOUD_PROOF.md)
-- [Architecture diagram source](docs/diagrams/architecture.mmd)
+- [Verified Google Cloud proof](docs/CLOUD_PROOF.md)
+- [Architecture diagram](docs/diagrams/architecture.svg) ·
+  [editable Mermaid source](docs/diagrams/architecture.mmd) ·
+  [demo-ready PNG](docs/diagrams/architecture.png)
 - [Continuity Contract](docs/CONTINUITY_CONTRACT.md)
 - [Conformance levels](docs/CONFORMANCE.md)
 - [Golden contract vector](examples/continuity-contract/golden-obligation.json)
