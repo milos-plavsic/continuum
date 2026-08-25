@@ -45,6 +45,13 @@ gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
 # dedicated push identity. Do not grant this to the runtime identities.
 project_number="$(gcloud projects describe "$CONTINUUM_PROJECT_ID" --format='value(projectNumber)')"
 [[ "$project_number" =~ ^[0-9]+$ ]] || { echo "Could not resolve project number" >&2; exit 2; }
+# New projects can execute Cloud Build as the default Compute service account
+# while the legacy Cloud Build account retains the builder role. Grant only the
+# purpose-built builder role to the principal that actually executes the build.
+build_identity="$project_number-compute@developer.gserviceaccount.com"
+gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
+  --member "serviceAccount:$build_identity" \
+  --role roles/cloudbuild.builds.builder --condition=None >/dev/null
 pubsub_service_agent="service-$project_number@gcp-sa-pubsub.iam.gserviceaccount.com"
 gcloud iam service-accounts add-iam-policy-binding "$push_identity" \
   --project "$CONTINUUM_PROJECT_ID" \

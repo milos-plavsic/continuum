@@ -34,6 +34,7 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
     def test_runtime_iam_separates_control_agents_and_verifier(self):
         self.assertIn('roles/datastore.viewer', self.bootstrap)
         self.assertIn('roles/iam.serviceAccountTokenCreator', self.bootstrap)
+        self.assertIn('roles/cloudbuild.builds.builder', self.bootstrap)
         self.assertNotIn('serviceAccount:$verifier" --role roles/datastore.user', self.bootstrap)
         self.assertNotIn('serviceAccount:$verifier" --role roles/pubsub.publisher', self.bootstrap)
         self.assertNotIn('serviceAccount:$verifier" --role roles/aiplatform.user', self.bootstrap)
