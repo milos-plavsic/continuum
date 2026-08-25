@@ -48,7 +48,7 @@ class FakeRunner:
                     "status": {"latestReadyRevisionName": f"{service}-00001",
                                "conditions": [{"type": "Ready", "status": "True"}]}}
         if argv[1:4] == ["run", "revisions", "describe"]:
-            return {"status": {"imageDigest": "sha256:" + "2" * 64}}
+            return {"status": {"imageDigest": "registry.example/image@sha256:" + "2" * 64}}
         if argv[1:3] == ["logging", "read"]:
             object_id = next(value for value in collector.RUN_OBJECTS
                              if f'object_id="{value}"' in argv[3])

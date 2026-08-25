@@ -77,6 +77,16 @@ class CloudAppTests(unittest.TestCase):
         self.assertEqual(self.client.post("/pubsub/push", json=_payload(event), headers=headers).status_code, 204)
         self.assertEqual(len(self.store.messages), 1)
 
+    def test_real_google_push_aliases_are_accepted_but_must_match(self):
+        event = {"event_id": "e-alias", "event_type": "identity.fenced", "correlation_id": "r1"}
+        payload = _payload(event)
+        payload["message"]["message_id"] = payload["message"]["messageId"]
+        payload["message"]["publish_time"] = payload["message"]["publishTime"]
+        headers = {"Authorization": "Bearer signed-token"}
+        self.assertEqual(self.client.post("/pubsub/push", json=payload, headers=headers).status_code, 204)
+        payload["message"]["message_id"] = "substituted"
+        self.assertEqual(self.client.post("/pubsub/push", json=payload, headers=headers).status_code, 400)
+
     def test_marked_event_forces_one_real_pubsub_redelivery(self):
         event = {"event_id": "e-redelivery", "event_type": "expectation.missed",
                  "correlation_id": "trace", "run_id": "run-redelivery",

@@ -63,6 +63,8 @@ def _run_object(scope: CaptureScope, role: str, service: dict[str, Any],
     container = containers[0] if isinstance(containers, list) and containers else {}
     env = _env(container if isinstance(container, dict) else {})
     digest = revision.get("status", {}).get("imageDigest")
+    if isinstance(digest, str) and "@sha256:" in digest:
+        digest = digest.rsplit("@", 1)[1]
     if not isinstance(digest, str) or not digest.startswith("sha256:"):
         raise ValueError("ready revision did not expose an immutable image digest")
     identity = template.get("serviceAccountName")

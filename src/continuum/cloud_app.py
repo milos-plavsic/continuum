@@ -37,7 +37,12 @@ def decode_pubsub_push(payload: dict[str, Any], *, expected_subscription: str) -
             raise ValueError("PUBSUB_SUBSCRIPTION_DENIED")
         message = payload["message"]
         if not isinstance(message, dict) or set(message) - {
-                "data", "messageId", "publishTime", "attributes", "orderingKey"}:
+                "data", "messageId", "message_id", "publishTime", "publish_time",
+                "attributes", "orderingKey", "ordering_key"}:
+            raise ValueError("INVALID_PUBSUB_ENVELOPE")
+        if message.get("message_id", message["messageId"]) != message["messageId"]:
+            raise ValueError("INVALID_PUBSUB_ENVELOPE")
+        if message.get("publish_time", message["publishTime"]) != message["publishTime"]:
             raise ValueError("INVALID_PUBSUB_ENVELOPE")
         message_id = str(message["messageId"])
         if not message_id or not str(message["publishTime"]).endswith("Z"):
