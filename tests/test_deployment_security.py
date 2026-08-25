@@ -43,6 +43,7 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
     def test_deployment_carries_immutable_and_observability_metadata(self):
         for name in ("GIT_SHA", "CONTINUUM_IMAGE_DIGEST", "CONTINUUM_DEPLOYMENT_ID",
                      "CONTINUUM_PROTOCOL", "OTEL_SERVICE_NAME", "CONTINUUM_OBSERVABILITY_ENABLED",
+                     "GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_LOCATION", "GOOGLE_GENAI_USE_VERTEXAI",
                      "CONTINUUM_V17_URL", "CONTINUUM_V18_URL", "CONTINUUM_VERIFIER_URL", "CONTINUUM_CONTROL_IDENTITY",
                      "CONTINUUM_V17_IDENTITY",
                      "CONTINUUM_V18_IDENTITY",

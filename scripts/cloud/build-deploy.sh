@@ -36,7 +36,7 @@ deploy_role() {
     --image "$image_ref" --service-account "$account@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" \
     --no-allow-unauthenticated \
     --min-instances 0 --max-instances 3 --concurrency 20 \
-    --set-env-vars "CONTINUUM_ROLE=$role,GIT_SHA=$CONTINUUM_GIT_SHA,CONTINUUM_IMAGE_DIGEST=$digest,CONTINUUM_DEPLOYMENT_ID=$deployment_id,CONTINUUM_PROTOCOL=continuum/0.1-draft,CONTINUUM_LIFECYCLE_TOPIC=$topic,OTEL_SERVICE_NAME=$service,CONTINUUM_OBSERVABILITY_ENABLED=true"
+    --set-env-vars "CONTINUUM_ROLE=$role,GIT_SHA=$CONTINUUM_GIT_SHA,CONTINUUM_IMAGE_DIGEST=$digest,CONTINUUM_DEPLOYMENT_ID=$deployment_id,CONTINUUM_PROTOCOL=continuum/0.1-draft,CONTINUUM_LIFECYCLE_TOPIC=$topic,OTEL_SERVICE_NAME=$service,CONTINUUM_OBSERVABILITY_ENABLED=true,GOOGLE_CLOUD_PROJECT=$CONTINUUM_PROJECT_ID,GOOGLE_CLOUD_LOCATION=global,GOOGLE_GENAI_USE_VERTEXAI=true"
 }
 
 deploy_role "$control_service" continuum-control control
