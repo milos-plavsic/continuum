@@ -237,7 +237,8 @@ class DurableCloudScenarioService:
 
     def _authority_request(self, current: dict[str, Any], operation: str) -> dict[str, Any]:
         return {
-            "run_id": current["run_id"], "tenant_id": current["tenant_id"],
+            "run_id": current["run_id"], "correlation_id": current["correlation_id"],
+            "tenant_id": current["tenant_id"],
             "principal": current["predecessor"] if operation != "activate" else current["successor"],
             "epoch": current["predecessor_epoch"] if operation != "activate" else current["successor_epoch"],
             "decision_id": current["decision"]["decision_id"], "operation": operation,
@@ -245,7 +246,8 @@ class DurableCloudScenarioService:
 
     def _effect_request(self, current: dict[str, Any]) -> dict[str, Any]:
         request = {
-            "run_id": current["run_id"], "tenant_id": current["tenant_id"],
+            "run_id": current["run_id"], "correlation_id": current["correlation_id"],
+            "tenant_id": current["tenant_id"],
             "principal": current["successor"], "epoch": current["successor_epoch"],
             "obligation_id": current["obligation_id"],
             "decision_id": current["decision"]["decision_id"],

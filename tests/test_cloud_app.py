@@ -8,6 +8,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from continuum.cloud_app import create_cloud_app, decode_pubsub_push
+from continuum.cloud_orchestration import workload_service_account
 
 
 class _Store:
@@ -57,6 +58,17 @@ class CloudAppTests(unittest.TestCase):
 
     def tearDown(self):
         self.environment.stop()
+
+    def test_workload_identity_refreshes_adc_before_reading_email(self):
+        class Credentials:
+            service_account_email = "default"
+            signer_email = None
+            def refresh(self, _request):
+                self.service_account_email = "continuum-v18@example.iam.gserviceaccount.com"
+        credentials = Credentials()
+        self.assertEqual(workload_service_account(
+            credentials_provider=lambda: (credentials, "project"), request_factory=object),
+            "continuum-v18@example.iam.gserviceaccount.com")
 
     def test_authenticated_push_is_deduplicated_by_message_id(self):
         event = {"event_id": "e1", "event_type": "identity.fenced", "correlation_id": "r1"}

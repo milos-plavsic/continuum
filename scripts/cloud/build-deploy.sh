@@ -78,7 +78,7 @@ for binding in \
   service="${binding%%:*}"
   policy="${binding#*:}"
   gcloud run services set-iam-policy "$service" "$policy" \
-    --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" >/dev/null
+    --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" --quiet >/dev/null
 done
 
 full_subscription="projects/$CONTINUUM_PROJECT_ID/subscriptions/$subscription"

@@ -26,7 +26,11 @@ command = {"run_id": sys.argv[1], "tenant_id": "acme",
 print(sha256(canonical_bytes(command)).hexdigest()[:32])
 PY
 )"
-token="$(gcloud auth print-identity-token --audiences="$control_url")"
+if [[ "${CONTINUUM_OPERATOR_MEMBER:-}" == serviceAccount:* ]]; then
+  token="$(gcloud auth print-identity-token --audiences="$control_url")"
+else
+  token="$(gcloud auth print-identity-token)"
+fi
 response_file="$(mktemp)"
 trap 'rm -f -- "$response_file"' EXIT
 

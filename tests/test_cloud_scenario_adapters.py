@@ -23,12 +23,14 @@ class CloudScenarioAdapterTests(unittest.TestCase):
             observed.update(request=request, timeout=timeout)
             return Response()
         client = AuthenticatedJsonClient(lambda audience: f"token-for:{audience}", open_request)
-        result = client.post("https://v18.run.app/internal/investigate", {"event_id": "e1"},
+        result = client.post("https://v18.run.app/internal/investigate", {"event_id": "e1", "correlation_id": "a" * 32},
                              run_id="run-1")
         self.assertIn("proposal", result)
         self.assertEqual(observed["request"].get_header("Authorization"),
                          "Bearer token-for:https://v18.run.app")
         self.assertEqual(observed["request"].get_header("X-continuum-run-id"), "run-1")
+        self.assertEqual(observed["request"].get_header("Traceparent"),
+                         f"00-{'a' * 32}-0000000000000001-01")
 
     def test_production_factory_fails_closed_when_invocation_graph_is_incomplete(self):
         with patch.dict(os.environ, {}, clear=True):

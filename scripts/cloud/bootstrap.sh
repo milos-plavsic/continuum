@@ -31,9 +31,12 @@ done
 control="continuum-control@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
 verifier="continuum-verifier@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
 push_identity="continuum-pubsub-push@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
-for role in roles/datastore.user roles/pubsub.publisher roles/aiplatform.user; do
+for role in roles/datastore.user roles/pubsub.publisher; do
   gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" --member "serviceAccount:$control" --role "$role" --condition=None >/dev/null
 done
+gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
+  --member "serviceAccount:continuum-v18@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" \
+  --role roles/aiplatform.user --condition=None >/dev/null
 
 # The independent verifier can resolve persisted evidence, but cannot publish,
 # execute, or call Vertex. Its application role is additionally enforced by the

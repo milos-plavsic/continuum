@@ -14,17 +14,23 @@ Investigator = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[s
 Verifier = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[str, Any]]]
 
 
-def workload_service_account() -> str:
+def workload_service_account(*, credentials_provider: Callable[[], tuple[Any, Any]] | None = None,
+                             request_factory: Callable[[], Any] | None = None) -> str:
     """Return the service identity attached to this workload via ADC.
 
     No request field or long-lived key participates in the authority decision.
     """
-    import google.auth
+    if credentials_provider is None or request_factory is None:
+        import google.auth
+        from google.auth.transport.requests import Request
+        credentials_provider = google.auth.default
+        request_factory = Request
 
-    credentials, _ = google.auth.default()
+    credentials, _ = credentials_provider()
+    credentials.refresh(request_factory())
     identity = (getattr(credentials, "service_account_email", None)
                 or getattr(credentials, "signer_email", None))
-    if not identity:
+    if not identity or identity == "default":
         raise RuntimeError("WORKLOAD_IDENTITY_UNAVAILABLE")
     return str(identity)
 

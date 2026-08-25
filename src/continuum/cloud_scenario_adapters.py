@@ -33,10 +33,14 @@ class AuthenticatedJsonClient:
     def post(self, url: str, payload: dict[str, Any], *, run_id: str) -> dict[str, Any]:
         parsed = urlsplit(url)
         audience = f"{parsed.scheme}://{parsed.netloc}"
-        request = Request(url, data=canonical_bytes(payload), method="POST", headers={
+        headers = {
             "Authorization": f"Bearer {self.token(audience)}", "Content-Type": "application/json",
             "X-Continuum-Run-ID": run_id,
-        })
+        }
+        trace_id = payload.get("correlation_id")
+        if isinstance(trace_id, str) and len(trace_id) == 32 and all(c in "0123456789abcdef" for c in trace_id):
+            headers["traceparent"] = f"00-{trace_id}-0000000000000001-01"
+        request = Request(url, data=canonical_bytes(payload), method="POST", headers=headers)
         with self.opener(request, timeout=60) as response:
             result = json.loads(response.read())
         if not isinstance(result, dict):

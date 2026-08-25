@@ -39,7 +39,7 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertNotIn('serviceAccount:$verifier" --role roles/pubsub.publisher', self.bootstrap)
         self.assertNotIn('serviceAccount:$verifier" --role roles/aiplatform.user', self.bootstrap)
         self.assertNotIn('continuum-v17@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" --role', self.bootstrap)
-        self.assertNotIn('continuum-v18@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" --role', self.bootstrap)
+        self.assertIn('continuum-v18@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com', self.bootstrap)
 
     def test_deployment_carries_immutable_and_observability_metadata(self):
         for name in ("GIT_SHA", "CONTINUUM_IMAGE_DIGEST", "CONTINUUM_DEPLOYMENT_ID",
