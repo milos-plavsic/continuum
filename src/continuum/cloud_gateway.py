@@ -20,7 +20,8 @@ class FirestoreActionGateway:
         required = {
             "run_id", "tenant_id", "principal", "epoch", "obligation_id",
             "decision_id", "idempotency_key", "operation", "vendor_id",
-            "compliance_evidence_id", "compliance_document_hash", "request_digest",
+            "compliance_evidence_id", "compliance_document_hash",
+            "context_receipt_digest", "request_digest",
         }
         if set(request) - {"correlation_id"} != required or request["operation"] != "vendor.create":
             raise ValueError("ACTION_REQUEST_INVALID")
@@ -66,6 +67,7 @@ class FirestoreActionGateway:
                 "epoch": request["epoch"],
                 "decision_id": request["decision_id"],
                 "compliance_evidence_id": request["compliance_evidence_id"],
+                "context_receipt_digest": request["context_receipt_digest"],
                 "actor": actor,
             }
             if provider_snapshot.exists:
