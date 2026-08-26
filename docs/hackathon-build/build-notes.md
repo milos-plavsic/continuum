@@ -1,5 +1,20 @@
 # Build notes
 
+## August 26 winner-hardening release proof
+
+- GitHub Actions passed the genuine 100.0% statement/branch gate, all 124 tests,
+  C0–C6 conformance, release checks, clean-tree/credential audit, and locked
+  non-root container build.
+- Deployed source `501a80ce50496a39cc822a69fc73ec7d44267dbd` as four private,
+  identity-separated Cloud Run services on image digest
+  `sha256:4c538b4cd6e9f86323913f017bdf21fc5a80c07968104c798b9b67ce662706e7`.
+- Fresh run `run-20260826T021240Z` was driven by Cloud Tasks and real Pub/Sub
+  redelivery, invoked ADK + `gemini-3.6-flash`, denied v17, executed one v18
+  effect, and received the verifier-only sixth artifact.
+- Read-only collection captured all 12 mandatory objects and 63 Cloud Trace API
+  spans. Offline verification returned PASS for bundle
+  `urn:uuid:5ac2c145-e8b1-4e19-a468-6d71f3c27430`.
+
 ## 2026-08-17
 
 - Participant authorized all seven priority outcomes and autonomous execution.

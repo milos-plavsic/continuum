@@ -114,7 +114,7 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   What to build: Make fresh compliance acquisition and validation a prerequisite to vendor creation and attestation.
   Acceptance: Missing or invalid compliance evidence cannot discharge onboarding; escalation remains safe.
   Verify: canonical, missing, invalid, and stale compliance tests.
-- [ ] **22. Implement a real temporal Negative Space Sentinel**
+- [x] **22. Implement a real temporal Negative Space Sentinel**
   Spec ref: `spec.md > Winner-hardening release`
   What to build: Persist deadlines and expected evidence; add an idempotent scheduler tick that observes absence after real time.
   Acceptance: scenario start cannot author `expectation.missed`; early and duplicate ticks are harmless.
@@ -139,7 +139,7 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   What to build: Bounded remediation-plan schema, citation validation, deterministic admission, and explicit HOLD paths.
   Acceptance: selected plan changes the permitted next transition; fabricated citations and unsupported plans cannot mutate state.
   Verify: model-output ablation and policy tests.
-- [ ] **27. Replace synthetic observability with owned evidence**
+- [x] **27. Replace synthetic observability with owned evidence**
   Spec ref: `spec.md > Winner-hardening release`
   What to build: Real OpenTelemetry spans and direct Firestore/Trace collection with precise source-authority labels.
   Acceptance: trace and state are retrieved from owning Google APIs for the exact run and revision.
@@ -154,7 +154,7 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   What to build: Distinct runnable cases for silence, bad citations, competing successors, provider ambiguity, expiry, races, duplicates, and verifier disagreement.
   Acceptance: report contains actual per-case inputs/outcomes and no duplicated fixture labels.
   Verify: regenerate report and independently compare case digests.
-- [ ] **30. Enforce continuous verification in GitHub Actions**
+- [x] **30. Enforce continuous verification in GitHub Actions**
   Spec ref: `spec.md > Winner-hardening release`
   What to build: Least-privilege pinned workflow for locked quality, conformance, release, syntax, secret, and container gates with concurrency cancellation.
   Acceptance: every PR and main push runs; workflow has read-only default permissions and no cloud credentials.
@@ -164,7 +164,7 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   What to build: Succession-first README, rubric map, explicit limitations, current diagram, executable demo story, and sanitized evidence publication plan.
   Acceptance: no stale run, unsupported Foundry headline, or inaccessible proof is presented as current.
   Verify: claims-to-evidence audit against exact release metadata.
-- [ ] **32. Deploy, recapture, and prepare the Devpost handoff**
+- [x] **32. Deploy, recapture, and prepare the Devpost handoff**
   Spec ref: `prd.md > Acceptance outcomes`
   What to build: Deploy exact final commit, run the one-touch scenario, capture owned evidence, publish a sanitized bundle, and freeze the four-minute narrative.
   Acceptance: source, image, services, run, bundle, CI and judge links all agree and independently verify.

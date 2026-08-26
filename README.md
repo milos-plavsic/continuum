@@ -29,9 +29,11 @@ standard and not yet a third-party interoperability claim.
 The repository contains a deterministic reference and a production-composed
 Google Cloud slice using private Cloud Run identities, Firestore transactions,
 Cloud Tasks, Pub/Sub redelivery, Google ADK with Gemini 3.6 Flash, and a
-read-only verifier. Cloud Trace is populated by real OpenTelemetry spans and
-collected through the owning Trace API. Cloud claims remain deployment-gated;
-local success is never relabelled as cloud proof.
+read-only verifier. The current release has a fresh 12-object Google Cloud
+evidence bundle with an offline semantic `PASS`; Cloud Trace contains 63 real
+OpenTelemetry spans read through the owning API. Exact release identifiers and
+the validity boundary are recorded in [the cloud proof](docs/CLOUD_PROOF.md).
+Local success is never relabelled as cloud proof.
 
 ## Run the reference scenario
 

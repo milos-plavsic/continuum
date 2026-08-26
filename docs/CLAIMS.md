@@ -7,11 +7,11 @@
 | Revoked memory is filtered before retrieval | `reference-local` | denial with zero candidates examined | Verified by tests |
 | One externally observed sandbox effect | `reference-local` | persistent provider reconciliation and redelivery | Verified by tests |
 | C0–C6 contract chain | `reference-local` | six artifacts and independent verifier principal | Verified by conformance suite |
-| Distinct deployed workload identities | `reference-google-cloud` | Cloud Run API plus workload-derived actors | Previous run superseded; final-commit recapture required |
-| Live Gemini 3.5+ through Google ADK | `reference-google-cloud` | correlated Vertex call and admitted cited plan | Previous run superseded; final-commit recapture required |
-| Pub/Sub redelivery causes one provider effect | `reference-google-cloud` | inbox delivery count, lifecycle transition and direct provider read | Fresh final-commit capture required |
-| Verifier alone issues artifact six | `reference-google-cloud` | five claims plus read-only authority/compliance/provider reads | Fresh final-commit capture required |
-| End-to-end Cloud Trace | `reference-google-cloud` | real OTel spans fetched from the Cloud Trace API | Fresh final-commit capture required |
+| Distinct deployed workload identities | `reference-google-cloud` | Cloud Run API plus workload-derived actors | Verified for release `501a80c` |
+| Live Gemini 3.5+ through Google ADK | `reference-google-cloud` | correlated Vertex call and admitted cited plan | Verified: `gemini-3.6-flash`, three citations, one admitted plan |
+| Pub/Sub redelivery causes one provider effect | `reference-google-cloud` | inbox delivery count, lifecycle transition and direct provider read | Verified: one message, two deliveries, one effect |
+| Verifier alone issues artifact six | `reference-google-cloud` | five claims plus read-only authority/compliance/provider reads | Verified by separate verifier identity and final bundle |
+| End-to-end Cloud Trace | `reference-google-cloud` | real OTel spans fetched from the Cloud Trace API | Verified: 63 spans under trace `41d27518…` |
 
 The offline verifier may issue `PASS` only when every mandatory cloud object is
 present, content-addressed, and semantically consistent. Missing evidence is
