@@ -61,6 +61,45 @@ Architecture diagram: `docs/diagrams/architecture.png` (source: `docs/diagrams/a
 
 Reference stack: Google ADK, Gemini 3.6 Flash on Vertex AI, Cloud Run, Firestore, Pub/Sub, Cloud Tasks, Cloud Trace/OpenTelemetry, Python/FastAPI, Pydantic, and Ed25519 contract support.
 
+## Data Sources
+
+- The successor registry's immutable deployment records: service endpoint,
+  workload identity, image digest, health, capabilities, jurisdiction, contract
+  profile, authorized scope, and trust score.
+- Firestore append-only lifecycle events, projections, authority epochs,
+  compliance evidence, context receipts, outbox/inbox delivery records, and the
+  sandbox provider observation.
+- Cloud Tasks deadline metadata and Pub/Sub message/delivery identity.
+- Google ADK/Gemini request and typed response metadata from Vertex AI.
+- Cloud Run service/revision identities and correlated OpenTelemetry spans read
+  from the owning Google Cloud APIs.
+
+The canonical demonstration uses synthetic procurement and compliance records;
+it does not ingest personal data, confidential enterprise records, or a
+third-party procurement system.
+
+## Findings and Learnings
+
+Persistence is not continuity: durable state can still preserve stale
+authority, poisoned context, or a duplicated effect. The useful boundary is an
+explicit contract that separates an obligation, model recommendation,
+deterministic authority decision, execution receipt, and independent verdict.
+
+We also learned that an LLM becomes more operationally credible when its choice
+is causal but bounded. Gemini changes which eligible workload is activated, yet
+cannot admit an ineligible candidate, grant itself authority, execute the
+effect, or attest success. Finally, real cloud proof exposed integration defects
+that deterministic local tests did not: wire canonicalization, a missing
+context-receipt field, and duplicated trace-ID logic. Each failed closed and was
+converted into a regression test before the accepted run.
+
+## Why I Built It
+
+I built Continuum because useful agents need more than intelligence;
+institutions need continuity. I hope the Continuity Contract can become a
+standard—and that it will yield when a demonstrably stronger standard earns the
+right to succeed it. Even standards should have succession plans.
+
 ## Testing Instructions
 
 Local deterministic proof requires Python 3.11+ and `uv`:
@@ -73,7 +112,7 @@ PYTHONPATH=src python3 -m continuum --output artifacts/latest
 python3 examples/local_sdk_consumer.py
 ```
 
-The quality gate installs locked dependencies, executes 138 tests, enforces genuine 100.0% statement and branch coverage, runs C0–C6 conformance, and runs the release gate. The repository's GitHub Actions also builds and imports the locked non-root runtime image.
+The quality gate installs locked dependencies, executes 140 tests, enforces genuine 100.0% statement and branch coverage, runs C0–C6 conformance, and runs the release gate. The repository's GitHub Actions also builds and imports the locked non-root runtime image.
 
 For an authorized Google Cloud project, copy `deploy/cloud.env.example`, then run:
 
@@ -90,9 +129,14 @@ bash scripts/cloud/run-cloud-proof.sh
 
 The accepted exact-source proof is documented in `docs/CLOUD_PROOF.md`: 13/13 read-only objects, 104 correlated spans, and a network-free/credential-free offline semantic PASS. The complete security-audited packet is publicly downloadable from the checksum-pinned `cloud-proof-0ceda49` GitHub Release.
 
-## Public Demo Link
+## Hosted Project
 
-No unauthenticated production endpoint. The private IAM-authenticated Cloud Run cockpit is shown live in the demo video; this is an intentional least-privilege boundary, not a missing deployment.
+A public, presentation-only Cloud Run showcase is deployed with a dedicated
+no-role identity and no mutation surface. It links to the checksum-pinned proof
+packet; the IAM-authenticated control plane and effect-bearing agents remain
+private by design.
+
+Hosted URL: TODO — insert the URL printed by `scripts/cloud/deploy-showcase.sh`
 
 Judge-facing Devpost project page: https://devpost.com/software/continuum-lq35x2
 
@@ -140,10 +184,10 @@ Demo outline: `docs/DEMO_SCRIPT.md`.
 - **Project start date (28087):** 08-17-26
 - **Repository (28141):** https://github.com/milos-plavsic/continuum
 - **Reproducible README (28089):** Yes
-- **Hosted project (28088, optional):** leave blank; private IAM cockpit is demonstrated in video
+- **Hosted project (28088, optional):** TODO — public read-only Cloud Run showcase URL
 - **Private testing instructions (28090):** Use `./scripts/quality-gate.sh`; exact cloud proof, immutable identifiers, public packet URL, archive checksum, and credential-free verification command are in `docs/CLOUD_PROOF.md`. Contact the submitter if temporary IAM cockpit access is required.
 - **Google SDK (28091):** Agent Development Kit (ADK)
-- **Google Cloud services (28142):** Cloud Run, Firestore, Pub/Sub
+- **Google Cloud service (28142):** Cloud Run (primary selection if the live field permits only one; the project also uses Firestore and Pub/Sub)
 - **Architecture upload (28092):** `docs/diagrams/architecture.png`
 - **Google AI models (28143):** Gemini 3.6 Flash via Vertex AI
 - **Demo video:** TODO URL

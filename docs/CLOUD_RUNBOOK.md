@@ -36,6 +36,25 @@ commit, digest, deployment ID, protocol version, Cloud Run revision, and service
 name through `/build-info`. `/ready` fails closed when immutable metadata or a
 role-specific configuration value is absent.
 
+## Public judge showcase
+
+The effect-bearing services stay private. A sixth, independently deployed Cloud
+Run service may expose the static read-only judge page without changing the
+validated five-service runtime:
+
+```bash
+export CONTINUUM_GIT_SHA="$(git rev-parse HEAD)"
+bash scripts/cloud/deploy-showcase.sh
+```
+
+`deploy-showcase.sh` builds and resolves an immutable image, assigns a dedicated
+`continuum-showcase` service account with no project role, deploys it privately,
+and then replaces only that service's invoker policy with `allUsers`. The
+showcase has no Firestore, Pub/Sub, Vertex AI, worker, verifier, or control-plane
+configuration. All state-changing and internal endpoints therefore fail closed
+with `404`; the page links to the separately released credential-free evidence
+packet instead of claiming to execute the historical run.
+
 ## Evidence interpretation
 
 The initial smoke captures infrastructure objects only, so the verifier should
@@ -48,6 +67,9 @@ contradiction returns `FAIL`; absence never becomes a false pass.
 
 - Never set `GOOGLE_APPLICATION_CREDENTIALS` on Cloud Run.
 - Services remain private; grant `roles/run.invoker` narrowly.
+- The presentation-only showcase is the sole intentional public exception. Its
+  no-role identity and absent mutation surface are enforced in tests and in its
+  full replacement IAM policy.
 - Authenticated service URLs retain default ingress so control-to-worker calls
   work without pretending a VPC path exists; IAM, not network reachability, is
   the demonstrated access boundary.

@@ -10,8 +10,7 @@ import re
 from typing import Any, Callable
 
 from fastapi import FastAPI, Header, HTTPException, Request, Response
-from fastapi.responses import JSONResponse
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pathlib import Path
 
 from .contract import canonical_bytes
@@ -94,10 +93,18 @@ def create_cloud_app(*, store: Any | None = None,
             store = FirestoreContinuityStore(GoogleBindingConfig(project, topic))
         return store
 
-    app = FastAPI(title=f"Continuum Cloud Role: {active_role}", version="0.1.0")
+    is_showcase = active_role == "showcase"
+    app = FastAPI(
+        title=f"Continuum Cloud Role: {active_role}", version="0.1.0",
+        docs_url=None if is_showcase else "/docs",
+        redoc_url=None if is_showcase else "/redoc",
+        openapi_url=None if is_showcase else "/openapi.json",
+    )
 
     @app.get("/", include_in_schema=False)
     def cloud_cockpit() -> Any:
+        if is_showcase:
+            return FileResponse(Path(__file__).parent / "static" / "public_showcase.html")
         if active_role != "control":
             raise HTTPException(status_code=404, detail={"code": "NOT_FOUND"})
         return FileResponse(Path(__file__).parent / "static" / "cloud_cockpit.html")
@@ -113,6 +120,13 @@ def create_cloud_app(*, store: Any | None = None,
             return JSONResponse(status_code=400, content={"detail": {"code": "INVALID_TRACEPARENT"}})
         trace_id = match.group(1) if match else ""
         response = await call_next(request)
+        if is_showcase:
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'none'; style-src 'unsafe-inline'; "
+                "img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+            )
+            response.headers["Referrer-Policy"] = "no-referrer"
+            response.headers["X-Content-Type-Options"] = "nosniff"
         if run_id:
             response.headers["X-Continuum-Run-ID"] = run_id
         if trace_id:
@@ -165,6 +179,12 @@ def create_cloud_app(*, store: Any | None = None,
                 "image_digest": os.getenv("CONTINUUM_IMAGE_DIGEST", "unknown"),
                 "deployment_id": os.getenv("CONTINUUM_DEPLOYMENT_ID", "unknown"),
                 "protocol": os.getenv("CONTINUUM_PROTOCOL", "unknown")}
+
+    # The public service is a deliberately smaller application, not the private
+    # application with authorization checks bolted on. No mutation or internal
+    # route is registered in this role.
+    if is_showcase:
+        return app
 
     @app.post("/cloud-smoke/start")
     async def start_cloud_scenario(request: Request) -> dict[str, Any]:
