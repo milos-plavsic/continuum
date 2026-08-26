@@ -70,7 +70,14 @@ class AssessmentReceipt:
         return {
             "requirements_digest": self.requirements_digest,
             "candidates_digest": self.candidates_digest,
-            "assessments": [asdict(item) for item in self.assessments],
+            "assessments": [{
+                "candidate_id": item.candidate_id,
+                "version": item.version,
+                "eligible": item.eligible,
+                "reason_codes": list(item.reason_codes),
+                "evidence_refs": list(item.evidence_refs),
+                "trust_score": item.trust_score,
+            } for item in self.assessments],
             "eligible_ids": list(self.eligible_ids),
             "receipt_digest": self.receipt_digest,
         }
