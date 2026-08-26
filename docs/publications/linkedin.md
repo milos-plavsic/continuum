@@ -1,4 +1,6 @@
-# LinkedIn post draft
+# LinkedIn post
+
+Published at: https://www.linkedin.com/feed/update/urn:li:share:7498513309642616832/
 
 What happens when an autonomous agent fails halfway through an obligation that
 the organization still has to keep?
