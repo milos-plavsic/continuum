@@ -1,5 +1,9 @@
 # Four-minute live, unedited demo
 
+The creative intent, audience, tone, and signature moments are defined in
+[`video/01_CREATIVE_BRIEF.md`](video/01_CREATIVE_BRIEF.md). This file remains the
+operational outline until the timed narration and shot list replace it.
+
 Target the normal run at 3:45 to retain latency margin.
 
 | Time | Live proof |

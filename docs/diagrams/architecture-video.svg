@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+  <title id="title">Continuum Google Cloud reference architecture</title>
+  <desc id="desc">A three-stage architecture that observes a missing event, governs agent succession, and independently proves the outcome.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12354a"/><stop offset="0.42" stop-color="#071018"/><stop offset="1" stop-color="#050b11"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity=".28"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5 0 10z" fill="#6f8999"/>
+    </marker>
+    <style>
+      .title{font:800 48px Inter,Arial,sans-serif;fill:#f1f8f8;letter-spacing:-1px}.sub{font:500 20px Inter,Arial,sans-serif;fill:#9fb4ba}.step{font:800 17px Inter,Arial,sans-serif;letter-spacing:2px}.nodeTitle{font:800 20px Inter,Arial,sans-serif;fill:#f1f8f8}.nodeSub{font:500 15px Inter,Arial,sans-serif;fill:#abc0c7}.edge{stroke:#6f8999;stroke-width:3;fill:none;marker-end:url(#arrow)}.lane{fill:#0b1923;stroke:#294052;stroke-width:2}.node{fill:#0e1c27;stroke-width:2;filter:url(#shadow)}.pill{font:700 14px Inter,Arial,sans-serif;fill:#d9e9ed}.foot{font:600 16px Inter,Arial,sans-serif;fill:#9fb4ba}
+    </style>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <text x="80" y="76" class="title">One promise. Three trust boundaries.</text>
+  <text x="80" y="112" class="sub">Continuum · Succession Protocol · Google Cloud reference binding</text>
+  <rect x="1160" y="38" width="680" height="76" rx="20" fill="#132a38" stroke="#83bbff"/>
+  <text x="1500" y="68" text-anchor="middle" class="pill">5 PRIVATE CLOUD RUN SERVICES</text>
+  <text x="1500" y="96" text-anchor="middle" class="nodeSub">control · predecessor v17 · successor v18 · warm successor v19 · verifier</text>
+
+  <rect class="lane" x="70" y="150" width="1780" height="228" rx="24"/>
+  <text x="100" y="188" class="step" fill="#65e6ad">1 · OBSERVE REAL ABSENCE</text>
+  <g transform="translate(105 220)"><rect class="node" width="300" height="118" rx="16" stroke="#83bbff"/><text x="150" y="44" text-anchor="middle" class="nodeTitle">PROMISE LEDGER</text><text x="150" y="73" text-anchor="middle" class="nodeSub">obligation + real deadline</text><text x="150" y="96" text-anchor="middle" class="nodeSub">Firestore transaction</text></g>
+  <path class="edge" d="M405 279H520"/>
+  <g transform="translate(520 220)"><rect class="node" width="300" height="118" rx="16" stroke="#65e6ad"/><text x="150" y="44" text-anchor="middle" class="nodeTitle">CLOUD TASKS</text><text x="150" y="73" text-anchor="middle" class="nodeSub">server-owned deadline callback</text><text x="150" y="96" text-anchor="middle" class="nodeSub">no process sleep</text></g>
+  <path class="edge" d="M820 279H935"/>
+  <g transform="translate(935 220)"><rect class="node" width="300" height="118" rx="16" stroke="#65e6ad"/><text x="150" y="44" text-anchor="middle" class="nodeTitle">NEGATIVE SPACE</text><text x="150" y="73" text-anchor="middle" class="nodeSub">detects evidence that should</text><text x="150" y="96" text-anchor="middle" class="nodeSub">exist—and does not</text></g>
+  <path class="edge" d="M1235 279H1350"/>
+  <g transform="translate(1350 220)"><rect class="node" width="390" height="118" rx="16" stroke="#65e6ad"/><text x="195" y="44" text-anchor="middle" class="nodeTitle">PUB/SUB REDELIVERY</text><text x="195" y="73" text-anchor="middle" class="nodeSub">OIDC push · at-least-once</text><text x="195" y="96" text-anchor="middle" class="nodeSub">first attempt fails · second resumes</text></g>
+
+  <rect class="lane" x="70" y="404" width="1780" height="300" rx="24"/>
+  <text x="100" y="442" class="step" fill="#83bbff">2 · GOVERN SUCCESSION</text>
+  <g transform="translate(105 478)"><rect class="node" width="290" height="150" rx="16" stroke="#65e6ad"/><text x="145" y="41" text-anchor="middle" class="nodeTitle">REGISTRY + GATE</text><text x="145" y="72" text-anchor="middle" class="nodeSub">health · scope · jurisdiction</text><text x="145" y="96" text-anchor="middle" class="nodeSub">contract · trust · capability</text><rect x="72" y="116" width="146" height="25" rx="12" fill="#103526"/><text x="145" y="134" text-anchor="middle" class="pill" fill="#65e6ad">ELIGIBLE SET ONLY</text></g>
+  <path class="edge" d="M395 553H455"/>
+  <g transform="translate(455 478)"><rect class="node" width="290" height="150" rx="16" stroke="#a78bfa"/><text x="145" y="41" text-anchor="middle" class="nodeTitle">ADK + GEMINI 3.6</text><text x="145" y="72" text-anchor="middle" class="nodeSub">chooses and cites evidence</text><text x="145" y="96" text-anchor="middle" class="nodeSub">never grants authority</text><rect x="72" y="116" width="146" height="25" rx="12" fill="#2b1d4d"/><text x="145" y="134" text-anchor="middle" class="pill">BOUNDED JUDGMENT</text></g>
+  <path class="edge" d="M745 553H805"/>
+  <g transform="translate(805 478)"><rect class="node" width="290" height="150" rx="16" stroke="#83bbff"/><text x="145" y="41" text-anchor="middle" class="nodeTitle">POLICY + EPOCH</text><text x="145" y="72" text-anchor="middle" class="nodeSub">validates choice · fences v17</text><text x="145" y="96" text-anchor="middle" class="nodeSub">action + memory denied</text><rect x="64" y="116" width="162" height="25" rx="12" fill="#182e42"/><text x="145" y="134" text-anchor="middle" class="pill">AUTHORITY BOUNDARY</text></g>
+  <path class="edge" d="M1095 553H1155"/>
+  <g transform="translate(1155 478)"><rect class="node" width="290" height="150" rx="16" stroke="#83bbff"/><text x="145" y="41" text-anchor="middle" class="nodeTitle">MINIMUM CONTEXT</text><text x="145" y="72" text-anchor="middle" class="nodeSub">2 verified facts included</text><text x="145" y="96" text-anchor="middle" class="nodeSub">4 unsafe classes excluded</text><rect x="75" y="116" width="140" height="25" rx="12" fill="#182e42"/><text x="145" y="134" text-anchor="middle" class="pill">RECONSTRUCT</text></g>
+  <path class="edge" d="M1445 553H1505"/>
+  <g transform="translate(1505 478)"><rect class="node" width="240" height="150" rx="16" stroke="#65e6ad"/><text x="120" y="41" text-anchor="middle" class="nodeTitle">ACTION GATE</text><text x="120" y="72" text-anchor="middle" class="nodeSub">identity · policy</text><text x="120" y="96" text-anchor="middle" class="nodeSub">compliance · idempotency</text><rect x="50" y="116" width="140" height="25" rx="12" fill="#103526"/><text x="120" y="134" text-anchor="middle" class="pill">ONE EFFECT</text></g>
+
+  <rect class="lane" x="70" y="730" width="1780" height="250" rx="24"/>
+  <text x="100" y="768" class="step" fill="#ff8fc7">3 · PROVE THE OUTCOME</text>
+  <g transform="translate(175 808)"><rect class="node" width="360" height="118" rx="16" stroke="#ff8fc7"/><text x="180" y="44" text-anchor="middle" class="nodeTitle">FIVE CONTROL CLAIMS</text><text x="180" y="75" text-anchor="middle" class="nodeSub">obligation · grant · manifest</text><text x="180" y="98" text-anchor="middle" class="nodeSub">revocation · execution receipt</text></g>
+  <path class="edge" d="M535 867H690"/>
+  <g transform="translate(690 808)"><rect class="node" width="420" height="118" rx="16" stroke="#ff8fc7"/><text x="210" y="44" text-anchor="middle" class="nodeTitle">INDEPENDENT VERIFIER</text><text x="210" y="75" text-anchor="middle" class="nodeSub">separate Cloud Run identity</text><text x="210" y="98" text-anchor="middle" class="nodeSub">direct read-only Firestore evidence</text></g>
+  <path class="edge" d="M1110 867H1265"/>
+  <g transform="translate(1265 808)"><rect class="node" width="410" height="118" rx="16" stroke="#65e6ad"/><text x="205" y="44" text-anchor="middle" class="nodeTitle">ARTIFACT SIX · VERIFIED</text><text x="205" y="75" text-anchor="middle" class="nodeSub">verifier-issued attestation</text><text x="205" y="98" text-anchor="middle" class="nodeSub">correlated in Cloud Trace</text></g>
+
+  <text x="80" y="1031" class="foot">Portable Continuity Contract · Google Cloud reference binding · every claim bound to one run and trace</text>
+  <text x="1840" y="1031" text-anchor="end" class="foot" fill="#65e6ad">one delivery can repeat · one promise completes once</text>
+</svg>
