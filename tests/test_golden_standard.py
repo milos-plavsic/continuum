@@ -12,6 +12,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from continuum.context_reconstruction import ContextItem, reconstruct_context
+from continuum.contract import canonical_bytes
 from continuum.models import AgentStatus, Denied
 from continuum.sdk import ContinuumClient, InProcessContinuum
 from continuum.resilience import FaultResult, run_resilience_lab
@@ -61,6 +62,7 @@ class SuccessorSelectionTests(unittest.TestCase):
                   "rationale": "highest verified trust", "objective": "assurance"}
         self.assertEqual(admit_successor_choice(choice, receipt), good.principal_id)
         self.assertEqual(receipt.to_dict()["eligible_ids"], [good.principal_id])
+        self.assertIsInstance(canonical_bytes(receipt.to_dict()), bytes)
 
     def test_every_deterministic_rejection_is_visible(self):
         bad = candidate(
