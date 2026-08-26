@@ -47,6 +47,10 @@ No source was copied from prior projects or external contributor pull requests. 
 - **Minimum-context reconstruction:** two verified facts included; raw injection, secrets, model inference, and revoked notes excluded before retrieval.
 - **Selected action gateway:** identity, epoch, policy, compliance, context receipt, request digest, and idempotency checked in one Firestore transaction.
 - **Independent verification:** five control claims plus a verifier-only sixth artifact after direct read-only observations.
+- **Verified Resilience Brief:** only a verifier-issued `VERIFIED` bundle can
+  drive Gemma 4; deterministic citation admission then causally invokes Veo 3.1
+  and Lyria 3 for content-addressed post-incident training media that is never
+  authority or execution evidence.
 - **Resilience lab:** ten distinct crash, retry, ambiguity, stale-message, citation, verifier, race, and partition fixtures with content-addressed results.
 - **Portable adoption:** three-call cloud-neutral SDK, local credential-free consumer, and optional same-bundle witness aggregation.
 - **Business-first cockpit:** obligation at risk, candidate decisions, transferred context, one effect, and independent verdict in one judge path.
@@ -59,7 +63,9 @@ The control service reads the registry, deterministically gates candidates, and 
 
 Architecture diagram: `docs/diagrams/architecture.png` (source: `docs/diagrams/architecture.mmd`).
 
-Reference stack: Google ADK, Gemini 3.6 Flash on Vertex AI, Cloud Run, Firestore, Pub/Sub, Cloud Tasks, Cloud Trace/OpenTelemetry, Python/FastAPI, Pydantic, and Ed25519 contract support.
+Reference stack: Google ADK, Gemini 3.6 Flash on Vertex AI, Gemma 4, Veo 3.1
+Lite, Lyria 3, Cloud Run, Firestore, Pub/Sub, Cloud Tasks, Cloud Trace/OpenTelemetry,
+Cloud Storage, Python/FastAPI, Pydantic, and Ed25519 contract support.
 
 ## Data Sources
 
@@ -112,7 +118,7 @@ PYTHONPATH=src python3 -m continuum --output artifacts/latest
 python3 examples/local_sdk_consumer.py
 ```
 
-The quality gate installs locked dependencies, executes 140 tests, enforces genuine 100.0% statement and branch coverage, runs C0–C6 conformance, and runs the release gate. The repository's GitHub Actions also builds and imports the locked non-root runtime image.
+The quality gate installs locked dependencies, executes 151 tests, enforces genuine 100.0% statement and branch coverage, runs C0–C6 conformance, and runs the release gate. The repository's GitHub Actions also builds and imports the locked non-root runtime image.
 
 For an authorized Google Cloud project, copy `deploy/cloud.env.example`, then run:
 
@@ -150,7 +156,9 @@ https://github.com/milos-plavsic/continuum
 
 ## Demo Video
 
-TODO: add the final public or unlisted YouTube/Vimeo URL after recording the live, unedited four-minute run.
+TODO: add the final **public** YouTube/Vimeo URL after recording the live,
+unedited, no-longer-than-four-minute run. Unlisted is not sufficient under the
+host's final checklist.
 
 Demo outline: `docs/DEMO_SCRIPT.md`.
 
@@ -193,6 +201,9 @@ Demo outline: `docs/DEMO_SCRIPT.md`.
 - **Google SDK (28091):** Agent Development Kit (ADK)
 - **Google Cloud service (28142):** Cloud Run (primary selection if the live field permits only one; the project also uses Firestore and Pub/Sub)
 - **Architecture upload (28092):** `docs/diagrams/architecture.png`
-- **Google AI models (28143):** Gemini 3.6 Flash via Vertex AI
+- **Google AI models (28143):** Gemini 3.6 Flash via Vertex AI; Gemma 4 26B A4B
+  IT (`gemma-4-26b-a4b-it-maas`); Veo 3.1 Lite
+  (`veo-3.1-lite-generate-001`); Lyria 3 Clip Preview
+  (`lyria-3-clip-preview`)
 - **Demo video:** TODO URL
 - **Optional public content/social links:** TODO only if genuinely published; do not claim bonus points otherwise

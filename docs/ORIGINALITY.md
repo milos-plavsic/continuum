@@ -1,5 +1,15 @@
 # Originality and provenance
 
+## Verifier-gated multimodal extension (August 27, 2026)
+
+The Verified Resilience Brief implementation, including its bounded evidence
+reduction, Gemma plan schema, deterministic citation/sensitivity admission,
+Veo and Lyria adapters, content-addressed GCS sink, receipt, command, and tests,
+was authored new in this repository during the submission period. No source or
+prompt was copied from a prior project or external pull request. Generated Veo
+and Lyria outputs are machine-created submission artifacts, not imported source
+code, evidence, or authority state.
+
 ## Golden-standard extension (August 26, 2026)
 
 The successor eligibility engine, bounded Gemini choice, minimum-context

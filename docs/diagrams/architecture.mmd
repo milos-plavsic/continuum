@@ -47,6 +47,15 @@ flowchart TB
     IV -. correlated evidence .-> TRACE
   end
 
+  subgraph R4["4 · LEARN FROM VERIFIED FACTS ONLY"]
+    direction LR
+    VFACTS["VERIFIED FACT FILTER<br/><small>five bounded citations<br/>no secrets · no authority</small>"]:::verify
+    GEMMA["GEMMA 4<br/><small>cited resilience plan<br/>deterministic admission</small>"]:::agent
+    MEDIA["VEO 3.1 + LYRIA 3<br/><small>content-addressed training media<br/>derivative, never evidence</small>"]:::agent
+    VFACTS --> GEMMA --> MEDIA
+  end
+
   OP --> R1
   R1 -->|redelivery causes transition| R2
   R2 --> R3
+  R3 -. VERIFIED only .-> R4
