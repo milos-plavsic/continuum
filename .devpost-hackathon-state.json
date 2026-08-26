@@ -25,8 +25,8 @@
   ],
   "rules_acknowledged": true,
   "learning": {
-    "status": "in_progress",
-    "current_step": "build",
+    "status": "completed",
+    "current_step": "complete",
     "completed_steps": [
       "scope",
       "prd",
@@ -41,5 +41,5 @@
     "draft_file": "devpost-submission.md",
     "status": "not-started"
   },
-  "next_command": "build-project"
+  "next_command": "prepare-submission"
 }

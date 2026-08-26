@@ -7,42 +7,48 @@ the separately deployed verifier and the credential-free, network-free offline
 semantic verifier.
 
 - Project `project-0775d12a-00a3-48d2-b13`, region `europe-west1`.
-- Run `run-20260826T021240Z`; canonical trace
-  `41d27518e9dad2c02a10cffe3c82c534`.
+- Run `golden-4d676b1-20260826-04`; canonical trace
+  `4d9f2269e752107a926bd5ef90030b54`.
 - Deployed source commit
-  `501a80ce50496a39cc822a69fc73ec7d44267dbd`.
+  `4d676b1ed4bbf2394dbac777fcaa1499f54f560b`.
 - Immutable image digest
-  `sha256:4c538b4cd6e9f86323913f017bdf21fc5a80c07968104c798b9b67ce662706e7`.
-- Bundle `urn:uuid:5ac2c145-e8b1-4e19-a468-6d71f3c27430`; bundle digest
-  `sha256:5052d0bfbc261c7880981e2ab545fe620e818f7a189866026ed97434738ac2da`.
+  `sha256:b87b7ce0242a98abe1e35427f3e3447c3f43c55ea8bb25c3a0be04bf23f66e92`.
+- Bundle `urn:uuid:e8cf6157-2a35-46ad-a399-4a35d5b56988`; bundle digest
+  `sha256:63e21f44bfd8285fd2513e982f181a8a17311b6216a8258b0971d12e8fde07bc`.
 - Offline result `PASS`; report digest
-  `sha256:b6c53e6805b6497c21361503f49be782b0433e33569f96d0e52ee4cd8c80ac32`.
+  `sha256:33709f67cf9a6a31b50925efb60d728ee28593f2e093d0d1c3d77bbad7fcf483`.
 
-The four ready services were independently read from the Cloud Run API:
+The five ready services were independently read from the Cloud Run API:
 
 | Role | Ready revision | User-managed service identity |
 |---|---|---|
-| Control | `continuum-control-00014-q8t` | `continuum-control@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
-| Predecessor v17 | `continuum-agent-v17-00007-8tk` | `continuum-v17@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
-| Successor v18 | `continuum-agent-v18-00009-x79` | `continuum-v18@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
-| Independent verifier | `continuum-verifier-00007-vq9` | `continuum-verifier@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
+| Control | `continuum-control-00022-bb7` | `continuum-control@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
+| Predecessor v17 | `continuum-agent-v17-00011-mdk` | `continuum-v17@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
+| Successor v18 | `continuum-agent-v18-00017-sn5` | `continuum-v18@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
+| Warm successor v19 | `continuum-agent-v19-00008-ncl` | `continuum-v19@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
+| Independent verifier | `continuum-verifier-00011-gkt` | `continuum-verifier@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
 
-All four revisions reported the same source commit, protocol and immutable
-image digest. The 12 content-addressed mandatory objects prove:
+All five revisions reported the same source commit, protocol and immutable
+image digest. The 13 content-addressed mandatory objects prove:
 
 - a real Google ADK call to `gemini-3.6-flash` from the v18 identity, citing all
-  three exact event IDs and proposing only `initiate_governed_succession`;
+  exact incident evidence, proposing only `initiate_governed_succession`, and
+  selecting v18 from the eligible v18/v19 set with Cloud Run, identity and image
+  citations; v20 was rejected for health and jurisdiction before model access;
+- a verifier-recomputed minimum-context receipt: two verified facts included and
+  raw untrusted input, a secret, model inference and revoked memory excluded;
 - an owning-API Firestore event, matching projection, and published outbox;
-- two deliveries of Pub/Sub message `21335889119988474`;
+- two deliveries of Pub/Sub message `21341560616619773`;
 - one reconciled provider effect despite redelivery;
 - v17 action denial with `STALE_EPOCH` and revoked-memory denial;
 - five control-authored pre-attestation artifacts followed by the verifier-only
   sixth artifact after direct authority, compliance, and provider reads;
-- 63 spans read directly from the Cloud Trace API, including
+- 69 spans read directly from the Cloud Trace API, including
   `generate_content gemini-3.6-flash`, all succession lifecycle spans, action
   gateway calls, and the separate verifier call.
 
-The raw capture is retained locally at `artifacts/cloud/20260826T022245Z` and
+The raw capture is retained locally at
+`artifacts/cloud/golden-4d676b1-20260826-04` and
 is intentionally gitignored: repository policy forbids committing generated
 cloud state. The identifiers and digests above are safe, reproducible
 fingerprints; the content-addressed bundle can be supplied separately to judges.

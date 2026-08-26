@@ -217,7 +217,7 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   What to build: Complete tests for new behavior while preserving genuine 100% statement/branch coverage and every existing CI gate.
   Acceptance: Quality, conformance, security, container, local runtime, and release checks all pass from a clean checkout.
   Verify: Locked quality workflow and reproducible image build.
-- [ ] **42. Merge, deploy, and capture the golden run**
+- [x] **42. Merge, deploy, and capture the golden run**
   Spec ref: `prd.md > Acceptance outcomes`
   What to build: Protected-branch PR, green CI merge, exact-commit Cloud Run deployment, fresh canonical run, sanitized bundle, and demo rehearsal.
   Acceptance: Commit, image, candidate decision, context receipt, effect, identities, logs/traces, independent verdict, and published checksums all agree.
