@@ -25,6 +25,11 @@ and independent verification prove one coherent lifecycle.
 6. Fresh compliance evidence is acquired and one transactional provider effect
    survives redelivery. A read-only verifier re-hashes the selection and context
    receipts, reads provider state, and alone issues artifact six.
+7. Only a `VERIFIED` artifact-six result can enter the Antibody Foundry. Gemma 4
+   turns its five bounded facts into a cited learning plan; deterministic
+   admission then permits Veo 3.1 and Lyria 3 to render a content-addressed
+   resilience brief. The media is explicitly derivative—never authority,
+   execution evidence, or an input to succession.
 
 Its portable boundary is the **Continuity Contract Profile 0.1-draft**: an open,
 vendor-neutral protocol proposal for obligations, authority grants, succession
@@ -46,6 +51,13 @@ identifiers and the validity boundary are recorded in
 [the cloud proof](docs/CLOUD_PROOF.md). The complete evidence packet is a public,
 checksum-pinned GitHub Release asset, so judges can run its semantic verifier
 without Google credentials. Local success is never relabelled as cloud proof.
+
+The optional multimodal learning branch has also completed a genuine managed
+Google Cloud run. It used `google/gemma-4-26b-a4b-it-maas`,
+`veo-3.1-lite-generate-001`, and `lyria-3-clip-preview`, causally chained from
+the accepted independent attestation. Veo and Lyria outputs were written
+create-only to private GCS URIs under the same request digest; the receipt marks
+them `DERIVED_NOT_AUTHORITY_OR_EVIDENCE`.
 
 The hosted judge surface is a separate, public **read-only showcase**. Its
 dedicated Cloud Run identity has no Firestore, Pub/Sub, Vertex AI, agent, or
@@ -76,6 +88,25 @@ excluded and there are no `pragma: no cover` shortcuts:
 ```bash
 ./scripts/quality-gate.sh
 ```
+
+The current gate executes 151 tests and reports genuine **100.0% statement and
+branch coverage**.
+
+To generate a verifier-gated multimodal resilience brief in an authorized
+Google Cloud project:
+
+```bash
+uv run python scripts/cloud/run-resilience-brief.py \
+  --evidence-dir artifacts/cloud/<accepted-run> \
+  --output-dir artifacts/learning/<fresh-run> \
+  --project "$CONTINUUM_PROJECT_ID" \
+  --veo-output-uri "gs://<private-bucket>/verified-resilience-brief" \
+  --lyria-output-uri "gs://<private-bucket>/verified-resilience-brief/media"
+```
+
+The command refuses non-verified evidence, validates all five Gemma citations,
+blocks sensitive rendering prompts, disallows person generation, uses
+create-only content-addressed audio objects, and emits one digest-bound receipt.
 
 Then regenerate the measured evaluation and portable artifacts when their
 fixtures change:
@@ -176,6 +207,7 @@ https://continuum-showcase-rdzvxiysbq-ew.a.run.app and pinned to image digest
 - [Deterministic evaluation](docs/EVALUATION.md)
 - [Four-minute demo](docs/DEMO_SCRIPT.md)
 - [Verified Google Cloud proof](docs/CLOUD_PROOF.md)
+- [Hackathon compliance matrix](docs/HACKATHON_COMPLIANCE.md)
 - [Architecture diagram](docs/diagrams/architecture.svg) ·
   [editable Mermaid source](docs/diagrams/architecture.mmd) ·
   [demo-ready PNG](docs/diagrams/architecture.png)

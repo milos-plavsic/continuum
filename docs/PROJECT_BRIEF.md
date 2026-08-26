@@ -34,8 +34,11 @@ Judging weights:
 3. Investigator agents gather evidence and propose corrective actions.
 4. Constitutional Court evaluates policy, conflicts, reversibility, and risk.
 5. The approved action is executed through a governed gateway.
-6. Antibody Foundry converts the failure into adversarial regression tests and
-   promotes a defense only after independent evaluation.
+6. Antibody Foundry converts the failure into adversarial regression tests and,
+   only after a verifier-issued `VERIFIED` attestation, uses Gemma to create a
+   cited resilience plan. Deterministic admission may then let Veo and Lyria
+   render content-addressed training media that can never become authority or
+   evidence.
 7. Succession Protocol transfers valid commitments and authorized memory to a
    replacement, then revokes and retires the compromised agent.
 8. The successor completes the original obligation with one externally observed

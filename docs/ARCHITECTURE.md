@@ -42,10 +42,28 @@ Promise Ledger ----> Negative Space Sentinel
 - Cloud Tasks for persisted, real-time deadline callbacks
 - Cloud Run service identities and IAM for least-privilege access
 - OpenTelemetry spans exported through the Google Cloud Trace exporter
+- Gemma 4 for verifier-gated, cited post-incident learning plans
+- Veo 3.1 Lite and Lyria 3 for derivative training media in private,
+  content-addressed Cloud Storage
 
 The cloud path is an implemented reference binding. A release claim is valid
 only after that exact commit is deployed and a fresh exact-run evidence bundle
 passes the offline semantic verifier.
+
+## Verifier-gated learning branch
+
+The multimodal branch is downstream of—not parallel to—the independent
+verifier. A non-`VERIFIED` result cannot reach any generative model. A verified
+bundle is reduced to five bounded facts; Gemma must cite all five in a strict
+plan. Deterministic admission rejects schema drift, missing or duplicate
+citations, oversized content, and sensitive rendering prompts before Veo or
+Lyria may run.
+
+Both media calls share a digest of the attestation, admitted plan, and exact
+model identifiers. Veo writes into a digest-scoped GCS prefix; Lyria uses a
+create-only object name containing the audio digest. The resulting receipt is
+marked `DERIVED_NOT_AUTHORITY_OR_EVIDENCE`. No output from this branch may
+select a successor, grant authority, execute an effect, or attest the incident.
 
 ## Reference implementation boundary
 
