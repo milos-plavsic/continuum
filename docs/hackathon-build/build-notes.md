@@ -1,5 +1,22 @@
 # Build notes
 
+## Golden cloud proof — August 26
+
+- PRs #6–#9 passed protected-branch coverage/release and reproducible-image
+  checks before merge. Two real integration mismatches and one proof-query drift
+  were discovered by fresh cloud runs, fixed with regression tests, and never
+  relabelled as successful evidence.
+- Exact source `4d676b1ed4bbf2394dbac777fcaa1499f54f560b` was deployed across
+  five private, identity-separated Cloud Run services on image digest
+  `sha256:b87b7ce0242a98abe1e35427f3e3447c3f43c55ea8bb25c3a0be04bf23f66e92`.
+- Fresh run `golden-4d676b1-20260826-04` reached independent `VERIFIED`:
+  Gemini selected deployable v18 from eligible v18/v19 candidates, v20 was
+  rejected, two facts crossed, four context classes were excluded, v17 was
+  denied, and two Pub/Sub deliveries produced one provider effect.
+- Read-only capture produced 13 content-addressed objects and 69 exact-trace
+  spans. The network-free, credential-free verifier returned `PASS` for bundle
+  `urn:uuid:e8cf6157-2a35-46ad-a399-4a35d5b56988`.
+
 ## Golden-standard extension — August 26
 
 - The participant explicitly authorized full autonomous implementation beyond the

@@ -35,15 +35,14 @@ standard and not yet a third-party interoperability claim.
 The repository contains a deterministic reference and a production-composed
 Google Cloud slice using private Cloud Run identities, Firestore transactions,
 Cloud Tasks, Pub/Sub redelivery, Google ADK with Gemini 3.6 Flash, and a
-read-only verifier. The prior `501a80c` release has a fresh 12-object Google Cloud
-evidence bundle with an offline semantic `PASS`; Cloud Trace contains 63 real
-OpenTelemetry spans read through the owning API. Exact release identifiers and
-the validity boundary are recorded in [the cloud proof](docs/CLOUD_PROOF.md).
-Local success is never relabelled as cloud proof.
-
-This branch extends capture to 13 mandatory objects by adding the independently
-deployed v19 warm successor. Its cloud claims remain pending until the exact
-merged commit is deployed and a new bundle supersedes the prior proof.
+read-only verifier. Release `4d676b1` has a fresh 13-object Google Cloud evidence
+bundle with an offline semantic `PASS`; Cloud Trace contains 69 real
+OpenTelemetry spans read through the owning API. The capture includes distinct
+v18 and v19 warm-successor identities, Gemini's evidence-cited selection, the
+minimum-context receipt and one provider effect despite redelivery. Exact release
+identifiers and the validity boundary are recorded in
+[the cloud proof](docs/CLOUD_PROOF.md). Local success is never relabelled as
+cloud proof.
 
 ## Run the reference scenario
 
