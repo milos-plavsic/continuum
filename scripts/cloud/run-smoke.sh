@@ -10,7 +10,7 @@ set -euo pipefail
 
 capture_dir="$(mktemp -d)"
 trap 'rm -rf "$capture_dir"' EXIT
-python3 scripts/cloud/collect_evidence.py "$capture_dir" \
+uv run --extra google python scripts/cloud/collect_evidence.py "$capture_dir" \
   --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" \
   --run-id "$CONTINUUM_RUN_ID" --trace-id "$CONTINUUM_TRACE_ID" \
   --control-service "${CONTINUUM_CONTROL_SERVICE:-continuum-control}" \
