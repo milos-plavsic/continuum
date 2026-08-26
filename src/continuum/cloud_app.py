@@ -215,15 +215,16 @@ def create_cloud_app(*, store: Any | None = None,
         repository().mark_inbox_processed(message_id=message_id, event_digest=digest,
                                           processed_at=_utc_now())
         if redelivery_probe:
-            delivery = repository().inbox_record(message_id) or {}
-            count = delivery.get("delivery_count", 1)
-            evidence_run_id = str(event.get("run_id", event["correlation_id"]))
-            payload = {"run_id": evidence_run_id, "deliveries": [
-                {"message_id": message_id, "delivery_id": f"{message_id}:{number}"}
-                for number in range(1, count + 1)]}
-            print(json.dumps({"continuum_evidence": {
-                "run_id": evidence_run_id, "object_id": "pubsub-deliveries",
-                "payload": payload}}, sort_keys=True, separators=(",", ":")), flush=True)
+            count = repository().claim_redelivery_evidence(
+                message_id=message_id, event_digest=digest, emitted_at=_utc_now())
+            if count is not None:
+                evidence_run_id = str(event.get("run_id", event["correlation_id"]))
+                payload = {"run_id": evidence_run_id, "deliveries": [
+                    {"message_id": message_id, "delivery_id": f"{message_id}:{number}"}
+                    for number in range(1, count + 1)]}
+                print(json.dumps({"continuum_evidence": {
+                    "run_id": evidence_run_id, "object_id": "pubsub-deliveries",
+                    "payload": payload}}, sort_keys=True, separators=(",", ":")), flush=True)
         return Response(status_code=204)
 
     @app.post("/internal/attempt-action")

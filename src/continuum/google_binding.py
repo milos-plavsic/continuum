@@ -106,6 +106,30 @@ class FirestoreContinuityStore:
 
         complete(transaction)
 
+    def claim_redelivery_evidence(self, *, message_id: str, event_digest: str,
+                                  emitted_at: str) -> int | None:
+        """Atomically claim the one immutable observation proving redelivery."""
+        from google.cloud import firestore
+        reference = self.client.collection("continuity_inbox").document(message_id)
+        transaction = self.client.transaction()
+
+        @firestore.transactional
+        def claim(txn: Any) -> int | None:
+            snapshot = reference.get(transaction=txn)
+            if not snapshot.exists:
+                raise ValueError("INBOX_MESSAGE_NOT_RECEIVED")
+            stored = snapshot.to_dict()
+            if stored["event_digest"] != event_digest:
+                raise ValueError("MESSAGE_ID_CONTENT_CONFLICT")
+            count = stored.get("delivery_count", 1)
+            if count < 2 or stored.get("redelivery_evidence_emitted") is True:
+                return None
+            txn.update(reference, {"redelivery_evidence_emitted": True,
+                                   "redelivery_evidence_emitted_at": emitted_at})
+            return count
+
+        return claim(transaction)
+
     def reserve_execution(self, *, scope: str, idempotency_key: str,
                           request_digest: str, record: dict[str, Any]) -> tuple[dict[str, Any], bool]:
         """Durably reserve an effect before dispatch; same key/digest reuses it."""

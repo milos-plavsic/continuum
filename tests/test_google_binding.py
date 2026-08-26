@@ -131,11 +131,24 @@ class GoogleBindingTests(unittest.TestCase):
         google = types.ModuleType("google")
         cloud = types.ModuleType("google.cloud")
         firestore = types.ModuleType("google.cloud.firestore")
+        auth = types.ModuleType("google.auth")
+        transport = types.ModuleType("google.auth.transport")
+        auth_requests = types.ModuleType("google.auth.transport.requests")
+        auth_requests.Request = object
+        oauth2 = types.ModuleType("google.oauth2")
+        id_token = types.ModuleType("google.oauth2.id_token")
+        id_token.verify_oauth2_token = lambda *_args, **_kwargs: {}
         firestore.transactional = lambda fn: fn
         cloud.firestore = firestore
-        google.cloud = cloud
+        transport.requests = auth_requests
+        auth.transport = transport
+        oauth2.id_token = id_token
+        google.cloud, google.auth, google.oauth2 = cloud, auth, oauth2
         self.google_modules = patch.dict(sys.modules, {
             "google": google, "google.cloud": cloud, "google.cloud.firestore": firestore,
+            "google.auth": auth, "google.auth.transport": transport,
+            "google.auth.transport.requests": auth_requests,
+            "google.oauth2": oauth2, "google.oauth2.id_token": id_token,
         })
         self.google_modules.start()
 
@@ -276,10 +289,21 @@ class GoogleBindingTests(unittest.TestCase):
         self.assertIsNone(self.store.inbox_record("missing"))
         with self.assertRaisesRegex(ValueError, "INBOX_MESSAGE_NOT_RECEIVED"):
             self.store.mark_inbox_processed(message_id="missing", event_digest="d", processed_at="t")
+        with self.assertRaisesRegex(ValueError, "INBOX_MESSAGE_NOT_RECEIVED"):
+            self.store.claim_redelivery_evidence(message_id="missing", event_digest="d", emitted_at="t")
         self.store.accept_inbox(message_id="m", event_digest="d", event_id="e", received_at="t")
         self.assertEqual(self.store.inbox_record("m")["event_id"], "e")
+        self.assertIsNone(self.store.claim_redelivery_evidence(
+            message_id="m", event_digest="d", emitted_at="t"))
         with self.assertRaisesRegex(ValueError, "MESSAGE_ID_CONTENT_CONFLICT"):
             self.store.mark_inbox_processed(message_id="m", event_digest="other", processed_at="t")
+        with self.assertRaisesRegex(ValueError, "MESSAGE_ID_CONTENT_CONFLICT"):
+            self.store.claim_redelivery_evidence(message_id="m", event_digest="other", emitted_at="t")
+        self.store.accept_inbox(message_id="m", event_digest="d", event_id="e", received_at="t2")
+        self.assertEqual(self.store.claim_redelivery_evidence(
+            message_id="m", event_digest="d", emitted_at="t3"), 2)
+        self.assertIsNone(self.store.claim_redelivery_evidence(
+            message_id="m", event_digest="d", emitted_at="t4"))
 
     def test_reservation_reuse_conflict_and_execution_state_failures(self):
         reserved, duplicate = self._reserve(); self.assertFalse(duplicate)

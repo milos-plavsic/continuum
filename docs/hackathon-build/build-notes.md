@@ -88,3 +88,15 @@
   matrix. Local verification can complete without credentials; cloud PASS still
   requires an authenticated project because this workspace has no `gcloud`
   installation or configured Google Cloud account.
+
+## Release recapture hardening
+
+- A live at-least-once delivery produced three legitimate attempts and exposed
+  that a changing aggregate log could yield conflicting evidence objects. The
+  run correctly remained `NOT_ASSESSED`; no favorable observation was selected.
+- Added a Firestore-transactional, one-time redelivery evidence claim. Any
+  number of retries remains deduplicated while exactly one immutable observation
+  proves at least two attempts. Added repeated-delivery and defensive-path tests.
+- Made the Google binding test doubles self-contained so identity-token tests
+  no longer depend on suite import order. The full production source remains
+  subject to genuine 100% line and branch coverage before cloud deployment.

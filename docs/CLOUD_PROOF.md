@@ -1,6 +1,6 @@
 # Google Cloud deployment proof
 
-## Verified canonical capture
+## Immutable historical capture
 
 A fresh reference-Google-Cloud run completed at `2026-08-25T23:33:59Z`:
 
@@ -25,6 +25,12 @@ The raw capture remains locally at `artifacts/cloud/20260825T233358Z` and is
 intentionally gitignored: repository policy forbids committing generated cloud
 state. The capture is reproducible with `scripts/cloud/run-cloud-proof.sh`, and
 the content-addressed bundle can be supplied separately to judges.
+
+This record proves only the source commit and image digest named above. A newer
+release must be deployed and recaptured from a clean run; its local `report.json`
+is authoritative only when `overall` is `PASS` and its scoped Git commit matches
+the ready Cloud Run revisions. The repository never inherits a historical cloud
+verdict or commits generated provider state.
 
 The local reference implementation proves domain behavior, while the capture
 above proves the deployed reference binding. Future releases must repeat the

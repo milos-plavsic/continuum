@@ -1,4 +1,6 @@
 import base64
+from contextlib import redirect_stdout
+from io import StringIO
 import json
 import os
 from unittest.mock import patch
@@ -29,6 +31,15 @@ class _Store:
 
     def inbox_record(self, message_id):
         return self.messages.get(message_id)
+
+    def claim_redelivery_evidence(self, **item):
+        current = self.messages[item["message_id"]]
+        if current["event_digest"] != item["event_digest"]:
+            raise ValueError("MESSAGE_ID_CONTENT_CONFLICT")
+        if current["delivery_count"] < 2 or current.get("redelivery_evidence_emitted"):
+            return None
+        current["redelivery_evidence_emitted"] = True
+        return current["delivery_count"]
 
 
 def _payload(event, message_id="m1"):
@@ -91,10 +102,13 @@ class CloudAppTests(unittest.TestCase):
                  "correlation_id": "trace", "run_id": "run-redelivery",
                  "redelivery_probe": True}
         headers = {"Authorization": "Bearer signed-token"}
-        with patch.dict(os.environ, {"CONTINUUM_FORCE_REDELIVERY": "1"}):
+        output = StringIO()
+        with redirect_stdout(output), patch.dict(os.environ, {"CONTINUUM_FORCE_REDELIVERY": "1"}):
             self.assertEqual(self.client.post("/pubsub/push", json=_payload(event), headers=headers).status_code, 503)
             self.assertEqual(self.client.post("/pubsub/push", json=_payload(event), headers=headers).status_code, 204)
-        self.assertEqual(self.store.inbox_record("m1")["delivery_count"], 2)
+            self.assertEqual(self.client.post("/pubsub/push", json=_payload(event), headers=headers).status_code, 204)
+        self.assertEqual(self.store.inbox_record("m1")["delivery_count"], 3)
+        self.assertEqual(output.getvalue().count('"object_id":"pubsub-deliveries"'), 1)
 
     def test_push_rejects_wrong_workload_identity(self):
         client = TestClient(create_cloud_app(store=self.store, role="control",
