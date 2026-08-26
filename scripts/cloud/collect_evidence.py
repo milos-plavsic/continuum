@@ -35,8 +35,19 @@ class GoogleTraceReader:
     """Read the exact trace through the owning Cloud Trace API."""
     def read(self, scope: "CaptureScope") -> dict[str, Any]:
         import google.auth
+        from google.auth.exceptions import DefaultCredentialsError
         from google.auth.transport.requests import AuthorizedSession
-        credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/trace.readonly"])
+        try:
+            credentials, _ = google.auth.default(
+                scopes=["https://www.googleapis.com/auth/trace.readonly"])
+        except DefaultCredentialsError:
+            from google.oauth2.credentials import Credentials
+            token = subprocess.run(
+                ["gcloud", "auth", "print-access-token"], check=True,
+                capture_output=True, text=True).stdout.strip()
+            if not token:
+                raise ValueError("GCLOUD_ACCESS_TOKEN_MISSING")
+            credentials = Credentials(token=token)
         response = AuthorizedSession(credentials).get(
             f"https://cloudtrace.googleapis.com/v1/projects/{scope.project}/traces/{scope.trace_id}",
             timeout=30)
