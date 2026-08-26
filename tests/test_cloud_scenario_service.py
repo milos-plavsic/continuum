@@ -10,8 +10,9 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from continuum.cloud_scenario_service import (DurableCloudScenarioService, FirestoreScenarioStore,
-    ScenarioConflict, canonical_context_items, canonical_successor_candidates)
+from continuum.cloud_scenario_service import (CanonicalCloudScenario, DurableCloudScenarioService,
+    FirestoreScenarioStore, ScenarioConflict, canonical_context_items,
+    canonical_run_command, canonical_run_correlation_id, canonical_successor_candidates)
 from continuum.cloud_app import create_cloud_app
 
 
@@ -107,6 +108,14 @@ class Verifier:
 
 
 class CloudScenarioServiceTests(unittest.TestCase):
+    def test_run_and_trace_identity_share_one_server_owned_command(self):
+        command = canonical_run_command("trace-run")
+        self.assertNotIn("successor", command)
+        self.assertEqual(32, len(canonical_run_correlation_id("trace-run")))
+        custom = CanonicalCloudScenario(tenant_id="other")
+        self.assertNotEqual(canonical_run_correlation_id("trace-run"),
+                            canonical_run_correlation_id("trace-run", custom))
+
     def setUp(self):
         self.now = datetime(2026, 8, 26, 10, 0, tzinfo=timezone.utc)
         self.store, self.investigator, self.effects = Store(), Investigator(), Effects()
