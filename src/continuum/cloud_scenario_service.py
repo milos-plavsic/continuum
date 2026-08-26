@@ -131,6 +131,24 @@ def canonical_context_items() -> tuple[ContextItem, ...]:
     )
 
 
+def canonical_run_command(run_id: str,
+                          scenario: CanonicalCloudScenario = CanonicalCloudScenario()) -> dict[str, Any]:
+    """Return the single server-owned command used for run and trace identity."""
+    return {
+        "run_id": run_id, "tenant_id": scenario.tenant_id,
+        "obligation_id": scenario.obligation_id,
+        "predecessor": scenario.predecessor,
+        "predecessor_epoch": scenario.predecessor_epoch,
+        "successor_epoch": scenario.successor_epoch,
+        "idempotency_key": scenario.idempotency_key,
+    }
+
+
+def canonical_run_correlation_id(run_id: str,
+                                 scenario: CanonicalCloudScenario = CanonicalCloudScenario()) -> str:
+    return sha256(canonical_bytes(canonical_run_command(run_id, scenario))).hexdigest()[:32]
+
+
 class DurableCloudScenarioService:
     """Resume the canonical lifecycle from its last committed phase."""
 
@@ -221,17 +239,11 @@ class DurableCloudScenarioService:
         }
 
     def _new_run(self, run_id: str) -> dict[str, Any]:
-        command = {
-            "run_id": run_id, "tenant_id": self.scenario.tenant_id,
-            "obligation_id": self.scenario.obligation_id,
-            "predecessor": self.scenario.predecessor,
-            "predecessor_epoch": self.scenario.predecessor_epoch,
-            "successor_epoch": self.scenario.successor_epoch,
-            "idempotency_key": self.scenario.idempotency_key,
-        }
+        command = canonical_run_command(run_id, self.scenario)
         digest = sha256(canonical_bytes(command)).hexdigest()
         deadline = self.clock() + timedelta(seconds=self.scenario.deadline_delay_seconds)
-        return {**command, "command_digest": digest, "correlation_id": digest[:32],
+        return {**command, "command_digest": digest,
+                "correlation_id": canonical_run_correlation_id(run_id, self.scenario),
                 "deadline": deadline.isoformat().replace("+00:00", "Z"),
                 "phase": "CREATED", "revision": 0}
 

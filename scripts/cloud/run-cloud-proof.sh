@@ -16,14 +16,9 @@ run_id="${CONTINUUM_RUN_ID:-run-$(date -u +%Y%m%dT%H%M%SZ)}"
   echo "CONTINUUM_RUN_ID is invalid" >&2; exit 2;
 }
 trace_id="$(PYTHONPATH=src python3 - "$run_id" <<'PY'
-from hashlib import sha256
 import sys
-from continuum.contract import canonical_bytes
-command = {"run_id": sys.argv[1], "tenant_id": "acme",
-           "obligation_id": "vendor-compliance-042", "predecessor": "v17",
-           "predecessor_epoch": 41, "successor": "v18", "successor_epoch": 42,
-           "idempotency_key": "vendor-042:create:v1"}
-print(sha256(canonical_bytes(command)).hexdigest()[:32])
+from continuum.cloud_scenario_service import canonical_run_correlation_id
+print(canonical_run_correlation_id(sys.argv[1]))
 PY
 )"
 if [[ "${CONTINUUM_OPERATOR_MEMBER:-}" == serviceAccount:* ]]; then
