@@ -41,7 +41,7 @@ point, producing a maximum final score of 6:
 |---|---:|---|---:|
 | Public build content | +0.2 | Serious dev.to draft prepared; it is not public yet. It must explicitly say it was created for entering this hackathon. | 0.0 |
 | Public social post | +0.2 | LinkedIn draft prepared; it is not public yet. It must include `#AllThingsAgenticHackathon`. | 0.0 |
-| Additional Google AI models | +0.6 | Gemma 4, Veo 3.1 Lite and Lyria 3 completed one verifier-gated managed-cloud run, each in the causal path, with a digest-bound receipt and GCS objects. Public proof still needs attaching and the models must be entered in field 28143. | +0.6 technically demonstrated; not yet submitted |
+| Additional Google AI models | +0.6 | Gemma 4, Veo 3.1 Lite and Lyria 3 completed one verifier-gated managed-cloud run, each in the causal path, with a digest-bound receipt and GCS objects. The public `multimodal-proof-8bec862` release contains the receipt and both media assets with SHA-256 checksums. The models still must be entered in field 28143. | +0.6 demonstrated; not yet submitted |
 
 One blog plus one LinkedIn post is enough to reach the two publication maxima;
 multiple posts do not stack beyond +0.2 in either publication category. Each of

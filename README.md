@@ -58,6 +58,9 @@ Google Cloud run. It used `google/gemma-4-26b-a4b-it-maas`,
 the accepted independent attestation. Veo and Lyria outputs were written
 create-only to private GCS URIs under the same request digest; the receipt marks
 them `DERIVED_NOT_AUTHORITY_OR_EVIDENCE`.
+[The public multimodal proof release](https://github.com/milos-plavsic/continuum/releases/tag/multimodal-proof-8bec862)
+contains the exact receipt and judge-accessible copies of both generated media
+assets with published SHA-256 checksums.
 
 The hosted judge surface is a separate, public **read-only showcase**. Its
 dedicated Cloud Run identity has no Firestore, Pub/Sub, Vertex AI, agent, or

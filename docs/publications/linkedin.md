@@ -36,4 +36,7 @@ Live showcase: https://continuum-showcase-rdzvxiysbq-ew.a.run.app
 Repository and reproducible cloud proof:
 https://github.com/milos-plavsic/continuum
 
+Verifier-gated Gemma, Veo, and Lyria proof:
+https://github.com/milos-plavsic/continuum/releases/tag/multimodal-proof-8bec862
+
 #AllThingsAgenticHackathon #GoogleCloud #Gemini #AgenticAI #AISafety

@@ -126,3 +126,4 @@ succession plans.
 
 - [Live read-only showcase](https://continuum-showcase-rdzvxiysbq-ew.a.run.app)
 - [Source, architecture, tests, and proof](https://github.com/milos-plavsic/continuum)
+- [Verifier-gated Gemma, Veo, and Lyria proof](https://github.com/milos-plavsic/continuum/releases/tag/multimodal-proof-8bec862)
