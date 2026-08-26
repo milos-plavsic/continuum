@@ -102,9 +102,17 @@ def _run_object(scope: CaptureScope, role: str, service: dict[str, Any],
     identity = template.get("serviceAccountName")
     if not isinstance(identity, str) or not identity:
         raise ValueError("service has no user-managed service identity")
+    service_name = service.get("metadata", {}).get("name")
+    revision_name = revision.get("metadata", {}).get("name")
+    if not isinstance(service_name, str) or not service_name:
+        raise ValueError("service name unavailable")
+    if not isinstance(revision_name, str) or not revision_name:
+        raise ValueError("ready revision name unavailable")
     return {
         "project_id": scope.project,
         "region": scope.region,
+        "service": service_name,
+        "revision": revision_name,
         "role": role,
         "ready": _ready(service),
         "service_account": identity,

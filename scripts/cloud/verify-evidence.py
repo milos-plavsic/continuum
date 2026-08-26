@@ -48,12 +48,27 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
 
     identities: set[str] = set()
     images: set[str] = set()
+    services: set[str] = set()
+    revisions: set[str] = set()
     for object_id, role in ROLES.items():
         value = objects[object_id]
         _same(value.get("project_id"), scope["project_id"], f"CLOUD_RUN_PROJECT_MISMATCH:{object_id}", errors)
         _same(value.get("region"), scope["region"], f"CLOUD_RUN_REGION_MISMATCH:{object_id}", errors)
         _same(value.get("role"), role, f"CLOUD_RUN_ROLE_MISMATCH:{object_id}", errors)
         _same(value.get("ready"), True, f"CLOUD_RUN_NOT_READY:{object_id}", errors)
+        service, revision = value.get("service"), value.get("revision")
+        if not isinstance(service, str) or not service:
+            errors.append(f"CLOUD_RUN_SERVICE_INVALID:{object_id}")
+        elif service in services:
+            errors.append("CLOUD_RUN_SERVICES_NOT_DISTINCT")
+        else:
+            services.add(service)
+        if not isinstance(revision, str) or not revision.startswith(f"{service}-"):
+            errors.append(f"CLOUD_RUN_REVISION_INVALID:{object_id}")
+        elif revision in revisions:
+            errors.append("CLOUD_RUN_REVISIONS_NOT_DISTINCT")
+        else:
+            revisions.add(revision)
         identity, digest = value.get("service_account"), value.get("image_digest")
         if not isinstance(identity, str) or not identity:
             errors.append(f"CLOUD_RUN_IDENTITY_INVALID:{object_id}")

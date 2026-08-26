@@ -30,6 +30,8 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
         build = {"git_commit": self.scope["git_commit"], "protocol": self.scope["protocol"]}
         run = lambda role, account: {"project_id": self.scope["project_id"],
                                      "region": self.scope["region"], "role": role,
+                                     "service": f"continuum-{role}",
+                                     "revision": f"continuum-{role}-00001-abc",
                                      "ready": True, "service_account": account,
                                      "image_digest": image, "build_info": build}
         contract_bundle = build_contract_bundle(self.directory / "contract-fixture")
