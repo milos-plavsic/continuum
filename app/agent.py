@@ -23,6 +23,15 @@ class EvidenceProposal(BaseModel):
     proposed_actions: list[Literal[
         "initiate_governed_succession", "request_operator_review"
     ]] = Field(min_length=1, max_length=1)
+    successor_choice: "SuccessorChoice"
+
+
+class SuccessorChoice(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    selected_candidate_id: str
+    candidate_evidence_refs: list[str] = Field(min_length=1)
+    rationale: str
+    objective: str
 
 
 root_agent = Agent(
@@ -40,7 +49,11 @@ Apply this deterministic recommendation table to the supplied event_type values:
 - for every other set, propose exactly request_operator_review.
 Return a structured proposal containing
 hypotheses, evidence_ids, unsupported_assumptions, risk, reversibility, and
-proposed_actions. Never claim to approve policy or execute an action. If cited
+proposed_actions. Also choose exactly one record from eligible_candidates. Optimize
+the supplied selection_objective, preferring the highest trust_score; copy that
+record's exact candidate_id and every evidence_refs value into successor_choice.
+Never invent a candidate or cite a candidate filtered out by the control plane.
+Never claim to approve policy or execute an action. If cited
 evidence is missing, fail closed and propose exactly request_operator_review.
 When and only when the correlated evidence supports controlled replacement,
 propose exactly initiate_governed_succession. These are the only action names.

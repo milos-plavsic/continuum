@@ -40,6 +40,7 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
             "cloud-run-control": run("control", "control@example.iam.gserviceaccount.com"),
             "cloud-run-v17": run("agent-v17", "v17@example.iam.gserviceaccount.com"),
             "cloud-run-v18": run("agent-v18", "v18@example.iam.gserviceaccount.com"),
+            "cloud-run-v19": run("agent-v19", "v19@example.iam.gserviceaccount.com"),
             "cloud-run-verifier": run("verifier", "verifier@example.iam.gserviceaccount.com"),
             "firestore-event": {"run_id": "run-001", "event_id": "evt-001"},
             "firestore-projection": {"run_id": "run-001", "last_event_id": "evt-001"},
@@ -52,7 +53,11 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
                             "model": "gemini-3.6-flash",
                             "service_account": "v18@example.iam.gserviceaccount.com",
                             "evidence_event_ids": ["evt-001"],
-                            "proposed_actions": ["initiate_governed_succession"]},
+                            "proposed_actions": ["initiate_governed_succession"],
+                            "selected_candidate_id": "v18",
+                            "candidate_evidence_refs": [
+                                "cloud-run:https://continuum-agent-v18-fixture",
+                                "identity:v18@example.iam.gserviceaccount.com"]},
             "trace-export": {"run_id": "run-001", "trace_id": "a" * 32,
                              "spans": [{"name": name} for name in
                                        ("continuum.missing_event_published",
@@ -123,6 +128,24 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
         result = verifier.verify(self.directory)
         self.assertEqual("FAIL", result["overall"])
         self.assertIn("VERTEX_MODEL_TOO_OLD", result["reason_codes"])
+
+    def test_selected_successor_must_bind_cloud_identity_and_contract(self):
+        objects = deepcopy(self.objects)
+        objects["vertex-call"]["candidate_evidence_refs"] = ["cloud-run:https://continuum-agent-v18"]
+        self.write_bundle(objects)
+        result = verifier.verify(self.directory)
+        self.assertEqual("FAIL", result["overall"])
+        self.assertIn("VERTEX_CANDIDATE_IDENTITY_UNPROVEN", result["reason_codes"])
+
+        objects = deepcopy(self.objects)
+        objects["vertex-call"]["selected_candidate_id"] = "v19"
+        objects["vertex-call"]["candidate_evidence_refs"] = [
+            "cloud-run:https://continuum-agent-v19-fixture",
+            "identity:v19@example.iam.gserviceaccount.com"]
+        self.write_bundle(objects)
+        result = verifier.verify(self.directory)
+        self.assertIn("CONTRACT_SELECTED_SUCCESSOR_MISMATCH", result["reason_codes"])
+        self.assertIn("CONTRACT_EXECUTING_SUCCESSOR_MISMATCH", result["reason_codes"])
 
     def test_content_mutation_fails_integrity(self):
         self.write_bundle()

@@ -8,7 +8,7 @@ from unittest.mock import patch
 from continuum.cloud_scenario_adapters import (
     AuthenticatedJsonClient, CloudTasksDeadlineScheduler, FirestoreAuthority, FirestoreLifecycleEvidence,
     FirestoreCompliance, FirestoreSandboxEffects, ObservedContractExporter, RemoteInvestigator,
-    RemoteVerifier, build_production_scenario_service, google_id_token,
+    RemoteVerifier, RoutedFirestoreSandboxEffects, build_production_scenario_service, google_id_token,
 )
 from continuum.cloud_gateway import FirestoreActionGateway
 from continuum.contract import canonical_bytes
@@ -199,7 +199,9 @@ class CloudAdapterCompleteTests(unittest.TestCase):
             def post(self, url, payload, *, run_id):
                 return {"actor": "v18@example", "proposal": {
                     "evidence_ids": ["e1"],
-                    "proposed_actions": ["initiate_governed_succession"]}}
+                    "proposed_actions": ["initiate_governed_succession"],
+                    "successor_choice": {"selected_candidate_id": "v18",
+                        "candidate_evidence_refs": ["build:v18", "health:v18"]}}}
         proposal = RemoteInvestigator(Client(), "https://v18").investigate({"run_id": "r"})
         self.assertEqual(proposal["evidence_ids"], ["e1"])
 
@@ -247,6 +249,20 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         effects.workload_client = InvalidWorkload()
         with self.assertRaisesRegex(ValueError, "ACTION_GATEWAY_RESULT_INVALID"):
             effects.execute(req)
+
+        routed_workload = Workload("v18@example")
+        routed = RoutedFirestoreSandboxEffects(db, routed_workload,
+                                               {"v18": ("https://v18", "v18@example")})
+        self.assertEqual(routed.execute({**req, "principal": "v18"})["state"], "DISPATCHED")
+        with self.assertRaisesRegex(ValueError, "SUCCESSOR_ROUTE_NOT_CONFIGURED"):
+            routed.execute({**req, "principal": "unknown"})
+        routed.routes["v18"] = ("https://v18", "other@example")
+        with self.assertRaisesRegex(ValueError, "SUCCESSOR_IDENTITY_MISMATCH"):
+            routed.execute({**req, "principal": "v18"})
+        routed.routes["v18"] = ("https://v18", "v18@example")
+        routed.workload_client = InvalidWorkload()
+        with self.assertRaisesRegex(ValueError, "ACTION_GATEWAY_RESULT_INVALID"):
+            routed.execute({**req, "principal": "v18"})
 
     def test_compliance_adapter_and_transactional_action_gateway(self):
         db = Firestore()
@@ -299,6 +315,13 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         run = {**request(), "predecessor": "v17", "predecessor_epoch": 41,
                "successor": "v18", "successor_epoch": 42,
                "deadline": "2026-08-26T10:05:00Z",
+               "candidate_assessment": {"requirements_digest": "req", "candidates_digest": "cand",
+                   "assessments": [], "eligible_ids": ["v18"], "receipt_digest": "selection"},
+               "context_reconstruction": {"succession_id": "r", "successor_principal": "v18",
+                   "purpose": "complete vendor onboarding", "allowed_scopes": ["vendor.approved"],
+                   "receipt_digest": "context", "decisions": [
+                       {"item_id": "obligation", "included": True, "reason_code": "AUTHORIZED_MINIMUM"},
+                       {"item_id": "raw", "included": False, "reason_code": "CLASS_RAW_UNTRUSTED_EXCLUDED"}]},
                "compliance": {"evidence_id": "e1", "document_hash": "doc"},
                "decision": {"outcome": "APPROVE_SUCCESSION", "decision_id": "d"},
                "provider_observation": {"effect_count": 1, "provider_ref": "firestore://vendor/1", "request_digest": "digest", "compliance_evidence_id": "e1"}}
@@ -339,11 +362,14 @@ class CloudAdapterCompleteTests(unittest.TestCase):
 
     def test_production_factory_builds_complete_graph(self):
         required = {"GOOGLE_CLOUD_PROJECT": "p", "CONTINUUM_V17_URL": "https://v17",
-                    "CONTINUUM_V18_URL": "https://v18", "CONTINUUM_VERIFIER_URL": "https://verifier",
+                    "CONTINUUM_V18_URL": "https://v18", "CONTINUUM_V19_URL": "https://v19",
+                    "CONTINUUM_VERIFIER_URL": "https://verifier",
                     "CONTINUUM_CONTROL_IDENTITY": "control@example", "CONTINUUM_V17_IDENTITY": "v17@example",
-                    "CONTINUUM_V18_IDENTITY": "v18@example", "CONTINUUM_VERIFIER_IDENTITY": "verifier@example",
+                    "CONTINUUM_V18_IDENTITY": "v18@example", "CONTINUUM_V19_IDENTITY": "v19@example",
+                    "CONTINUUM_VERIFIER_IDENTITY": "verifier@example",
                     "CONTINUUM_CONTROL_URL": "https://control", "CONTINUUM_DEADLINE_QUEUE": "q",
-                    "CONTINUUM_PUBSUB_PUSH_IDENTITY": "push@example", "CONTINUUM_REGION": "r"}
+                    "CONTINUUM_PUBSUB_PUSH_IDENTITY": "push@example", "CONTINUUM_REGION": "r",
+                    "CONTINUUM_IMAGE_DIGEST": "sha256:" + "1" * 64}
         db = Firestore()
         with patch.dict(os.environ, required, clear=True), \
              patch("google.cloud.firestore.Client", return_value=db), \
@@ -351,6 +377,9 @@ class CloudAdapterCompleteTests(unittest.TestCase):
              patch("continuum.cloud_scenario_adapters.PubSubLifecyclePublisher", return_value=Publisher()):
             service = build_production_scenario_service()
         self.assertIsNotNone(service); self.assertIs(service.store.client, db)
+        self.assertEqual("v18@example", service.successor_candidates[0].service_identity)
+        self.assertEqual("sha256:" + "1" * 64, service.successor_candidates[1].artifact_digest)
+        self.assertIn("https://v19", service.successor_candidates[1].evidence_refs[1])
 
 
 if __name__ == "__main__": unittest.main()

@@ -16,7 +16,7 @@ from continuum.contract import canonical_bytes
 from continuum.standard import verify_bundle
 
 MANDATORY = {
-    "cloud-run-control", "cloud-run-v17", "cloud-run-v18", "cloud-run-verifier",
+    "cloud-run-control", "cloud-run-v17", "cloud-run-v18", "cloud-run-v19", "cloud-run-verifier",
     "firestore-event", "firestore-projection", "firestore-outbox",
     "pubsub-publish", "pubsub-deliveries", "vertex-call", "trace-export",
     "contract-export",
@@ -24,7 +24,8 @@ MANDATORY = {
 BASE_NON_CLAIMS = {"third_party_interoperability", "universal_exactly_once",
                    "global_credential_revocation", "tamper_proof"}
 ROLES = {"cloud-run-control": "control", "cloud-run-v17": "agent-v17",
-         "cloud-run-v18": "agent-v18", "cloud-run-verifier": "verifier"}
+         "cloud-run-v18": "agent-v18", "cloud-run-v19": "agent-v19",
+         "cloud-run-verifier": "verifier"}
 IMAGE_DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 GIT_COMMIT = re.compile(r"^[0-9a-f]{7,64}$")
 
@@ -130,6 +131,21 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
         errors.append("VERTEX_EVIDENCE_CITATION_MISSING")
     if vertex.get("proposed_actions") != ["initiate_governed_succession"]:
         errors.append("VERTEX_REMEDIATION_NOT_ADMITTED")
+    selected = vertex.get("selected_candidate_id")
+    if selected not in {"v18", "v19"}:
+        errors.append("VERTEX_SUCCESSOR_CHOICE_INVALID")
+    candidate_refs = vertex.get("candidate_evidence_refs")
+    if not isinstance(candidate_refs, list) or not candidate_refs:
+        errors.append("VERTEX_CANDIDATE_CITATION_MISSING")
+    elif selected in {"v18", "v19"}:
+        selected_run = objects[f"cloud-run-{selected}"]
+        expected_identity_ref = f'identity:{selected_run.get("service_account")}'
+        expected_service_ref = f'cloud-run:https://continuum-{"agent-" if selected else ""}{selected}'
+        if expected_identity_ref not in candidate_refs:
+            errors.append("VERTEX_CANDIDATE_IDENTITY_UNPROVEN")
+        if not any(isinstance(ref, str) and ref.startswith(expected_service_ref)
+                   for ref in candidate_refs):
+            errors.append("VERTEX_CANDIDATE_SERVICE_UNPROVEN")
 
     trace = objects["trace-export"]
     _same(trace.get("trace_id"), scope["trace_id"], "TRACE_ID_MISMATCH", errors)
@@ -168,6 +184,18 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
                                     "value": sha256(canonical_bytes(cloud_bundle)).hexdigest()}
         if contract.get("report_digest") != expected_contract_digest:
             errors.append("CONTRACT_REPORT_DIGEST_MISMATCH")
+        artifacts = {artifact.get("artifact_type"): artifact
+                     for artifact in cloud_bundle.get("artifacts", []) if isinstance(artifact, dict)}
+        manifest = artifacts.get("succession_manifest", {}).get("body", {})
+        receipt = artifacts.get("execution_receipt", {}).get("body", {})
+        manifest_successor = manifest.get("successor", {}).get("principal_id")
+        executing_principal = receipt.get("executing_principal")
+        if selected in {"v18", "v19"}:
+            accepted_principals = {selected, f"urn:continuum:principal:acme:procurement:{selected}"}
+            if manifest_successor not in accepted_principals:
+                errors.append("CONTRACT_SELECTED_SUCCESSOR_MISMATCH")
+            if executing_principal not in accepted_principals:
+                errors.append("CONTRACT_EXECUTING_SUCCESSOR_MISMATCH")
     return sorted(set(errors))
 
 

@@ -35,3 +35,22 @@ context moved to a successor without duplicating the external effect.
 19. Every pushed release is continuously checked with the same locked quality gate used locally.
 20. Final judge-accessible evidence is sanitized, content-addressed, checksum-linked, and
     scoped to the exact submitted commit and deployed image.
+21. At least three successor candidates are visibly assessed; deterministic policy rejects
+    ineligible candidates with stable reason codes before Gemini can choose.
+22. Gemini selects and explains one candidate from the eligible set with citations, and a
+    malformed, unknown, ineligible, or uncited selection cannot advance succession.
+23. The successor receives a content-addressed reconstruction containing the live obligation
+    and authorized facts while raw injection, secrets, stale inference, and revoked memory
+    are explicitly excluded before retrieval.
+24. An external application can integrate through three cloud-neutral calls—register an
+    agent, record an obligation, and execute an idempotent effect—and run the same contract
+    locally without Google credentials.
+25. Every declared fault case executes a distinct fixture and records the observed safety
+    outcome, including an honest INCONCLUSIVE result where truth cannot be established.
+26. The first screen explains a quantified business obligation and the signature recovery
+    moment without requiring a judge to understand Pub/Sub, Firestore, IAM, or tracing.
+27. Optional witness aggregation accepts only independently identified verdicts over the
+    same bundle digest, exposes dissent, and never claims Byzantine consensus.
+28. A fresh deployed run proves dynamic candidate assessment, bounded Gemini selection,
+    context reconstruction, one external effect, predecessor fencing, and independent
+    verification in one correlated trace.

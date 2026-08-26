@@ -167,7 +167,7 @@ class CloudAppTests(unittest.TestCase):
             observed.update(payload=payload, identity=identity)
             return {"hypotheses": ["deadline missed"], "evidence_ids": ["e1"],
                     "unsupported_assumptions": [], "risk": "medium", "reversibility": "high",
-                    "proposed_actions": ["review"]}
+                    "proposed_actions": ["review"], "successor_choice": {}}
         agent = TestClient(create_cloud_app(role="agent-v18", investigator=investigate,
             identity_resolver=lambda: "v18@example.iam.gserviceaccount.com"))
         response = agent.post("/internal/investigate", json={"event_id": "e1", "actor": "forged"})
@@ -179,6 +179,7 @@ class CloudAppTests(unittest.TestCase):
         def investigate(payload, identity):
             return {"hypotheses": [], "evidence_ids": [], "unsupported_assumptions": [],
                     "risk": "low", "reversibility": "high", "proposed_actions": [],
+                    "successor_choice": {},
                     "policy_decision": "APPROVE"}
         agent = TestClient(create_cloud_app(role="agent-v18", investigator=investigate,
                                            identity_resolver=lambda: "v18@example.com"))

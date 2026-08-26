@@ -15,13 +15,19 @@ from typing import Any, Protocol
 
 from .contract import canonical_bytes
 from .cloud_orchestration import admit_remediation_plan
+from .context_reconstruction import ContextItem, reconstruct_context
+from .models import AgentStatus
 from .observability import lifecycle_span
+from .succession_selection import (
+    SuccessorCandidate, SuccessionRequirements, admit_successor_choice,
+    assess_candidates, model_candidate_view,
+)
 
 
 PHASES = (
     "CREATED", "WAITING_FOR_DEADLINE", "MISSING_EVENT_PUBLISHED",
     "INVESTIGATED", "AUTHORIZED", "PREDECESSOR_FENCED",
-    "SUCCESSOR_ACTIVE", "COMPLIANCE_VERIFIED", "EFFECT_OBSERVED",
+    "SUCCESSOR_ACTIVE", "CONTEXT_RECONSTRUCTED", "COMPLIANCE_VERIFIED", "EFFECT_OBSERVED",
     "CONTRACT_EXPORTED", "VERIFIED",
 )
 
@@ -83,11 +89,46 @@ class CanonicalCloudScenario:
     obligation_id: str = "vendor-compliance-042"
     predecessor: str = "v17"
     predecessor_epoch: int = 41
-    successor: str = "v18"
     successor_epoch: int = 42
     idempotency_key: str = "vendor-042:create:v1"
     vendor_id: str = "vendor-042"
     deadline_delay_seconds: int = 8
+
+
+def canonical_successor_candidates() -> tuple[SuccessorCandidate, ...]:
+    common = {
+        "tenant_id": "acme", "status": AgentStatus.REGISTERED,
+        "capabilities": ("vendor.create",), "memory_scopes": ("vendor.approved",),
+        "authority_domains": ("procurement",), "contract_profiles": ("continuity/1",),
+    }
+    return (
+        SuccessorCandidate("v18", "v18", artifact_digest="sha256:v18-release",
+            service_identity="continuum-agent-v18", jurisdictions=("EU",), health="HEALTHY",
+            trust_score=96, evidence_refs=("build:v18", "health:v18"), **common),
+        SuccessorCandidate("v19", "v19", artifact_digest="sha256:v19-release",
+            service_identity="continuum-agent-v19", jurisdictions=("EU",), health="HEALTHY",
+            trust_score=89, evidence_refs=("build:v19", "health:v19"), **common),
+        SuccessorCandidate("v20", "v20", artifact_digest="sha256:v20-release",
+            service_identity="continuum-agent-v20", jurisdictions=("US",), health="DEGRADED",
+            trust_score=98, evidence_refs=("build:v20", "health:v20"), **common),
+    )
+
+
+def canonical_context_items() -> tuple[ContextItem, ...]:
+    return (
+        ContextItem("obligation:vendor-compliance-042", "vendor.approved",
+                    "complete vendor onboarding", "sha256:obligation-042", "event:obligation-open"),
+        ContextItem("fact:verified-vendor-identity", "vendor.approved",
+                    "complete vendor onboarding", "sha256:vendor-identity", "event:identity-verified"),
+        ContextItem("raw:injected-document", "vendor.approved", "complete vendor onboarding",
+                    "sha256:raw-document", "event:injection", classification="RAW_UNTRUSTED"),
+        ContextItem("secret:predecessor-token", "agent.private", "complete vendor onboarding",
+                    "sha256:secret", "event:secret", classification="SECRET"),
+        ContextItem("inference:unverified-compliance", "vendor.approved", "complete vendor onboarding",
+                    "sha256:inference", "event:model-output", classification="MODEL_INFERENCE"),
+        ContextItem("memory:revoked-private-notes", "agent.private", "complete vendor onboarding",
+                    "sha256:revoked", "event:revocation", revoked=True),
+    )
 
 
 class DurableCloudScenarioService:
@@ -99,7 +140,9 @@ class DurableCloudScenarioService:
                  compliance: CompliancePort,
                  exporter: ContractExporterPort, verifier: IndependentVerifierPort,
                  scenario: CanonicalCloudScenario = CanonicalCloudScenario(),
-                 clock: Any | None = None, deadline_scheduler: DeadlineSchedulerPort | None = None):
+                 clock: Any | None = None, deadline_scheduler: DeadlineSchedulerPort | None = None,
+                 successor_candidates: tuple[SuccessorCandidate, ...] | None = None,
+                 context_items: tuple[ContextItem, ...] | None = None):
         self.store = store
         self.evidence = evidence
         self.investigator = investigator
@@ -111,6 +154,8 @@ class DurableCloudScenarioService:
         self.scenario = scenario
         self.clock = clock or (lambda: datetime.now(timezone.utc))
         self.deadline_scheduler = deadline_scheduler
+        self.successor_candidates = successor_candidates or canonical_successor_candidates()
+        self.context_items = context_items or canonical_context_items()
 
     def run(self, run_id: str) -> dict[str, Any]:
         """Compatibility helper: start, tick when due, then resume from the event."""
@@ -165,6 +210,11 @@ class DurableCloudScenarioService:
             "provider_observation": current.get("provider_observation"),
             "contract_bundle_digest": current.get("contract_bundle_digest"),
             "verification": current.get("verification"),
+            "selected_successor": current.get("successor"),
+            "candidate_assessment": current.get("candidate_assessment"),
+            "context_reconstruction": current.get("context_reconstruction"),
+            "business_impact": {"currency": "EUR", "value_at_risk": 250000,
+                                "obligation": "Compliant supplier onboarding"},
             "deadline": current.get("deadline"),
             "observation_count": len(self.store.observations(run_id)),
             "observations": self.store.observations(run_id),
@@ -176,7 +226,6 @@ class DurableCloudScenarioService:
             "obligation_id": self.scenario.obligation_id,
             "predecessor": self.scenario.predecessor,
             "predecessor_epoch": self.scenario.predecessor_epoch,
-            "successor": self.scenario.successor,
             "successor_epoch": self.scenario.successor_epoch,
             "idempotency_key": self.scenario.idempotency_key,
         }
@@ -239,9 +288,20 @@ class DurableCloudScenarioService:
             })
             if not isinstance(evidence, list) or any(not isinstance(item, dict) for item in evidence):
                 raise ValueError("LIFECYCLE_EVIDENCE_INVALID")
+            receipt = assess_candidates(self.successor_candidates, SuccessionRequirements(
+                tenant_id=current["tenant_id"],
+                predecessor_principal=current["predecessor"],
+                capability="vendor.create", memory_scope="vendor.approved",
+                authority_domain="procurement", jurisdiction="EU",
+                contract_profile="continuity/1", minimum_trust_score=80))
+            if not receipt.eligible_ids:
+                raise ValueError("NO_ELIGIBLE_SUCCESSOR")
             proposal = self.investigator.investigate({
                 "run_id": current["run_id"], "correlation_id": current["correlation_id"],
                 "obligation_id": current["obligation_id"], "evidence": evidence,
+                "selection_objective": "maximize verified assurance for EU procurement continuity",
+                "eligible_candidates": model_candidate_view(self.successor_candidates, receipt),
+                "candidate_assessment_receipt": receipt.to_dict(),
             })
             cited = set(proposal.get("evidence_ids", proposal.get("evidence_types", [])))
             required = {item["event_id"] if "event_id" in item else item["type"]
@@ -251,9 +311,18 @@ class DurableCloudScenarioService:
             selected_plan = admit_remediation_plan(proposal)
             if selected_plan != "initiate_governed_succession":
                 raise ValueError("INVESTIGATION_RECOMMENDS_HOLD")
-            observed = {"signals": evidence, "proposal": proposal, "selected_plan": selected_plan}
+            try:
+                successor = admit_successor_choice(proposal.get("successor_choice", {}), receipt)
+            except Exception as error:
+                raise ValueError(str(error)) from error
+            selected_record = next(item for item in self.successor_candidates
+                                   if item.principal_id == successor)
+            observed = {"signals": evidence, "proposal": proposal, "selected_plan": selected_plan,
+                        "candidate_assessment": receipt.to_dict(), "selected_successor": successor}
             return self._commit(current, "INVESTIGATED", {"investigation": proposal,
-                                "selected_plan": selected_plan},
+                                "selected_plan": selected_plan, "candidate_assessment": receipt.to_dict(),
+                                "successor": successor, "successor_version": selected_record.version,
+                                "successor_service_identity": selected_record.service_identity},
                                 "investigation.observed", observed)
 
         if phase == "INVESTIGATED":
@@ -289,6 +358,17 @@ class DurableCloudScenarioService:
                                 "successor.activation_observed", activation)
 
         if phase == "SUCCESSOR_ACTIVE":
+            receipt = reconstruct_context(
+                succession_id=current["run_id"], successor_principal=current["successor"],
+                purpose="complete vendor onboarding", allowed_scopes=("vendor.approved",),
+                items=self.context_items, now=self.clock())
+            if not receipt.included_item_ids or not receipt.excluded_item_ids:
+                raise ValueError("CONTEXT_RECONSTRUCTION_INCOMPLETE")
+            value = receipt.to_dict()
+            return self._commit(current, "CONTEXT_RECONSTRUCTED", {"context_reconstruction": value},
+                                "context.reconstruction_observed", value)
+
+        if phase == "CONTEXT_RECONSTRUCTED":
             compliance = self.compliance.verify({
                 "run_id": current["run_id"], "correlation_id": current["correlation_id"],
                 "tenant_id": current["tenant_id"], "obligation_id": current["obligation_id"],
@@ -346,6 +426,7 @@ class DurableCloudScenarioService:
             "principal": current["predecessor"] if operation != "activate" else current["successor"],
             "epoch": current["predecessor_epoch"] if operation != "activate" else current["successor_epoch"],
             "decision_id": current["decision"]["decision_id"], "operation": operation,
+            "candidate_assessment_digest": current.get("candidate_assessment", {}).get("receipt_digest"),
         }
 
     def _effect_request(self, current: dict[str, Any]) -> dict[str, Any]:
@@ -359,6 +440,7 @@ class DurableCloudScenarioService:
             "vendor_id": self.scenario.vendor_id,
             "compliance_evidence_id": current["compliance"]["evidence_id"],
             "compliance_document_hash": current["compliance"]["document_hash"],
+            "context_receipt_digest": current["context_reconstruction"]["receipt_digest"],
         }
         return {**request, "request_digest": sha256(canonical_bytes(request)).hexdigest()}
 

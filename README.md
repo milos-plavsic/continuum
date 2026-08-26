@@ -1,8 +1,9 @@
 # Continuum
 
-Continuum is a succession control plane for autonomous agents: when an agent
-silently fails or must be retired, its verified obligations move to a fenced
-successor without transferring untrusted memory or repeating side effects.
+Continuum is a vendor-neutral continuity layer for autonomous agents: when an
+agent silently fails or must be retired, its verified obligations move to an
+evidence-selected, fenced successor without transferring poisoned context or
+repeating side effects. **The agent failed. The organization’s promise did not.**
 
 The project is a new implementation for the 2026 All Things Agentic Hackathon.
 It targets **Fortified Enterprise Fleet**. Succession Protocol is the product;
@@ -13,10 +14,15 @@ verification are the minimum services required to prove one coherent lifecycle.
 
 1. Click once. Continuum persists a compliance obligation and schedules its real deadline.
 2. Cloud Tasks wakes the Sentinel; Pub/Sub deliberately redelivers the missing-event signal.
-3. Gemini 3.6 Flash, through Google ADK, cites live events and proposes one bounded remediation.
-4. Deterministic policy fences v17; its action and memory requests are denied.
-5. v18 obtains fresh compliance evidence and a transactional gateway creates one provider record.
-6. A read-only verifier directly reads authority, compliance and provider state, then alone issues artifact six: the continuity attestation.
+3. A deterministic gate assesses v18, v19 and v20 for health, capability,
+   jurisdiction, contract compatibility, scope and trust.
+4. Gemini 3.6 Flash, through Google ADK, cites live evidence and selects only
+   from the eligible set; deterministic policy validates but never delegates authority.
+5. v17 is fenced. The selected successor receives two purpose-bound verified
+   facts while raw injection, a secret, an unsupported inference and revoked memory are excluded.
+6. Fresh compliance evidence is acquired and one transactional provider effect
+   survives redelivery. A read-only verifier re-hashes the selection and context
+   receipts, reads provider state, and alone issues artifact six.
 
 Its portable boundary is the **Continuity Contract Profile 0.1-draft**: an open,
 vendor-neutral protocol proposal for obligations, authority grants, succession
@@ -29,11 +35,15 @@ standard and not yet a third-party interoperability claim.
 The repository contains a deterministic reference and a production-composed
 Google Cloud slice using private Cloud Run identities, Firestore transactions,
 Cloud Tasks, Pub/Sub redelivery, Google ADK with Gemini 3.6 Flash, and a
-read-only verifier. The current release has a fresh 12-object Google Cloud
+read-only verifier. The prior `501a80c` release has a fresh 12-object Google Cloud
 evidence bundle with an offline semantic `PASS`; Cloud Trace contains 63 real
 OpenTelemetry spans read through the owning API. Exact release identifiers and
 the validity boundary are recorded in [the cloud proof](docs/CLOUD_PROOF.md).
 Local success is never relabelled as cloud proof.
+
+This branch extends capture to 13 mandatory objects by adding the independently
+deployed v19 warm successor. Its cloud claims remain pending until the exact
+merged commit is deployed and a new bundle supersedes the prior proof.
 
 ## Run the reference scenario
 
@@ -76,7 +86,37 @@ uv run python scripts/release_gate.py
 ```
 
 The evaluation writes actual inputs, outcomes and digests for eight distinct
-signal combinations, five deterministic replays and every C0–C6 case.
+signal combinations, five deterministic replays, every C0–C6 case, and ten
+distinct fault injections. Unknown provider truth and verifier outage produce
+`INCONCLUSIVE_HOLD`; the project does not claim Byzantine consensus.
+
+## Integrate without migrating clouds
+
+The portable SDK imports no Google package. An application needs three calls:
+
+```python
+from continuum.sdk import ContinuumClient, InProcessContinuum
+
+continuum = ContinuumClient(InProcessContinuum(your_effect_adapter))
+continuum.register_agent(principal_id="agent:v2", tenant_id="acme",
+    capabilities=("vendor.create",), artifact_digest="sha256:release")
+continuum.record_obligation(obligation_id="vendor-042", tenant_id="acme",
+    owner_principal="agent:v2", required_evidence=("compliance.valid",),
+    value_at_risk={"currency": "EUR", "amount": 250000})
+continuum.execute_idempotent(obligation_id="vendor-042", principal_id="agent:v2",
+    capability="vendor.create", idempotency_key="vendor-042:create:v1",
+    payload={"vendor_id": "vendor-042"})
+```
+
+Run the complete non-GCP consumer with no credentials:
+
+```bash
+PYTHONPATH=src python3 examples/local_sdk_consumer.py
+```
+
+Google Cloud is the production reference binding and deployment proof—not an
+adoption prerequisite. HTTP, queue, or other cloud adapters can implement the
+same `ContinuumTransport` boundary and Continuity Contract.
 
 ## Run the incident cockpit
 

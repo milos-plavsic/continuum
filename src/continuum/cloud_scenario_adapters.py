@@ -17,7 +17,8 @@ from urllib.request import Request, urlopen
 from .cloud_scenario_service import DurableCloudScenarioService, FirestoreScenarioStore
 from .contract import artifact_ref, canonical_bytes, make_envelope
 from .google_binding import GoogleBindingConfig, PubSubLifecyclePublisher
-from .models import digest
+from .models import AgentStatus, digest
+from .succession_selection import SuccessorCandidate
 
 
 def _emit(run_id: str, object_id: str, payload: dict[str, Any]) -> None:
@@ -146,7 +147,9 @@ class RemoteInvestigator:
               "provider": "vertex-ai", "model": "gemini-3.6-flash",
               "service_account": response["actor"],
               "evidence_event_ids": proposal["evidence_ids"],
-              "proposed_actions": proposal["proposed_actions"]})
+              "proposed_actions": proposal["proposed_actions"],
+              "selected_candidate_id": proposal["successor_choice"]["selected_candidate_id"],
+              "candidate_evidence_refs": proposal["successor_choice"]["candidate_evidence_refs"]})
         return proposal
 
 
@@ -246,6 +249,27 @@ class FirestoreSandboxEffects:
                 "compliance_evidence_id": record["compliance_evidence_id"]}
 
 
+class RoutedFirestoreSandboxEffects(FirestoreSandboxEffects):
+    """Route the admitted logical principal to its distinct workload identity."""
+    def __init__(self, client: Any, workload_client: AuthenticatedJsonClient,
+                 routes: dict[str, tuple[str, str]]):
+        super().__init__(client, workload_client, "", "")
+        self.routes = dict(routes)
+
+    def execute(self, request: dict[str, Any]) -> dict[str, Any]:
+        route = self.routes.get(str(request.get("principal")))
+        if route is None:
+            raise ValueError("SUCCESSOR_ROUTE_NOT_CONFIGURED")
+        url, identity = route
+        observed = self.workload_client.post(f"{url}/internal/attempt-action", request,
+                                             run_id=request["run_id"])
+        if observed.get("actor") != identity:
+            raise ValueError("SUCCESSOR_IDENTITY_MISMATCH")
+        if observed.get("state") not in {"DISPATCHED", "DEDUPLICATED"}:
+            raise ValueError("ACTION_GATEWAY_RESULT_INVALID")
+        return observed
+
+
 class FirestoreCompliance:
     """Deterministic compliance provider fixture persisted independently of the run."""
     def __init__(self, client: Any): self.client = client
@@ -302,7 +326,7 @@ class ObservedContractExporter:
         decision = {"artifact_id": f"{base}:decision", "digest": {"alg": "sha-256", "value": sha256(canonical_bytes(run["decision"])).hexdigest()}, "policy_version": "compromise-succession/1", "outcome": "APPROVE_SUCCESSION"}
         obligation = make_envelope("obligation", f"{base}:obligation", self.issuer, at, {"tenant_id": run["tenant_id"], "subject": run["obligation_id"], "revision": 2, "owner": {"principal_id": run["successor"], "authority_domain": f"{base}:authority", "epoch": run["successor_epoch"]}, "description": "Onboard vendor only after independently observed compliance evidence", "deadline": run["deadline"], "completion_criteria": [{"criterion_id": "compliance-verified", "evidence_type": "compliance-provider-observation", "verifier_role": "independent-verifier"}, {"criterion_id": "provider-effect-once", "evidence_type": "provider-observation", "verifier_role": "independent-verifier"}], "allowed_effects": ["vendor.create"], "compensation": {"mode": "HUMAN"}, "status": "DISCHARGED"})
         grant = make_envelope("authority_grant", f"{base}:grant", self.issuer, at, {"tenant_id": run["tenant_id"], "grant_id": f'{run["run_id"]}:grant', "subject_principal": run["successor"], "authority_domain": f"{base}:authority", "epoch": run["successor_epoch"], "obligation_ids": [obligation["artifact_id"]], "capabilities": ["vendor.create"], "memory_scopes": ["vendor.approved"], "purpose": "complete vendor onboarding", "not_before": at, "expires_at": expires, "policy_decision": decision, "status": "ACTIVE"})
-        manifest = make_envelope("succession_manifest", f"{base}:manifest", self.issuer, at, {"succession_id": run["run_id"], "tenant_id": run["tenant_id"], "authority_domain": f"{base}:authority", "predecessor": {"principal_id": run["predecessor"], "epoch": run["predecessor_epoch"]}, "successor": {"principal_id": run["successor"], "epoch": run["successor_epoch"]}, "obligations": [artifact_ref(obligation)], "included_grants": [artifact_ref(grant)], "excluded_context": [{"reference_or_class": "raw_untrusted_document", "reason_code": "NON_TRANSFERABLE"}], "in_flight_effects": [], "evidence_refs": [{"observation": item["sequence"], "kind": item["kind"]} for item in observations], "policy_decision": decision, "created_from_registry_revision": run["successor_epoch"], "state": "COMMITTED"})
+        manifest = make_envelope("succession_manifest", f"{base}:manifest", self.issuer, at, {"succession_id": run["run_id"], "tenant_id": run["tenant_id"], "authority_domain": f"{base}:authority", "predecessor": {"principal_id": run["predecessor"], "epoch": run["predecessor_epoch"]}, "successor": {"principal_id": run["successor"], "epoch": run["successor_epoch"]}, "obligations": [artifact_ref(obligation)], "included_grants": [artifact_ref(grant)], "excluded_context": [{"reference_or_class": item["item_id"], "reason_code": item["reason_code"]} for item in run["context_reconstruction"]["decisions"] if not item["included"]], "in_flight_effects": [], "evidence_refs": [{"observation": item["sequence"], "kind": item["kind"]} for item in observations], "policy_decision": decision, "created_from_registry_revision": run["successor_epoch"], "state": "COMMITTED"}, extensions={"continuum.dev/successor-selection": run["candidate_assessment"], "continuum.dev/context-reconstruction": run["context_reconstruction"]})
         revocation = make_envelope("revocation_proof", f"{base}:revocation", self.issuer, at, {"tenant_id": run["tenant_id"], "authority_domain": f"{base}:authority", "revoked_principal": run["predecessor"], "revoked_through_epoch": run["predecessor_epoch"], "registry_revision": run["successor_epoch"], "effective_at": at, "revoked_grant_ids": [], "enforcement_points": [{"id": "action-gateway", "kind": "ACTION", "observation_ref": "predecessor.denials_observed"}, {"id": "memory-gateway", "kind": "MEMORY", "observation_ref": "predecessor.denials_observed"}], "policy_decision": decision, "status": "ENFORCED"})
         provider = run["provider_observation"]
         receipt = make_envelope("execution_receipt", f"{base}:receipt", self.issuer, at, {"tenant_id": run["tenant_id"], "obligation": artifact_ref(obligation), "executing_principal": run["successor"], "authority_domain": f"{base}:authority", "epoch": run["successor_epoch"], "decision": decision, "idempotency_key": run["idempotency_key"], "request_digest": provider["request_digest"], "execution_id": run["run_id"], "provider": {"adapter": "firestore-sandbox/1", "operation": "vendor.create", "resource_ref": provider["provider_ref"]}, "disposition": "EXECUTED", "observed_at": at}, extensions={"continuum.dev/compliance": {"evidence_id": run["compliance"]["evidence_id"], "obligation_id": run["obligation_id"], "document_hash": run["compliance"]["document_hash"]}})
@@ -333,9 +357,9 @@ def google_id_token(audience: str) -> str:
 
 def build_production_scenario_service() -> DurableCloudScenarioService | None:
     required = {name: os.getenv(name, "") for name in (
-        "GOOGLE_CLOUD_PROJECT", "CONTINUUM_V17_URL", "CONTINUUM_V18_URL", "CONTINUUM_VERIFIER_URL",
-        "CONTINUUM_CONTROL_IDENTITY", "CONTINUUM_V17_IDENTITY", "CONTINUUM_V18_IDENTITY",
-        "CONTINUUM_VERIFIER_IDENTITY", "CONTINUUM_CONTROL_URL",
+        "GOOGLE_CLOUD_PROJECT", "CONTINUUM_V17_URL", "CONTINUUM_V18_URL", "CONTINUUM_V19_URL", "CONTINUUM_VERIFIER_URL",
+        "CONTINUUM_CONTROL_IDENTITY", "CONTINUUM_V17_IDENTITY", "CONTINUUM_V18_IDENTITY", "CONTINUUM_V19_IDENTITY",
+        "CONTINUUM_VERIFIER_IDENTITY", "CONTINUUM_CONTROL_URL", "CONTINUUM_IMAGE_DIGEST",
         "CONTINUUM_DEADLINE_QUEUE", "CONTINUUM_PUBSUB_PUSH_IDENTITY")}
     if any(not value for value in required.values()): return None
     from google.cloud import firestore
@@ -344,6 +368,30 @@ def build_production_scenario_service() -> DurableCloudScenarioService | None:
     http = AuthenticatedJsonClient(google_id_token)
     publisher = PubSubLifecyclePublisher(GoogleBindingConfig(
         required["GOOGLE_CLOUD_PROJECT"], os.getenv("CONTINUUM_LIFECYCLE_TOPIC", "continuum-lifecycle")))
+    common = {
+        "tenant_id": "acme", "status": AgentStatus.REGISTERED,
+        "capabilities": ("vendor.create",), "memory_scopes": ("vendor.approved",),
+        "authority_domains": ("procurement",), "contract_profiles": ("continuity/1",),
+    }
+    deployed_candidates = (
+        SuccessorCandidate("v18", "v18", artifact_digest=required["CONTINUUM_IMAGE_DIGEST"],
+            service_identity=required["CONTINUUM_V18_IDENTITY"], jurisdictions=("EU",),
+            health="HEALTHY", trust_score=96,
+            evidence_refs=(f'image:{required["CONTINUUM_IMAGE_DIGEST"]}',
+                           f'cloud-run:{required["CONTINUUM_V18_URL"]}',
+                           f'identity:{required["CONTINUUM_V18_IDENTITY"]}'), **common),
+        SuccessorCandidate("v19", "v19", artifact_digest=required["CONTINUUM_IMAGE_DIGEST"],
+            service_identity=required["CONTINUUM_V19_IDENTITY"], jurisdictions=("EU",),
+            health="HEALTHY", trust_score=89,
+            evidence_refs=(f'image:{required["CONTINUUM_IMAGE_DIGEST"]}',
+                           f'cloud-run:{required["CONTINUUM_V19_URL"]}',
+                           f'identity:{required["CONTINUUM_V19_IDENTITY"]}'), **common),
+        # An explicit negative control proves that the deterministic gate, rather than
+        # prompt wording, excludes an otherwise high-scoring but inadmissible agent.
+        SuccessorCandidate("v20", "v20", artifact_digest="sha256:" + "0" * 64,
+            service_identity="not-deployed", jurisdictions=("US",), health="DEGRADED",
+            trust_score=98, evidence_refs=("registry:v20",), **common),
+    )
     return DurableCloudScenarioService(
         store=FirestoreScenarioStore(db), evidence=FirestoreLifecycleEvidence(db, publisher),
         deadline_scheduler=CloudTasksDeadlineScheduler(tasks_v2.CloudTasksClient(),
@@ -354,7 +402,10 @@ def build_production_scenario_service() -> DurableCloudScenarioService | None:
         authority=FirestoreAuthority(db, http, required["CONTINUUM_V17_URL"],
                                      required["CONTINUUM_V17_IDENTITY"]),
         compliance=FirestoreCompliance(db),
-        effects=FirestoreSandboxEffects(db, http, required["CONTINUUM_V18_URL"],
-                                       required["CONTINUUM_V18_IDENTITY"]),
+        effects=RoutedFirestoreSandboxEffects(db, http, {
+            "v18": (required["CONTINUUM_V18_URL"], required["CONTINUUM_V18_IDENTITY"]),
+            "v19": (required["CONTINUUM_V19_URL"], required["CONTINUUM_V19_IDENTITY"]),
+        }),
         exporter=ObservedContractExporter(f'mailto:{required["CONTINUUM_CONTROL_IDENTITY"]}', f'mailto:{required["CONTINUUM_VERIFIER_IDENTITY"]}'),
-        verifier=RemoteVerifier(http, required["CONTINUUM_VERIFIER_URL"], required["CONTINUUM_VERIFIER_IDENTITY"]))
+        verifier=RemoteVerifier(http, required["CONTINUUM_VERIFIER_URL"], required["CONTINUUM_VERIFIER_IDENTITY"]),
+        successor_candidates=deployed_candidates)

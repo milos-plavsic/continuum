@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from continuum.contract import artifact_digest
+from continuum.models import digest
 from continuum.standard import build_contract_bundle
 from continuum.verification import IndependentVerificationEngine
 from continuum.verification import FirestoreVerificationReader
@@ -39,6 +40,22 @@ def pre_bundle():
         "document_hash": "sha256:compliance-document",
     }}
     receipt["digest"] = {"alg": "sha-256", "value": artifact_digest(receipt)}
+    manifest = next(item for item in bundle["artifacts"] if item["artifact_type"] == "succession_manifest")
+    selection = {"requirements_digest": "requirements", "candidates_digest": "candidates",
+                 "assessments": [{"candidate_id": manifest["body"]["successor"]["principal_id"],
+                                   "eligible": True}]}
+    selection["receipt_digest"] = digest({"requirements": selection["requirements_digest"],
+                                           "candidates": selection["candidates_digest"],
+                                           "assessments": selection["assessments"]})
+    reconstruction = {"succession_id": "s", "successor_principal": manifest["body"]["successor"]["principal_id"],
+                      "purpose": "p", "allowed_scopes": ["vendor.approved"],
+                      "decisions": [{"item_id": "obligation", "included": True},
+                                    {"item_id": "raw", "included": False}]}
+    reconstruction["receipt_digest"] = digest({key: reconstruction[key] for key in (
+        "succession_id", "successor_principal", "purpose", "allowed_scopes", "decisions")})
+    manifest["extensions"] = {"continuum.dev/successor-selection": selection,
+                              "continuum.dev/context-reconstruction": reconstruction}
+    manifest["digest"] = {"alg": "sha-256", "value": artifact_digest(manifest)}
     return bundle
 
 
@@ -115,6 +132,28 @@ class IndependentVerificationEngineTests(unittest.TestCase):
         self.assertIn("BROKEN_ARTIFACT_REFERENCE", engine.verify(run_id="r", bundle=broken,
             verifier_principal="urn:v")["reason_codes"])
         self.assertEqual(engine._reason(Exception("!"), "FALLBACK"), "FALLBACK")
+
+        valid_manifest = next(a for a in bundle["artifacts"] if a["artifact_type"] == "succession_manifest")
+        mutations = []
+        missing = deepcopy(valid_manifest); missing["extensions"] = {}; mutations.append((missing, "HANDOFF_EVIDENCE_MISSING"))
+        bad_selection = deepcopy(valid_manifest); bad_selection["extensions"]["continuum.dev/successor-selection"]["receipt_digest"] = "bad"; mutations.append((bad_selection, "SUCCESSOR_ASSESSMENT_DIGEST_MISMATCH"))
+        bad_context = deepcopy(valid_manifest); bad_context["extensions"]["continuum.dev/context-reconstruction"]["receipt_digest"] = "bad"; mutations.append((bad_context, "CONTEXT_RECONSTRUCTION_DIGEST_MISMATCH"))
+        wrong_successor = deepcopy(valid_manifest)
+        context = wrong_successor["extensions"]["continuum.dev/context-reconstruction"]
+        context["successor_principal"] = "urn:other"
+        context["receipt_digest"] = digest({key: context[key] for key in (
+            "succession_id", "successor_principal", "purpose", "allowed_scopes", "decisions")})
+        mutations.append((wrong_successor, "CONTEXT_SUCCESSOR_MISMATCH"))
+        for decisions in ("bad", [{"included": True}], [{"included": False}]):
+            incomplete = deepcopy(valid_manifest)
+            context = incomplete["extensions"]["continuum.dev/context-reconstruction"]
+            context["decisions"] = decisions
+            context["receipt_digest"] = digest({key: context[key] for key in (
+                "succession_id", "successor_principal", "purpose", "allowed_scopes", "decisions")})
+            mutations.append((incomplete, "CONTEXT_DECISIONS_INCOMPLETE"))
+        for changed, code in mutations:
+            with self.subTest(code=code), self.assertRaisesRegex(Exception, code):
+                engine._validate_handoff_extensions(changed)
 
         indexed = engine._validate_pre_attestation_bundle(bundle)
         variants = [

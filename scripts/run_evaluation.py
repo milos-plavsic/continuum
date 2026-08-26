@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from continuum.scenario import run_scenario
 from continuum.conformance import run_conformance
 from continuum.models import digest
+from continuum.resilience import run_resilience_lab
 
 OUTPUT = ROOT / "artifacts" / "evaluation"
 if OUTPUT.exists():
@@ -37,6 +38,8 @@ replays = [run_scenario(OUTPUT / f"replay-{number}") for number in range(5)]
 baseline = [(item["manifest_hash"], item["timeline"]) for item in replays]
 divergences = sum(value != baseline[0] for value in baseline)
 conformance = run_conformance(OUTPUT / "conformance")
+resilience = run_resilience_lab()
+(OUTPUT / "resilience.json").write_text(json.dumps(resilience, indent=2) + "\n")
 executed_cases = [
     {"case": case["id"], "level": case["level"], "assertion": case["assertion"],
      "outcome": case["status"], "result_digest": case["evidence_sha256"]}
@@ -58,6 +61,7 @@ report = {
         "benign_silence_quarantines": int(silence["outcome"] != "INVESTIGATE_HOLD"),
         "replay_divergences": divergences,
         "event_integrity": canonical["events_valid"],
+        "resilience_lab": resilience,
     },
     "pending_external_evidence": [
         "live Gemini schema-valid and citation-grounding rates",

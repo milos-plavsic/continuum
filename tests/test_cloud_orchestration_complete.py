@@ -13,6 +13,7 @@ from continuum.cloud_orchestration import (
 )
 from continuum.standard import build_contract_bundle
 from continuum.contract import artifact_digest
+from continuum.models import digest
 from tests.test_verification_engine import Reader, observations
 
 
@@ -42,7 +43,8 @@ class CloudOrchestrationCompleteTests(unittest.TestCase):
 
     def test_investigation_validation_and_canonical_request(self):
         complete = {"hypotheses": [], "evidence_ids": [], "unsupported_assumptions": [],
-                    "risk": "low", "reversibility": "high", "proposed_actions": []}
+                    "risk": "low", "reversibility": "high", "proposed_actions": [],
+                    "successor_choice": {}}
         self.assertIs(validate_investigation(complete), complete)
         for invalid, code in [({}, "INVESTIGATION_RESULT_INVALID"),
                               ({**complete, "evidence_ids": "bad"}, "INVESTIGATION_RESULT_INVALID"),
@@ -79,7 +81,8 @@ class CloudOrchestrationCompleteTests(unittest.TestCase):
 
     def test_live_adk_investigator_success_and_all_response_failures(self):
         valid = json.dumps({"hypotheses": [], "evidence_ids": [], "unsupported_assumptions": [],
-                            "risk": "low", "reversibility": "high", "proposed_actions": []})
+                            "risk": "low", "reversibility": "high", "proposed_actions": [],
+                            "successor_choice": {}})
         cases = [
             ([(False, "ignored", True), (True, valid, True)], None),
             ([], "INVESTIGATION_RESULT_MISSING"),
@@ -106,6 +109,20 @@ class CloudOrchestrationCompleteTests(unittest.TestCase):
         receipt["extensions"] = {"continuum.dev/compliance": {"evidence_id": "compliance-1",
             "obligation_id": "obl-1", "document_hash": "sha256:compliance-document"}}
         receipt["digest"] = {"alg": "sha-256", "value": artifact_digest(receipt)}
+        manifest = next(a for a in bundle["artifacts"] if a["artifact_type"] == "succession_manifest")
+        selection = {"requirements_digest": "req", "candidates_digest": "cand",
+                     "assessments": [{"candidate_id": manifest["body"]["successor"]["principal_id"],
+                                       "eligible": True}]}
+        selection["receipt_digest"] = digest({"requirements": "req", "candidates": "cand",
+                                               "assessments": selection["assessments"]})
+        reconstruction = {"succession_id": "s",
+            "successor_principal": manifest["body"]["successor"]["principal_id"],
+            "purpose": "p", "allowed_scopes": ["vendor.approved"],
+            "decisions": [{"included": True}, {"included": False}]}
+        reconstruction["receipt_digest"] = digest(reconstruction)
+        manifest["extensions"] = {"continuum.dev/successor-selection": selection,
+                                  "continuum.dev/context-reconstruction": reconstruction}
+        manifest["digest"] = {"alg": "sha-256", "value": artifact_digest(manifest)}
         state = observations(bundle)
         with self.assertRaisesRegex(ValueError, "RUN_ID_REQUIRED"):
             independent_contract_verifier({"bundle": bundle}, "verifier@example.com", Reader(**state))

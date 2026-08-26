@@ -169,3 +169,56 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   What to build: Deploy exact final commit, run the one-touch scenario, capture owned evidence, publish a sanitized bundle, and freeze the four-minute narrative.
   Acceptance: source, image, services, run, bundle, CI and judge links all agree and independently verify.
   Verify: live unedited rehearsal, offline PASS, green required CI, and clean Git state.
+
+## Golden-standard extension — autonomous
+
+- [x] **33. Implement bounded successor discovery and eligibility**
+  Spec ref: `spec.md > Golden-standard extension`
+  What to build: Immutable candidate records, deterministic assessment receipt, stable fail-closed rejection reasons, and registry integration.
+  Acceptance: Multiple candidates are assessed and only compatible, authorized, healthy candidates can reach model selection.
+  Verify: Candidate permutation, rejection, mutation, and empty-set tests.
+- [x] **34. Make Gemini choose the successor causally**
+  Spec ref: `spec.md > Golden-standard extension`
+  What to build: Typed candidate choice, bounded prompt, citation validation, policy admission, HOLD paths, and cloud lifecycle wiring.
+  Acceptance: A valid Gemini choice changes the activated principal; unknown, rejected, malformed, or uncited choices cannot mutate state.
+  Verify: Model ablation, adversarial output, scenario, and API tests.
+- [x] **35. Prove minimum authorized context reconstruction**
+  Spec ref: `spec.md > Golden-standard extension`
+  What to build: Purpose/freshness/trust/scope filters, inclusion/exclusion receipt, digests, manifest linkage, and verifier checks.
+  Acceptance: The successor gets enough verified state to resume while poisoned, revoked, secret, stale, and unrelated context never crosses the boundary.
+  Verify: Context classification, tamper, omission, and end-to-end verification tests.
+- [x] **36. Ship the migration-free SDK and local consumer**
+  Spec ref: `spec.md > Golden-standard extension`
+  What to build: Three-call vendor-neutral SDK, in-process adapter, local consumer example, and portable contract export.
+  Acceptance: The example completes without Google packages or credentials and emits independently verifiable artifacts.
+  Verify: Isolated import, example subprocess, idempotency, and contract verification tests.
+- [x] **37. Expand the resilience and ambiguity lab**
+  Spec ref: `spec.md > Golden-standard extension`
+  What to build: Distinct crash, retry, delayed/stale message, competing successor, invalid citation, unknown effect, verifier outage/disagreement, and partition fixtures.
+  Acceptance: Every case has a unique input digest and a measured safe result; unknown truth is INCONCLUSIVE.
+  Verify: Regenerated evaluation report and digest/coverage audit.
+- [x] **38. Add optional independent witness aggregation**
+  Spec ref: `spec.md > Golden-standard extension`
+  What to build: Same-bundle verifier verdict aggregation, principal uniqueness, threshold rules, dissent evidence, and explicit non-consensus language.
+  Acceptance: Duplicate identities, mixed bundles, insufficient quorum, and dissent fail or remain inconclusive as specified.
+  Verify: Quorum truth-table and signature-boundary tests.
+- [x] **39. Rebuild the cockpit around business impact**
+  Spec ref: `spec.md > Golden-standard extension`
+  What to build: Obligation-at-risk, succession-decision, and continuity-proof panels with quantified value and infrastructure drill-down.
+  Acceptance: A judge can explain the problem, autonomous decision, transferred context, and verified outcome after a 60-second path.
+  Verify: Browser/API smoke, accessibility checks, and narrative audit.
+- [x] **40. Publish polished architecture and adoption proof**
+  Spec ref: `spec.md > Golden-standard extension`
+  What to build: Clean source-controlled architecture diagram, SDK quickstart, threat/guarantee matrix, claims map, provenance, and four-minute story.
+  Acceptance: GCP is visibly the reference deployment rather than an adoption prerequisite; every headline claim points to executable evidence.
+  Verify: Diagram render, link checker, release gate, and originality audit.
+- [x] **41. Pass exhaustive release verification**
+  Spec ref: `prd.md > Acceptance outcomes`
+  What to build: Complete tests for new behavior while preserving genuine 100% statement/branch coverage and every existing CI gate.
+  Acceptance: Quality, conformance, security, container, local runtime, and release checks all pass from a clean checkout.
+  Verify: Locked quality workflow and reproducible image build.
+- [ ] **42. Merge, deploy, and capture the golden run**
+  Spec ref: `prd.md > Acceptance outcomes`
+  What to build: Protected-branch PR, green CI merge, exact-commit Cloud Run deployment, fresh canonical run, sanitized bundle, and demo rehearsal.
+  Acceptance: Commit, image, candidate decision, context receipt, effect, identities, logs/traces, independent verdict, and published checksums all agree.
+  Verify: Required GitHub checks, offline PASS, live unedited rehearsal, and clean main.

@@ -28,7 +28,7 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
 
     def test_invocation_graph_is_push_to_control_and_control_to_workers(self):
         self.assertIn('write_invoker_policy "$policy_dir/control.yaml" "serviceAccount:$push_identity" "$CONTINUUM_OPERATOR_MEMBER"', self.deploy)
-        for role in ("agent-v17", "agent-v18", "verifier"):
+        for role in ("agent-v17", "agent-v18", "agent-v19", "verifier"):
             self.assertIn(f'write_invoker_policy "$policy_dir/{role}.yaml" "serviceAccount:$control_identity"', self.deploy)
 
     def test_runtime_iam_separates_control_agents_and_verifier(self):
@@ -40,14 +40,16 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertNotIn('serviceAccount:$verifier" --role roles/aiplatform.user', self.bootstrap)
         self.assertNotIn('continuum-v17@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" --role', self.bootstrap)
         self.assertIn('continuum-v18@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com', self.bootstrap)
+        self.assertIn('continuum-v19@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com', self.bootstrap)
 
     def test_deployment_carries_immutable_and_observability_metadata(self):
         for name in ("GIT_SHA", "CONTINUUM_IMAGE_DIGEST", "CONTINUUM_DEPLOYMENT_ID",
                      "CONTINUUM_PROTOCOL", "OTEL_SERVICE_NAME", "CONTINUUM_OBSERVABILITY_ENABLED",
                      "GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_LOCATION", "GOOGLE_GENAI_USE_VERTEXAI",
-                     "CONTINUUM_V17_URL", "CONTINUUM_V18_URL", "CONTINUUM_VERIFIER_URL", "CONTINUUM_CONTROL_IDENTITY",
+                     "CONTINUUM_V17_URL", "CONTINUUM_V18_URL", "CONTINUUM_V19_URL", "CONTINUUM_VERIFIER_URL", "CONTINUUM_CONTROL_IDENTITY",
                      "CONTINUUM_V17_IDENTITY",
                      "CONTINUUM_V18_IDENTITY",
+                     "CONTINUUM_V19_IDENTITY",
                      "CONTINUUM_VERIFIER_IDENTITY"):
             self.assertIn(name, self.deploy)
         self.assertIn('image_ref="${image_tag%:*}@$digest"', self.deploy)

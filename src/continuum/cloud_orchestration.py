@@ -49,9 +49,10 @@ async def invoke(adapter: Investigator | Verifier, payload: dict[str, Any],
 def validate_investigation(result: dict[str, Any]) -> dict[str, Any]:
     """Keep model output non-authoritative and evidence-cited."""
     required = {"hypotheses", "evidence_ids", "unsupported_assumptions", "risk",
-                "reversibility", "proposed_actions"}
+                "reversibility", "proposed_actions", "successor_choice"}
     if (not required.issubset(result) or not isinstance(result["evidence_ids"], list)
-            or not isinstance(result["proposed_actions"], list)):
+            or not isinstance(result["proposed_actions"], list)
+            or not isinstance(result["successor_choice"], dict)):
         raise ValueError("INVESTIGATION_RESULT_INVALID")
     forbidden = {"policy_decision", "authority_grant", "execution_receipt"}
     if forbidden.intersection(result):

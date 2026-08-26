@@ -16,6 +16,7 @@ topic="${CONTINUUM_LIFECYCLE_TOPIC:-continuum-lifecycle}"
 control_service="${CONTINUUM_CONTROL_SERVICE:-continuum-control}"
 v17_service="${CONTINUUM_V17_SERVICE:-continuum-agent-v17}"
 v18_service="${CONTINUUM_V18_SERVICE:-continuum-agent-v18}"
+v19_service="${CONTINUUM_V19_SERVICE:-continuum-agent-v19}"
 verifier_service="${CONTINUUM_VERIFIER_SERVICE:-continuum-verifier}"
 subscription="${CONTINUUM_PUSH_SUBSCRIPTION:-continuum-control-push}"
 image_tag="$CONTINUUM_REGION-docker.pkg.dev/$CONTINUUM_PROJECT_ID/$repository/$image:$CONTINUUM_GIT_SHA"
@@ -42,16 +43,19 @@ deploy_role() {
 deploy_role "$control_service" continuum-control control
 deploy_role "$v17_service" continuum-v17 agent-v17
 deploy_role "$v18_service" continuum-v18 agent-v18
+deploy_role "$v19_service" continuum-v19 agent-v19
 deploy_role "$verifier_service" continuum-verifier verifier
 
 control_url="$(gcloud run services describe "$control_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" --format='value(status.url)')"
 v17_url="$(gcloud run services describe "$v17_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" --format='value(status.url)')"
 v18_url="$(gcloud run services describe "$v18_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" --format='value(status.url)')"
+v19_url="$(gcloud run services describe "$v19_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" --format='value(status.url)')"
 verifier_url="$(gcloud run services describe "$verifier_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" --format='value(status.url)')"
 push_identity="continuum-pubsub-push@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
 control_identity="continuum-control@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
 v17_identity="continuum-v17@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
 v18_identity="continuum-v18@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
+v19_identity="continuum-v19@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
 verifier_identity="continuum-verifier@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
 
 # Replace, rather than append to, each service invocation policy. This prevents
@@ -69,11 +73,13 @@ write_invoker_policy() {
 write_invoker_policy "$policy_dir/control.yaml" "serviceAccount:$push_identity" "$CONTINUUM_OPERATOR_MEMBER"
 write_invoker_policy "$policy_dir/agent-v17.yaml" "serviceAccount:$control_identity"
 write_invoker_policy "$policy_dir/agent-v18.yaml" "serviceAccount:$control_identity"
+write_invoker_policy "$policy_dir/agent-v19.yaml" "serviceAccount:$control_identity"
 write_invoker_policy "$policy_dir/verifier.yaml" "serviceAccount:$control_identity"
 for binding in \
   "$control_service:$policy_dir/control.yaml" \
   "$v17_service:$policy_dir/agent-v17.yaml" \
   "$v18_service:$policy_dir/agent-v18.yaml" \
+  "$v19_service:$policy_dir/agent-v19.yaml" \
   "$verifier_service:$policy_dir/verifier.yaml"; do
   service="${binding%%:*}"
   policy="${binding#*:}"
@@ -82,10 +88,12 @@ for binding in \
 done
 
 full_subscription="projects/$CONTINUUM_PROJECT_ID/subscriptions/$subscription"
-common_env="GOOGLE_CLOUD_PROJECT=$CONTINUUM_PROJECT_ID,CONTINUUM_REGION=$CONTINUUM_REGION,CONTINUUM_CONTROL_URL=$control_url,CONTINUUM_CONTROL_AUDIENCE=$control_url,CONTINUUM_DEADLINE_QUEUE=${CONTINUUM_DEADLINE_QUEUE:-continuum-deadlines},CONTINUUM_PUBSUB_PUSH_IDENTITY=$push_identity,CONTINUUM_PUSH_SUBSCRIPTION=$full_subscription,CONTINUUM_FORCE_REDELIVERY=1,CONTINUUM_V17_URL=$v17_url,CONTINUUM_V18_URL=$v18_url,CONTINUUM_VERIFIER_URL=$verifier_url,CONTINUUM_CONTROL_IDENTITY=$control_identity,CONTINUUM_V17_IDENTITY=$v17_identity,CONTINUUM_V18_IDENTITY=$v18_identity,CONTINUUM_VERIFIER_IDENTITY=$verifier_identity"
+common_env="GOOGLE_CLOUD_PROJECT=$CONTINUUM_PROJECT_ID,CONTINUUM_REGION=$CONTINUUM_REGION,CONTINUUM_CONTROL_URL=$control_url,CONTINUUM_CONTROL_AUDIENCE=$control_url,CONTINUUM_DEADLINE_QUEUE=${CONTINUUM_DEADLINE_QUEUE:-continuum-deadlines},CONTINUUM_PUBSUB_PUSH_IDENTITY=$push_identity,CONTINUUM_PUSH_SUBSCRIPTION=$full_subscription,CONTINUUM_FORCE_REDELIVERY=1,CONTINUUM_V17_URL=$v17_url,CONTINUUM_V18_URL=$v18_url,CONTINUUM_V19_URL=$v19_url,CONTINUUM_VERIFIER_URL=$verifier_url,CONTINUUM_CONTROL_IDENTITY=$control_identity,CONTINUUM_V17_IDENTITY=$v17_identity,CONTINUUM_V18_IDENTITY=$v18_identity,CONTINUUM_V19_IDENTITY=$v19_identity,CONTINUUM_VERIFIER_IDENTITY=$verifier_identity"
 gcloud run services update "$control_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" --update-env-vars "$common_env" >/dev/null
 gcloud run services update "$v18_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" \
   --update-env-vars "CONTINUUM_V18_IDENTITY=$v18_identity" >/dev/null
+gcloud run services update "$v19_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" \
+  --update-env-vars "CONTINUUM_V19_IDENTITY=$v19_identity" >/dev/null
 
 if gcloud pubsub subscriptions describe "$subscription" --project "$CONTINUUM_PROJECT_ID" >/dev/null 2>&1; then
   gcloud pubsub subscriptions update "$subscription" --project "$CONTINUUM_PROJECT_ID" \

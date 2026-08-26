@@ -16,6 +16,7 @@ uv run --extra google python scripts/cloud/collect_evidence.py "$capture_dir" \
   --control-service "${CONTINUUM_CONTROL_SERVICE:-continuum-control}" \
   --v17-service "${CONTINUUM_V17_SERVICE:-continuum-agent-v17}" \
   --v18-service "${CONTINUUM_V18_SERVICE:-continuum-agent-v18}" \
+  --v19-service "${CONTINUUM_V19_SERVICE:-continuum-agent-v19}" \
   --verifier-service "${CONTINUUM_VERIFIER_SERVICE:-continuum-verifier}"
 
 python3 scripts/cloud/package-evidence.py "$capture_dir" "$CONTINUUM_EVIDENCE_DIR" \

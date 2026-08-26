@@ -71,3 +71,32 @@ require separate evidence.
 - CI runs locked tests, genuine 100% line/branch coverage, conformance, release
   audit, compile/shell checks, secret scanning, and a container build on every PR
   and push to main. Branch protection can require the resulting check.
+
+## Golden-standard extension
+
+- The registry exposes immutable `SuccessorCandidate` records with workload identity,
+  artifact digest, capabilities, authority domains, jurisdictions, health evidence,
+  supported contract profiles, memory scopes, and evidence references.
+- A deterministic eligibility engine produces an ordered assessment receipt and stable
+  rejections for predecessor identity, lifecycle, health, capability, jurisdiction,
+  contract compatibility, memory scope, and trust floor. Only eligible records reach
+  Gemini. The model returns a typed candidate choice and evidence citations; validation
+  proves the candidate and citations came from that bounded set before policy admission.
+- A reconstruction engine resolves authorized context items by digest. It includes only
+  fresh, transferable, purpose-bound facts within the successor grant and emits explicit
+  exclusions for untrusted, secret, stale, revoked, out-of-purpose, or unsupported items.
+  The receipt is linked into the succession manifest and independent verification.
+- The portable SDK defines `register_agent`, `record_obligation`, and
+  `execute_idempotent`; transports are ports, not cloud imports. An in-process local
+  runtime executes a complete consumer example and exports the same six-artifact contract
+  profile without credentials.
+- A resilience lab injects faults at durable boundaries and records unique input digests,
+  decisions, safety properties, and observed outcomes. Network ambiguity resolves through
+  provider reads or remains INCONCLUSIVE; it never guesses success.
+- Optional witness aggregation requires a configured threshold of distinct verifier
+  principals signing the same bundle digest and reports dissent. This is an evidence
+  aggregation profile, not Byzantine consensus.
+- The cockpit leads with a EUR 250,000 supplier onboarding obligation, deadline, risk,
+  candidate assessments, selected successor, excluded context, duplicate effect count,
+  and independent verdict. Provider implementation evidence remains available as a
+  secondary proof layer.
