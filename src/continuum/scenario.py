@@ -8,10 +8,11 @@ from typing import Any
 from uuid import uuid5
 
 from .core import (
-    NAMESPACE, ActionGateway, AgentRegistry, EventStore, MemoryGateway,
-    VendorRegistry, decide_compromise, validate_manifest,
+    NAMESPACE, ActionGateway, AgentRegistry, ComplianceRegistry, EventStore,
+    MemoryGateway, VendorRegistry, decide_compromise, validate_manifest,
 )
 from .models import AgentStatus, AgentVersion, Denied, Event, Obligation, ObligationStatus, TransferManifest, digest
+from .sentinel import NegativeSpaceSentinel
 
 
 class EventFactory:
@@ -47,7 +48,8 @@ def run_scenario(workdir: Path | None = None, *, signals: tuple[str, ...] = (
     registry = AgentRegistry()
     memory = MemoryGateway()
     provider = VendorRegistry(output / "vendor-registry.sqlite3")
-    gateway = ActionGateway(registry, provider)
+    compliance = ComplianceRegistry()
+    gateway = ActionGateway(registry, provider, compliance)
     tenant, agent = fixture["tenant"], fixture["agent_id"]
 
     registry.register(AgentVersion(agent, "v17", tenant, AgentStatus.ACTIVE, 41,
@@ -69,10 +71,18 @@ def run_scenario(workdir: Path | None = None, *, signals: tuple[str, ...] = (
         event = emit("action.denied", obligation.obligation_id, "action-gateway",
                      {"version": "v17", "reason": "CAPABILITY_DENIED", "action": "mark_compliant_without_evidence"}, fixture["clock_start"])
         evidence["anomalous_action"] = event.event_id
-    if "missed_evidence" in signals:
+    sentinel = NegativeSpaceSentinel()
+    observation_time = fixture["deadline"] if "missed_evidence" in signals else fixture["clock_start"]
+    missing = sentinel.evaluate(
+        required_evidence=obligation.required_evidence,
+        deadline=fixture["deadline"],
+        now=observation_time,
+        observed_evidence=store.types(),
+    )
+    if missing:
         obligation.status = ObligationStatus.AT_RISK
         event = emit("expectation.missed", obligation.obligation_id, "negative-space-sentinel",
-                     {"expected": "compliance.evidence_verified", "deadline": fixture["deadline"]}, fixture["deadline"])
+                     {"expected": missing[0].evidence_type, "deadline": missing[0].deadline}, observation_time)
         evidence["missed_evidence"] = event.event_id
     emit("investigation.requested", obligation.obligation_id, "negative-space-sentinel",
          {"evidence_ids": sorted(evidence.values())}, fixture["deadline"])
@@ -104,7 +114,25 @@ def run_scenario(workdir: Path | None = None, *, signals: tuple[str, ...] = (
     obligation.owner_version, obligation.status, obligation.revision = "v18", ObligationStatus.EXECUTING, 2
     emit("successor.activated", agent, "succession-protocol", {"version": "v18", "epoch": target_epoch}, fixture["deadline"])
 
+    evidence_id = f"compliance:{obligation.obligation_id}:v1"
+    safe_document = fixture["compliance_document"]
+    safe_document_hash = digest(safe_document)
+    emit("compliance.evidence_requested", obligation.obligation_id, "successor-agent",
+         {"subject": fixture["vendor"]}, fixture["deadline"])
+    emit("compliance.evidence_received", obligation.obligation_id, "compliance-provider",
+         {"evidence_id": evidence_id, "document_hash": safe_document_hash}, fixture["deadline"])
+    verification_hash = compliance.verify(
+        evidence_id=evidence_id,
+        tenant=tenant,
+        obligation_id=obligation.obligation_id,
+        subject=fixture["vendor"],
+        document_hash=safe_document_hash,
+    )
+    emit("compliance.evidence_verified", obligation.obligation_id, "compliance-verifier",
+         {"evidence_id": evidence_id, "verification_hash": verification_hash}, fixture["deadline"])
+
     kwargs = dict(tenant=tenant, version="v18", epoch=target_epoch, vendor=fixture["vendor"],
+                  obligation_id=obligation.obligation_id, compliance_evidence_id=evidence_id,
                   idempotency_key=fixture["idempotency_key"], decision_id=decision.decision_id)
     provider_ref, duplicate_first = gateway.create_vendor(**kwargs)
     emit("external_effect.created", obligation.obligation_id, "action-gateway", {"provider_ref": provider_ref}, fixture["deadline"])

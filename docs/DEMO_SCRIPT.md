@@ -6,26 +6,21 @@ Target the normal run at 3:45 to retain latency margin.
 |---|---|
 | 0:00–0:10 | “Agents can fail. Their obligations must not.” Name the platform operator buyer. |
 | 0:10–0:22 | Show architecture and one governed lifecycle on Google Cloud. |
-| 0:22–0:36 | Fleet: procurement v17 active, v18 registered; identities, digests, capabilities, epochs. |
-| 0:36–0:46 | `/build-info`: Cloud Run revision, Git SHA, region, ADK and Gemini identifiers. |
-| 0:46–0:56 | Start a fresh scenario; show new run ID and trace ID. |
-| 0:56–1:10 | Record vendor-compliance obligation, deadline, and required evidence. |
-| 1:10–1:24 | Submit malicious fixture; show denied bypass attempt and missing evidence. |
-| 1:24–1:40 | Virtual deadline expires; Sentinel marks obligation `AT_RISK`. |
-| 1:40–1:57 | Investigator shows competing hypotheses with exact event citations. |
-| 1:57–2:10 | Policy approves reversible quarantine and succession, not domain bypass. |
-| 2:10–2:28 | Epoch increments; v17 quarantined; manifest excludes raw untrusted memory; v18 activates. |
-| 2:28–2:40 | v17 action request fails `STALE_FENCE`. |
-| 2:40–2:52 | v17 memory request fails `GRANT_REVOKED` before retrieval. |
-| 2:52–3:08 | v18 creates the sandbox vendor through the governed gateway. |
-| 3:08–3:20 | Redeliver identical request; same execution returned; vendor count remains one. |
-| 3:20–3:34 | Narrow Foundry regression result: attack caught, benign fixture preserved. |
-| 3:34–3:48 | Obligation discharged; open evidence-to-verification incident timeline. |
-| 3:48–4:00 | Show Cloud Trace: one obligation, one effect, two old-identity denials. |
+| 0:22–0:38 | Show the three lanes: observe absence, govern succession, prove outcome. |
+| 0:38–0:50 | Show `/build-info`: exact Cloud Run revision, image digest and Git SHA. |
+| 0:50–1:02 | Click **Start canonical run** once; show fresh run and trace IDs. Do nothing else. |
+| 1:02–1:24 | The real deadline expires; Cloud Tasks invokes Sentinel and Pub/Sub visibly redelivers. |
+| 1:24–1:48 | Gemini cites the live events and proposes only `initiate_governed_succession`. |
+| 1:48–2:12 | Policy fences v17; its action fails stale epoch and memory exposes zero candidates. |
+| 2:12–2:38 | v18 obtains and verifies fresh compliance evidence before execution. |
+| 2:38–3:02 | The v18 transaction checks identity, epoch, policy, compliance and idempotency; effect count stays one. |
+| 3:02–3:30 | Control exports five claims. The verifier directly reads Firestore and alone creates artifact six. |
+| 3:30–3:48 | Show `VERIFIED`, the attestation digest and the autonomous evidence chain. |
+| 3:48–4:00 | Open Cloud Trace for the exact trace ID and state the bounded guarantee. |
 
 Pre-open authenticated console tabs. A stalled dependency must remain visibly
 pending or fail closed; never substitute prerecorded output.
 
-The runnable cockpit is served by `continuum.api:app`. Its signature controls
-call server-side proof endpoints; the browser does not fabricate epochs,
-denials, effect counts, manifests, or attestation outcomes.
+The cloud cockpit is served by the private control service. It polls only
+server-owned state; Cloud Tasks and Pub/Sub drive the lifecycle. The browser
+does not author epochs, evidence, decisions, effect counts or attestations.

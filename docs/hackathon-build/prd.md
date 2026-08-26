@@ -21,4 +21,17 @@ context moved to a successor without duplicating the external effect.
    lifecycle status, and epoch.
 9. Automated evaluation reports observed results without presenting unrun cloud or
    live-model claims as facts.
-
+10. Vendor creation is impossible until a fresh compliance observation is independently valid.
+11. A real deadline scan, not scenario initialization, authors the missed-expectation event.
+12. Redelivered Pub/Sub work traverses the same durable transition and effect gateway.
+13. The predecessor receives a real centralized-gateway denial while the successor succeeds.
+14. Control cannot create, predetermine, or self-verify a continuity attestation.
+15. The verifier distinguishes contradiction from unavailable evidence and independently
+    resolves every digest and provider observation it relies on.
+16. Cloud evidence provenance names the owning API and never upgrades application logs.
+17. One operator start produces a visibly autonomous, phase-by-phase cloud run.
+18. The measured fault matrix executes distinct adversarial cases rather than replaying
+    one fixture under multiple labels.
+19. Every pushed release is continuously checked with the same locked quality gate used locally.
+20. Final judge-accessible evidence is sanitized, content-addressed, checksum-linked, and
+    scoped to the exact submitted commit and deployed image.

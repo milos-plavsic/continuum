@@ -59,6 +59,13 @@ class FakeRunner:
         raise AssertionError(argv)
 
 
+class FakeTraceReader:
+    def __init__(self, scope): self.scope = scope
+    def read(self, scope):
+        return {"run_id": scope.run_id, "trace_id": scope.trace_id,
+                "spans": [{"name": "continuum.investigated"}], "source": "cloud-trace-api"}
+
+
 class EvidenceCollectorTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -76,7 +83,8 @@ class EvidenceCollectorTests(unittest.TestCase):
 
     def test_collects_all_exact_objects_with_read_only_commands(self):
         runner = FakeRunner(self.scope)
-        report = collector.collect(self.scope, self.destination, runner, services=self.services)
+        report = collector.collect(self.scope, self.destination, runner, services=self.services,
+                                   trace_reader=FakeTraceReader(self.scope))
         self.assertEqual(12, len(report["captured"]))
         self.assertEqual({}, report["unavailable"])
         self.assertEqual(12, len([path for path in self.destination.glob("*.json")
@@ -90,7 +98,8 @@ class EvidenceCollectorTests(unittest.TestCase):
 
     def test_partial_capture_omits_missing_object(self):
         runner = FakeRunner(self.scope, omit={"vertex-call"})
-        report = collector.collect(self.scope, self.destination, runner, services=self.services)
+        report = collector.collect(self.scope, self.destination, runner, services=self.services,
+                                   trace_reader=FakeTraceReader(self.scope))
         self.assertEqual("not_observed", report["unavailable"]["vertex-call"])
         self.assertFalse((self.destination / "vertex-call.json").exists())
         self.assertTrue((self.destination / ".capture-report.json").exists())

@@ -1,8 +1,9 @@
 from copy import deepcopy
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sys
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
 
@@ -36,10 +37,21 @@ class Investigator:
         self.calls += 1
         return {"evidence_ids": [item["event_id"] if "event_id" in item else item["type"]
                                  for item in request["evidence"]],
-                "hypothesis": "compromised"}
+                "hypothesis": "compromised",
+                "proposed_actions": ["initiate_governed_succession"]}
 
 
 class Evidence:
+    def record_initial(self, request):
+        return [
+            {"type": "document.injection_detected", "source": "document-ingress"},
+            {"type": "action.denied", "source": "action-gateway"},
+        ]
+    def detect_missing(self, request):
+        if datetime.fromisoformat(request["now"].replace("Z", "+00:00")) < datetime.fromisoformat(request["deadline"].replace("Z", "+00:00")):
+            return None
+        return {"type": "expectation.missed", "event_type": "expectation.missed",
+                "event_id": "missed-1", "run_id": request["run_id"]}
     def observe(self, request):
         return [
             {"type": "document.injection_detected", "source": "document-ingress"},
@@ -63,7 +75,14 @@ class Effects:
     def reconcile(self, request):
         self.reconcile_calls += 1
         return {"effect_count": 1, "provider_ref": "vendor://acme/vendor-042",
-                "request_digest": request["request_digest"]}
+                "request_digest": request["request_digest"],
+                "compliance_evidence_id": request["compliance_evidence_id"]}
+
+
+class Compliance:
+    def verify(self, request):
+        return {"status": "VERIFIED", "evidence_id": "compliance-1",
+                "document_hash": "sha256:document", "obligation_id": request["obligation_id"]}
 
 
 class Exporter:
@@ -83,21 +102,33 @@ class Verifier:
 
 class CloudScenarioServiceTests(unittest.TestCase):
     def setUp(self):
+        self.now = datetime(2026, 8, 26, 10, 0, tzinfo=timezone.utc)
         self.store, self.investigator, self.effects = Store(), Investigator(), Effects()
         self.exporter, self.verifier = Exporter(), Verifier()
         self.service = DurableCloudScenarioService(
             store=self.store, evidence=Evidence(), investigator=self.investigator,
             authority=Authority(),
-            effects=self.effects, exporter=self.exporter, verifier=self.verifier)
+            compliance=Compliance(), effects=self.effects, exporter=self.exporter,
+            verifier=self.verifier, clock=lambda: self.now)
+
+    def complete(self, run_id):
+        started = self.service.run(run_id)
+        self.assertEqual(started["phase"], "WAITING_FOR_DEADLINE")
+        self.now += timedelta(seconds=9)
+        published = self.service.tick(run_id)
+        self.assertEqual(published["phase"], "MISSING_EVENT_PUBLISHED")
+        return self.service.handle_event({"run_id": run_id, "event_type": "expectation.missed"})
 
     def test_run_persists_observed_lifecycle_and_independent_verification(self):
-        result = self.service.run("run-001")
+        result = self.complete("run-001")
         self.assertEqual(result["phase"], "VERIFIED")
         self.assertEqual(result["provider_observation"]["effect_count"], 1)
         self.assertEqual(result["verification"]["status"], "PASS")
         self.assertEqual([event["kind"] for event in self.store.events["run-001"]], [
+            "expectation.persisted", "missing_event.published",
             "investigation.observed", "policy.decision_observed",
             "predecessor.denials_observed", "successor.activation_observed",
+            "compliance.evidence_verified",
             "provider.effect_observed", "contract.exported",
             "independent.verification_observed"])
         self.assertEqual(self.verifier.request["provider_observation"]["effect_count"], 1)
@@ -105,30 +136,31 @@ class CloudScenarioServiceTests(unittest.TestCase):
                             for event in self.exporter.observations))
 
     def test_retry_of_completed_run_does_not_repeat_effect(self):
-        first = self.service.run("run-retry")
+        first = self.complete("run-retry")
         second = self.service.run("run-retry")
         self.assertEqual(first, second)
+        self.assertEqual(self.service.tick("run-retry"), first)
         self.assertEqual(self.effects.execute_calls, 1)
         self.assertEqual(self.investigator.calls, 1)
 
     def test_dispatch_acknowledgement_cannot_author_success(self):
         self.effects.reconcile = lambda request: {"effect_count": 0, "provider_ref": None}
         with self.assertRaisesRegex(ValueError, "PROVIDER_EFFECT_NOT_OBSERVED_ONCE"):
-            self.service.run("run-no-effect")
-        self.assertEqual(self.store.runs["run-no-effect"]["phase"], "SUCCESSOR_ACTIVE")
+            self.complete("run-no-effect")
+        self.assertEqual(self.store.runs["run-no-effect"]["phase"], "COMPLIANCE_VERIFIED")
         self.assertIsNone(self.verifier.request)
 
     def test_incomplete_investigation_cannot_trigger_policy_or_mutation(self):
         self.investigator.investigate = lambda request: {"evidence_types": ["expectation.missed"]}
         with self.assertRaisesRegex(ValueError, "INVESTIGATION_EVIDENCE_INCOMPLETE"):
-            self.service.run("run-silence-only")
-        self.assertEqual(self.store.runs["run-silence-only"]["phase"], "CREATED")
+            self.complete("run-silence-only")
+        self.assertEqual(self.store.runs["run-silence-only"]["phase"], "MISSING_EVENT_PUBLISHED")
         self.assertEqual(self.effects.execute_calls, 0)
 
     def test_verifier_result_requires_independent_identity(self):
         self.verifier.verify = lambda request: {"status": "PASS"}
         with self.assertRaisesRegex(ValueError, "VERIFIER_IDENTITY_MISSING"):
-            self.service.run("run-self-claim")
+            self.complete("run-self-claim")
         self.assertEqual(self.store.runs["run-self-claim"]["phase"], "CONTRACT_EXPORTED")
 
     def test_control_api_accepts_only_server_owned_run_command(self):
@@ -140,6 +172,14 @@ class CloudScenarioServiceTests(unittest.TestCase):
         self.assertEqual(started.status_code, 200)
         status = client.get("/cloud-smoke/api-run")
         self.assertEqual(status.json(), started.json())
+
+    def test_start_schedules_one_external_deadline_tick_when_configured(self):
+        scheduler = Mock()
+        scheduler.schedule.return_value = {"mode": "cloud-tasks", "task_name": "task"}
+        self.service.deadline_scheduler = scheduler
+        result = self.service.run("scheduled")
+        self.assertEqual(result["phase"], "WAITING_FOR_DEADLINE")
+        scheduler.schedule.assert_called_once()
 
     def test_control_api_fails_closed_without_production_ports(self):
         client = TestClient(create_cloud_app(role="control", scenario_service=None))
@@ -153,6 +193,13 @@ class CloudScenarioServiceTests(unittest.TestCase):
         self.store.runs["conflict"] = {**self.service._new_run("conflict"), "command_digest": "other"}
         with self.assertRaisesRegex(ScenarioConflict, "RUN_ID_CONTENT_CONFLICT"): self.service.run("conflict")
         with self.assertRaisesRegex(KeyError, "RUN_NOT_FOUND"): self.service.status("missing")
+        with self.assertRaisesRegex(KeyError, "RUN_NOT_FOUND"): self.service.tick("missing")
+        with self.assertRaisesRegex(KeyError, "RUN_NOT_FOUND"):
+            self.service.handle_event({"run_id": "missing", "event_type": "expectation.missed"})
+        waiting = self.service.run("waiting")
+        self.assertEqual(self.service.tick("waiting"), waiting)
+        self.assertEqual(self.service.handle_event({"run_id": "waiting", "event_type": "other"}), waiting)
+        self.assertEqual(self.service.handle_event({"run_id": "waiting", "event_type": "expectation.missed"}), waiting)
         with self.assertRaisesRegex(ScenarioConflict, "SCENARIO_PHASE_INVALID"):
             self.service._advance({**self.service._new_run("bad"), "phase": "UNKNOWN"})
 
@@ -160,11 +207,12 @@ class CloudScenarioServiceTests(unittest.TestCase):
         def current(phase):
             return {**self.service._new_run("gate"), "phase": phase,
                     "decision": {"decision_id": "d"},
-                    "provider_observation": {"effect_count": 1, "provider_ref": "p", "request_digest": "r"},
+                    "compliance": {"status": "VERIFIED", "evidence_id": "e", "document_hash": "h"},
+                    "provider_observation": {"effect_count": 1, "provider_ref": "p", "request_digest": "r", "compliance_evidence_id": "e"},
                     "contract_bundle": {"profile": "reference-google-cloud", "artifacts": [{}]}}
         for evidence in ("bad", ["bad"]):
             self.service.evidence.observe = lambda request, value=evidence: value
-            with self.assertRaisesRegex(ValueError, "LIFECYCLE_EVIDENCE_INVALID"): self.service._advance(current("CREATED"))
+            with self.assertRaisesRegex(ValueError, "LIFECYCLE_EVIDENCE_INVALID"): self.service._advance(current("MISSING_EVENT_PUBLISHED"))
         self.service.evidence = Evidence()
         self.store.events["gate"] = []
         for decision in ({"outcome": "HOLD", "decision_id": "d"},
@@ -172,6 +220,12 @@ class CloudScenarioServiceTests(unittest.TestCase):
             self.service.authority.decide = lambda evidence, value=decision: value
             with self.assertRaisesRegex(ValueError, "SUCCESSION_NOT_AUTHORIZED"): self.service._advance(current("INVESTIGATED"))
         self.service.authority = Authority()
+        self.service.investigator.investigate = lambda request: {
+            "evidence_types": [item["type"] for item in request["evidence"]],
+            "proposed_actions": ["request_operator_review"]}
+        with self.assertRaisesRegex(ValueError, "INVESTIGATION_RECOMMENDS_HOLD"):
+            self.service._advance(current("MISSING_EVENT_PUBLISHED"))
+        self.service.investigator = Investigator()
         for fenced in ({"status": "BAD", "revoked_through_epoch": 41},
                        {"status": "FENCED", "revoked_through_epoch": 40}):
             self.service.authority.fence_predecessor = lambda request, value=fenced: value
@@ -191,9 +245,13 @@ class CloudScenarioServiceTests(unittest.TestCase):
             self.service.authority.activate_successor = lambda request, value=activation: value
             with self.assertRaisesRegex(ValueError, "SUCCESSOR_ACTIVATION_NOT_OBSERVED"): self.service._advance(current("PREDECESSOR_FENCED"))
         self.service.authority = Authority()
+        self.service.compliance.verify = lambda request: {"status": "FAILED"}
+        with self.assertRaisesRegex(ValueError, "COMPLIANCE_EVIDENCE_NOT_VERIFIED"):
+            self.service._advance(current("SUCCESSOR_ACTIVE"))
+        self.service.compliance = Compliance()
         for observation in ({"effect_count": 2, "provider_ref": "p"}, {"effect_count": 1, "provider_ref": None}):
             self.service.effects.reconcile = lambda request, value=observation: value
-            with self.assertRaisesRegex(ValueError, "PROVIDER_EFFECT_NOT_OBSERVED_ONCE"): self.service._advance(current("SUCCESSOR_ACTIVE"))
+            with self.assertRaisesRegex(ValueError, "PROVIDER_EFFECT_NOT_OBSERVED_ONCE"): self.service._advance(current("COMPLIANCE_VERIFIED"))
         self.service.effects = Effects()
         for bundle in ({"profile": "wrong", "artifacts": [{}]}, {"profile": "reference-google-cloud", "artifacts": []}):
             self.service.exporter.export = lambda run, observations, value=bundle: value

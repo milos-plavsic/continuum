@@ -52,7 +52,11 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
                             "evidence_event_ids": ["evt-001"]},
             "trace-export": {"run_id": "run-001", "trace_id": "a" * 32,
                              "spans": [{"name": name} for name in
-                                       ("investigation", "policy", "succession", "verification")]},
+                                       ("continuum.missing_event_published",
+                                        "continuum.investigated", "continuum.authorized",
+                                        "continuum.predecessor_fenced",
+                                        "continuum.successor_active",
+                                        "continuum.contract_exported")]},
             "contract-export": {"run_id": "run-001", "protocol": "continuum/0.1-draft",
                                 "status": "PASS", "bundle": contract_bundle,
                                 "report_digest": {"alg": "sha-256",

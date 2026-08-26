@@ -8,10 +8,12 @@ import unittest
 from unittest.mock import patch
 
 from continuum.cloud_orchestration import (
-    canonical_request, independent_contract_verifier, invoke, live_adk_investigator,
+    admit_remediation_plan, canonical_request, independent_contract_verifier, invoke, live_adk_investigator,
     validate_investigation, workload_service_account,
 )
 from continuum.standard import build_contract_bundle
+from continuum.contract import artifact_digest
+from tests.test_verification_engine import Reader, observations
 
 
 class _Credentials:
@@ -47,6 +49,11 @@ class CloudOrchestrationCompleteTests(unittest.TestCase):
                               ({**complete, "authority_grant": {}}, "INVESTIGATION_ASSERTS_AUTHORITY")]:
             with self.assertRaisesRegex(ValueError, code): validate_investigation(invalid)
         self.assertEqual(canonical_request({"é": 1}, "id"), b'{"identity":"id","payload":{"\xc3\xa9":1}}')
+        self.assertEqual(admit_remediation_plan({"proposed_actions": ["request_operator_review"]}),
+                         "request_operator_review")
+        for actions in (None, [], ["unknown"], ["request_operator_review", "initiate_governed_succession"]):
+            with self.assertRaisesRegex(ValueError, "REMEDIATION_PLAN_UNSUPPORTED"):
+                admit_remediation_plan({"proposed_actions": actions})
 
     def _adk_modules(self, outputs):
         class SessionService:
@@ -89,16 +96,30 @@ class CloudOrchestrationCompleteTests(unittest.TestCase):
                 else:
                     self.assertEqual(asyncio.run(live_adk_investigator({"e": 1}, "worker@example.com"))["risk"], "low")
 
-    def test_independent_verifier_requires_bundle_and_matching_identity(self):
+    def test_independent_verifier_requires_pre_attestation_bundle_and_direct_reads(self):
         with self.assertRaisesRegex(ValueError, "CONTRACT_BUNDLE_REQUIRED"):
             independent_contract_verifier({}, "v")
         with TemporaryDirectory() as directory:
             bundle = build_contract_bundle(Path(directory))
-        principal = next(a for a in bundle["artifacts"] if a["artifact_type"] == "continuity_attestation")["body"]["verification"]["verifier_principal"]
-        result = independent_contract_verifier({"bundle": bundle}, principal)
+        bundle["artifacts"] = [a for a in bundle["artifacts"] if a["artifact_type"] != "continuity_attestation"]
+        receipt = next(a for a in bundle["artifacts"] if a["artifact_type"] == "execution_receipt")
+        receipt["extensions"] = {"continuum.dev/compliance": {"evidence_id": "compliance-1",
+            "obligation_id": "obl-1", "document_hash": "sha256:compliance-document"}}
+        receipt["digest"] = {"alg": "sha-256", "value": artifact_digest(receipt)}
+        state = observations(bundle)
+        with self.assertRaisesRegex(ValueError, "RUN_ID_REQUIRED"):
+            independent_contract_verifier({"bundle": bundle}, "verifier@example.com", Reader(**state))
+        with patch.dict("os.environ", {}, clear=True), self.assertRaisesRegex(RuntimeError, "CLOUD_PROJECT_NOT_CONFIGURED"):
+            independent_contract_verifier({"run_id": "r", "bundle": bundle}, "verifier@example.com")
+        with patch.dict("os.environ", {"GOOGLE_CLOUD_PROJECT": "p"}), \
+             patch("google.cloud.firestore.Client", return_value=object()), \
+             patch("continuum.cloud_orchestration.FirestoreVerificationReader", return_value=Reader(**state)):
+            self.assertEqual(independent_contract_verifier(
+                {"run_id": "r", "bundle": bundle}, "verifier@example.com")["status"], "PASS")
+        result = independent_contract_verifier({"run_id": "r", "bundle": bundle},
+                                               "verifier@example.com", Reader(**state))
         self.assertEqual(result["status"], "PASS")
-        with self.assertRaisesRegex(ValueError, "VERIFIER_IDENTITY_MISMATCH"):
-            independent_contract_verifier({"bundle": bundle}, "other@example.com")
+        self.assertEqual(result["bundle"]["artifacts"][-1]["issuer"], "mailto:verifier@example.com")
 
 
 if __name__ == "__main__": unittest.main()

@@ -118,7 +118,11 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
     _same(trace.get("trace_id"), scope["trace_id"], "TRACE_ID_MISMATCH", errors)
     _same(trace.get("run_id"), scope["run_id"], "RUN_ID_MISMATCH:trace-export", errors)
     spans = trace.get("spans")
-    required_spans = {"investigation", "policy", "succession", "verification"}
+    required_spans = {
+        "continuum.missing_event_published", "continuum.investigated",
+        "continuum.authorized", "continuum.predecessor_fenced",
+        "continuum.successor_active", "continuum.contract_exported",
+    }
     names = {span.get("name") for span in spans if isinstance(span, dict)} if isinstance(spans, list) else set()
     if not required_spans.issubset(names):
         errors.append("TRACE_LIFECYCLE_INCOMPLETE")

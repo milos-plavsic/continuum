@@ -150,20 +150,65 @@ class VendorRegistry:
         self.connection.close()
 
 
+class ComplianceRegistry:
+    """Append-only evidence boundary used as a hard action precondition."""
+
+    def __init__(self):
+        self._evidence: dict[str, tuple[str, str, str, str]] = {}
+
+    def verify(self, *, evidence_id: str, tenant: str, obligation_id: str,
+               subject: str, document_hash: str) -> str:
+        if not evidence_id or not document_hash:
+            raise Denied("COMPLIANCE_EVIDENCE_REQUIRED")
+        binding = (tenant, obligation_id, subject, document_hash)
+        previous = self._evidence.get(evidence_id)
+        if previous is not None and previous != binding:
+            raise Denied("COMPLIANCE_EVIDENCE_CONFLICT")
+        self._evidence[evidence_id] = binding
+        return digest({"evidence_id": evidence_id, "binding": binding, "status": "VERIFIED"})
+
+    def authorize(self, *, evidence_id: str, tenant: str, obligation_id: str,
+                  subject: str) -> str:
+        if not evidence_id:
+            raise Denied("COMPLIANCE_EVIDENCE_REQUIRED")
+        evidence = self._evidence.get(evidence_id)
+        if evidence is None:
+            raise Denied("COMPLIANCE_EVIDENCE_NOT_VERIFIED")
+        if evidence[:3] != (tenant, obligation_id, subject):
+            raise Denied("COMPLIANCE_EVIDENCE_BINDING_MISMATCH")
+        return evidence[3]
+
+
 class ActionGateway:
-    def __init__(self, registry: AgentRegistry, provider: VendorRegistry):
+    def __init__(self, registry: AgentRegistry, provider: VendorRegistry,
+                 compliance: ComplianceRegistry):
         self.registry = registry
         self.provider = provider
+        self.compliance = compliance
         self.executions: dict[str, tuple[str, str]] = {}
 
     def create_vendor(self, *, tenant: str, version: str, epoch: int, vendor: str,
+                      obligation_id: str, compliance_evidence_id: str,
                       idempotency_key: str, decision_id: str) -> tuple[str, bool]:
         if not idempotency_key:
             raise Denied("IDEMPOTENCY_KEY_REQUIRED")
         if not decision_id:
             raise Denied("POLICY_DECISION_REQUIRED")
         self.registry.authorize(tenant, version, epoch, "vendor.create")
-        request_hash = digest({"tenant": tenant, "vendor": vendor, "decision": decision_id})
+        evidence_hash = self.compliance.authorize(
+            evidence_id=compliance_evidence_id,
+            tenant=tenant,
+            obligation_id=obligation_id,
+            subject=vendor,
+        )
+        request_hash = digest({
+            "tenant": tenant,
+            "vendor": vendor,
+            "obligation_id": obligation_id,
+            "compliance_evidence_id": compliance_evidence_id,
+            "compliance_document_hash": evidence_hash,
+            "decision": decision_id,
+        })
         previous = self.executions.get(idempotency_key)
         if previous:
             if previous[0] != request_hash:

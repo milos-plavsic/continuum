@@ -7,10 +7,11 @@
 | Revoked memory is filtered before retrieval | `reference-local` | denial with zero candidates examined | Verified by tests |
 | One externally observed sandbox effect | `reference-local` | persistent provider reconciliation and redelivery | Verified by tests |
 | C0–C6 contract chain | `reference-local` | six artifacts and independent verifier principal | Verified by conformance suite |
-| Distinct deployed workload identities | `reference-google-cloud` | Cloud Run service exports and observed token identities | Verified by canonical run `run-20260825T233359Z` |
-| Live Gemini 3.5+ through Google ADK | `reference-google-cloud` | correlated Vertex call and cited proposal | Verified with `gemini-3.6-flash` in the canonical run |
-| Pub/Sub redelivery with one provider effect | `reference-google-cloud` | publish/log deliveries, durable receipt, provider observation | Verified by two deliveries and one effect receipt in the canonical run |
-| End-to-end Cloud Observability trace | `reference-google-cloud` | ordered correlated spans from investigation through verification | Verified by correlated trace export in the canonical run |
+| Distinct deployed workload identities | `reference-google-cloud` | Cloud Run API plus workload-derived actors | Previous run superseded; final-commit recapture required |
+| Live Gemini 3.5+ through Google ADK | `reference-google-cloud` | correlated Vertex call and admitted cited plan | Previous run superseded; final-commit recapture required |
+| Pub/Sub redelivery causes one provider effect | `reference-google-cloud` | inbox delivery count, lifecycle transition and direct provider read | Fresh final-commit capture required |
+| Verifier alone issues artifact six | `reference-google-cloud` | five claims plus read-only authority/compliance/provider reads | Fresh final-commit capture required |
+| End-to-end Cloud Trace | `reference-google-cloud` | real OTel spans fetched from the Cloud Trace API | Fresh final-commit capture required |
 
 The offline verifier may issue `PASS` only when every mandatory cloud object is
 present, content-addressed, and semantically consistent. Missing evidence is

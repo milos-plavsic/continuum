@@ -41,3 +41,33 @@ independent reference verification, published golden vectors, and cumulative
 profile-specific conformance. Local C6 demonstrates only the declared sandbox
 boundaries; Google Cloud, live-model, and third-party interoperability profiles
 require separate evidence.
+
+## Winner-hardening release
+
+- The canonical obligation is to obtain and independently validate compliance
+  evidence before vendor creation. Missing evidence can never be discharged by
+  the downstream effect alone.
+- A persisted deadline is evaluated by a separately invoked sentinel tick. The
+  tick emits `expectation.missed` only after reading the absence of the expected
+  evidence; scenario creation cannot manufacture that observation.
+- The Google path uses the transactional event/projection/outbox adapter. Pub/Sub
+  delivery advances the durable lifecycle, and the same message is deliberately
+  redelivered through the effect-bearing path.
+- One centralized gateway transaction revalidates tenant, authority domain,
+  workload principal, epoch, capability, obligation revision, policy decision,
+  request digest, and idempotency key immediately before provider dispatch.
+- Gemini selects a bounded remediation plan and cites observed event identifiers.
+  Deterministic policy validates the selection; the model never grants authority.
+- Control exports five pre-attestation artifacts. A read-only verifier resolves
+  their digests, reads authority/compliance/provider observations independently,
+  returns `VERIFIED`, `FAILED`, or `INCONCLUSIVE`, and alone issues the continuity
+  attestation.
+- Evidence collection reads Firestore and Cloud Trace from their owning Google
+  APIs. Application-authored logs are identified as logs, never relabeled as
+  provider-authoritative state.
+- A cloud-backed cockpit starts once and polls durable phases through completion.
+  It exposes the live model proposal, gateway denials, delivery attempts, provider
+  effect count, verification verdict, and correlated trace without extra proof clicks.
+- CI runs locked tests, genuine 100% line/branch coverage, conformance, release
+  audit, compile/shell checks, secret scanning, and a container build on every PR
+  and push to main. Branch protection can require the resulting check.

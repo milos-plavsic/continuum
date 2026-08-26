@@ -66,9 +66,11 @@ def package(source: Path, destination: Path, *, project: str, region: str,
 
 
 def _authority(object_id: str) -> str:
+    if object_id == "trace-export":
+        return "GOOGLE_TRACE_API"
     if object_id.startswith(("cloud-run-", "firestore-", "artifact-", "enabled-services", "iam-policy")):
         return "GOOGLE_API"
-    if object_id.startswith(("pubsub-deliveries", "vertex-call", "trace-export")):
+    if object_id.startswith(("pubsub-deliveries", "vertex-call")):
         return "CLOUD_LOG_EXPORT"
     return "APP_RESPONSE"
 

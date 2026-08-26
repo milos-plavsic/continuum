@@ -82,8 +82,10 @@ for binding in \
 done
 
 full_subscription="projects/$CONTINUUM_PROJECT_ID/subscriptions/$subscription"
-common_env="GOOGLE_CLOUD_PROJECT=$CONTINUUM_PROJECT_ID,CONTINUUM_CONTROL_AUDIENCE=$control_url,CONTINUUM_PUBSUB_PUSH_IDENTITY=$push_identity,CONTINUUM_PUSH_SUBSCRIPTION=$full_subscription,CONTINUUM_FORCE_REDELIVERY=1,CONTINUUM_V17_URL=$v17_url,CONTINUUM_V18_URL=$v18_url,CONTINUUM_VERIFIER_URL=$verifier_url,CONTINUUM_CONTROL_IDENTITY=$control_identity,CONTINUUM_V17_IDENTITY=$v17_identity,CONTINUUM_V18_IDENTITY=$v18_identity,CONTINUUM_VERIFIER_IDENTITY=$verifier_identity"
+common_env="GOOGLE_CLOUD_PROJECT=$CONTINUUM_PROJECT_ID,CONTINUUM_REGION=$CONTINUUM_REGION,CONTINUUM_CONTROL_URL=$control_url,CONTINUUM_CONTROL_AUDIENCE=$control_url,CONTINUUM_DEADLINE_QUEUE=${CONTINUUM_DEADLINE_QUEUE:-continuum-deadlines},CONTINUUM_PUBSUB_PUSH_IDENTITY=$push_identity,CONTINUUM_PUSH_SUBSCRIPTION=$full_subscription,CONTINUUM_FORCE_REDELIVERY=1,CONTINUUM_V17_URL=$v17_url,CONTINUUM_V18_URL=$v18_url,CONTINUUM_VERIFIER_URL=$verifier_url,CONTINUUM_CONTROL_IDENTITY=$control_identity,CONTINUUM_V17_IDENTITY=$v17_identity,CONTINUUM_V18_IDENTITY=$v18_identity,CONTINUUM_VERIFIER_IDENTITY=$verifier_identity"
 gcloud run services update "$control_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" --update-env-vars "$common_env" >/dev/null
+gcloud run services update "$v18_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" \
+  --update-env-vars "CONTINUUM_V18_IDENTITY=$v18_identity" >/dev/null
 
 if gcloud pubsub subscriptions describe "$subscription" --project "$CONTINUUM_PROJECT_ID" >/dev/null 2>&1; then
   gcloud pubsub subscriptions update "$subscription" --project "$CONTINUUM_PROJECT_ID" \

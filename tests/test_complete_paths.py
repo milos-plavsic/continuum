@@ -23,7 +23,7 @@ from continuum.contract import (
     verify_ed25519,
 )
 from continuum.core import (
-    ActionGateway, AgentRegistry, EventStore, MemoryGateway, VendorRegistry,
+    ActionGateway, AgentRegistry, ComplianceRegistry, EventStore, MemoryGateway, VendorRegistry,
     validate_manifest,
 )
 from continuum.models import AgentStatus, AgentVersion, Denied, Event, TransferManifest
@@ -83,8 +83,12 @@ class CoreDefensivePathTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             provider = VendorRegistry(Path(directory) / "vendor.db")
             registry = AgentRegistry(); registry.register(agent())
-            gateway = ActionGateway(registry, provider)
+            compliance = ComplianceRegistry()
+            compliance.verify(evidence_id="e1", tenant="acme", obligation_id="o1",
+                              subject="one", document_hash="sha256:doc")
+            gateway = ActionGateway(registry, provider, compliance)
             base = dict(tenant="acme", version="v1", epoch=7, vendor="one",
+                        obligation_id="o1", compliance_evidence_id="e1",
                         idempotency_key="key", decision_id="decision")
             for changed, code in [({"idempotency_key": ""}, "IDEMPOTENCY_KEY_REQUIRED"),
                                   ({"decision_id": ""}, "POLICY_DECISION_REQUIRED")]:
@@ -93,13 +97,13 @@ class CoreDefensivePathTests(unittest.TestCase):
             ref, duplicate = gateway.create_vendor(**base)
             self.assertFalse(duplicate)
             self.assertEqual(provider.find_execution("missing"), None)
-            restarted = ActionGateway(registry, provider)
+            restarted = ActionGateway(registry, provider, compliance)
             self.assertEqual(restarted.create_vendor(**base), (ref, True))
             with self.assertRaisesRegex(Denied, "IDEMPOTENCY_KEY_CONFLICT"):
-                restarted.create_vendor(**(base | {"vendor": "two"}))
-            durable_conflict = ActionGateway(registry, provider)
+                restarted.create_vendor(**(base | {"decision_id": "other"}))
+            durable_conflict = ActionGateway(registry, provider, compliance)
             with self.assertRaisesRegex(Denied, "IDEMPOTENCY_KEY_CONFLICT"):
-                durable_conflict.create_vendor(**(base | {"vendor": "two"}))
+                durable_conflict.create_vendor(**(base | {"decision_id": "other"}))
             with self.assertRaisesRegex(Denied, "PROVIDER_IDEMPOTENCY_CONFLICT"):
                 provider.create("acme", "one", "other-execution", "other-hash")
             provider.close()

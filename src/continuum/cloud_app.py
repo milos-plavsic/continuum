@@ -11,11 +11,14 @@ from typing import Any, Callable
 
 from fastapi import FastAPI, Header, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse
+from pathlib import Path
 
 from .contract import canonical_bytes
 from .cloud_orchestration import (Investigator, Verifier, independent_contract_verifier, invoke, live_adk_investigator,
                                   validate_investigation, workload_service_account)
 from .google_binding import FirestoreContinuityStore, GoogleBindingConfig, verify_cloud_run_identity_token
+from .observability import configure_cloud_tracing
 
 
 _LOG = logging.getLogger("continuum.cloud")
@@ -71,7 +74,8 @@ def create_cloud_app(*, store: Any | None = None,
                      identity_resolver: Callable[[], str] = workload_service_account,
                      investigator: Investigator | None = live_adk_investigator,
                      verifier: Verifier | None = independent_contract_verifier,
-                     scenario_service: Any | None = None) -> FastAPI:
+                     scenario_service: Any | None = None,
+                     action_gateway: Any | None = None) -> FastAPI:
     active_role = role or os.getenv("CONTINUUM_ROLE", "control")
     project = os.getenv("GOOGLE_CLOUD_PROJECT", "")
     audience = os.getenv("CONTINUUM_CONTROL_AUDIENCE", "")
@@ -91,6 +95,12 @@ def create_cloud_app(*, store: Any | None = None,
         return store
 
     app = FastAPI(title=f"Continuum Cloud Role: {active_role}", version="0.1.0")
+
+    @app.get("/", include_in_schema=False)
+    def cloud_cockpit() -> Any:
+        if active_role != "control":
+            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND"})
+        return FileResponse(Path(__file__).parent / "static" / "cloud_cockpit.html")
 
     @app.middleware("http")
     async def correlation_boundary(request: Request, call_next: Callable[..., Any]) -> Response:
@@ -188,6 +198,17 @@ def create_cloud_app(*, store: Any | None = None,
         except KeyError as error:
             raise HTTPException(status_code=404, detail={"code": "RUN_NOT_FOUND"}) from error
 
+    @app.post("/cloud-smoke/{run_id}/tick")
+    def tick_cloud_scenario(run_id: str) -> dict[str, Any]:
+        if active_role != "control":
+            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND"})
+        if scenario_service is None:
+            raise HTTPException(status_code=503, detail={"code": "SCENARIO_SERVICE_NOT_CONFIGURED"})
+        try:
+            return scenario_service.tick(run_id)
+        except KeyError as error:
+            raise HTTPException(status_code=404, detail={"code": "RUN_NOT_FOUND"}) from error
+
     @app.post("/pubsub/push", status_code=204)
     async def pubsub_push(request: Request, authorization: str | None = Header(default=None)) -> Response:
         if active_role != "control":
@@ -208,10 +229,17 @@ def create_cloud_app(*, store: Any | None = None,
         digest = __import__("hashlib").sha256(canonical_bytes(event)).hexdigest()
         accepted = repository().accept_inbox(message_id=message_id, event_digest=digest,
                                              event_id=event["event_id"], received_at=_utc_now())
+        inbox = repository().inbox_record(message_id)
+        already_processed = bool(inbox and inbox.get("status") == "PROCESSED")
         redelivery_probe = (os.getenv("CONTINUUM_FORCE_REDELIVERY") == "1" and
                             event.get("redelivery_probe") is True)
         if accepted and redelivery_probe:
             raise HTTPException(status_code=503, detail={"code": "DELIBERATE_REDELIVERY_PROBE"})
+        if not already_processed and scenario_service is not None:
+            try:
+                scenario_service.handle_event(event)
+            except KeyError as error:
+                raise HTTPException(status_code=409, detail={"code": "RUN_NOT_FOUND"}) from error
         repository().mark_inbox_processed(message_id=message_id, event_digest=digest,
                                           processed_at=_utc_now())
         if redelivery_probe:
@@ -228,13 +256,28 @@ def create_cloud_app(*, store: Any | None = None,
         return Response(status_code=204)
 
     @app.post("/internal/attempt-action")
-    def attempt_action() -> dict[str, Any]:
+    async def attempt_action(request: Request) -> dict[str, Any]:
         if active_role not in {"agent-v17", "agent-v18"}:
             raise HTTPException(status_code=404, detail={"code": "NOT_FOUND"})
         try:
             identity = identity_resolver()
         except Exception as error:
             raise HTTPException(status_code=503, detail={"code": "WORKLOAD_IDENTITY_UNAVAILABLE"}) from error
+        if active_role == "agent-v18":
+            nonlocal action_gateway
+            if action_gateway is None and project:
+                from google.cloud import firestore
+                from .cloud_gateway import FirestoreActionGateway
+                action_gateway = FirestoreActionGateway(
+                    firestore.Client(project=project),
+                    expected_actor=os.getenv("CONTINUUM_V18_IDENTITY") or None)
+            if action_gateway is None:
+                raise HTTPException(status_code=503, detail={"code": "ACTION_GATEWAY_NOT_CONFIGURED"})
+            try:
+                result = action_gateway.execute_vendor_create(await request.json(), actor=identity)
+            except (ValueError, json.JSONDecodeError) as error:
+                raise HTTPException(status_code=409, detail={"code": str(error)}) from error
+            return {**result, "role": active_role, "authority_source": "firestore-transaction"}
         return {"role": active_role, "actor": identity, "request": "vendor.create",
                 "authority_source": "application-default-credentials"}
 
@@ -275,6 +318,7 @@ def create_cloud_app(*, store: Any | None = None,
             raise HTTPException(status_code=422, detail={"code": str(error)}) from error
         return {"actor": identity, "verification": result}
 
+    configure_cloud_tracing(app)
     return app
 
 

@@ -1,53 +1,42 @@
-%%{init: {"flowchart": {"curve": "basis", "nodeSpacing": 48, "rankSpacing": 60}, "themeVariables": {"fontFamily": "Arial, sans-serif", "primaryTextColor": "#172033", "lineColor": "#64748B", "clusterBkg": "#FFFFFF", "clusterBorder": "#CBD5E1"}}}%%
+%%{init:{"flowchart":{"curve":"linear","nodeSpacing":38,"rankSpacing":46},"themeVariables":{"fontFamily":"Inter,Arial,sans-serif","primaryTextColor":"#10202d","lineColor":"#60788a","clusterBkg":"#ffffff","clusterBorder":"#cbd7df"}}}%%
 flowchart TB
-  classDef human fill:#FFF7ED,stroke:#C2410C,color:#431407,stroke-width:2px
-  classDef control fill:#EFF6FF,stroke:#1D4ED8,color:#172554,stroke-width:2px
-  classDef agent fill:#F5F3FF,stroke:#7C3AED,color:#2E1065,stroke-width:2px
-  classDef state fill:#ECFDF5,stroke:#047857,color:#022C22,stroke-width:2px
-  classDef verify fill:#FDF2F8,stroke:#BE185D,color:#500724,stroke-width:2px
-  classDef observe fill:#F8FAFC,stroke:#475569,color:#0F172A,stroke-width:1.5px
+  classDef human fill:#fff7ed,stroke:#c2410c,color:#431407,stroke-width:2px
+  classDef control fill:#eff6ff,stroke:#1d4ed8,color:#172554,stroke-width:2px
+  classDef agent fill:#f5f3ff,stroke:#7c3aed,color:#2e1065,stroke-width:2px
+  classDef state fill:#ecfdf5,stroke:#047857,color:#022c22,stroke-width:2px
+  classDef verify fill:#fdf2f8,stroke:#be185d,color:#500724,stroke-width:2px
 
-  OP["OPERATOR<br/><small>IAM-authenticated</small>"]:::human
+  OP["OPERATOR<br/><small>one IAM-authenticated start</small>"]:::human
 
-  subgraph CLOUD["GOOGLE CLOUD · DEPLOYED REFERENCE BINDING"]
-    direction TB
-
-    subgraph DURABLE["DURABLE ORCHESTRATION"]
-      direction LR
-      CP["CONTROL PLANE<br/><small>private Cloud Run<br/>ledger · policy · fencing</small>"]:::control
-
-      FS[("FIRESTORE<br/><small>append-only events · projections<br/>outbox · authority · run journal</small>")]:::state
-      PS["PUB/SUB<br/><small>authenticated push<br/>at-least-once delivery</small>"]:::state
-      PUSH["CONTROL PUSH ROUTE<br/><small>same control-plane identity<br/>idempotent reconciliation</small>"]:::control
-    end
-
-    subgraph ACTION["GOVERNED SUCCESSION AND ACTION"]
-      direction LR
-      V17["PREDECESSOR · v17<br/><small>DENIED after succession<br/>stale epoch + revoked memory</small>"]:::agent
-      V18["SUCCESSOR · v18<br/><small>private Cloud Run · epoch 42<br/>Google ADK investigator</small>"]:::agent
-      VX["VERTEX AI<br/><small>Gemini 3.6 Flash<br/>typed proposal · no authority</small>"]:::agent
-      FX["EFFECT GATEWAY<br/><small>one external effect<br/>despite redelivery</small>"]:::control
-    end
-
-    subgraph ASSURANCE["INDEPENDENT ASSURANCE"]
-      direction LR
-      IV["INDEPENDENT VERIFIER<br/><small>private Cloud Run · read-only<br/>no execution or Vertex permission</small>"]:::verify
-      OBS["CLOUD LOGGING + TRACE<br/><small>run ID · trace ID · revision · identity<br/>delivery attempt · evidence verdict</small>"]:::observe
-    end
+  subgraph R1["1 · OBSERVE REAL ABSENCE"]
+    direction LR
+    CP["CONTROL PLANE<br/><small>private Cloud Run<br/>persist obligation + deadline</small>"]:::control
+    TASK["CLOUD TASKS<br/><small>deadline callback<br/>no process sleep</small>"]:::state
+    PS["PUB/SUB<br/><small>OIDC push · at-least-once<br/>deliberate redelivery</small>"]:::state
+    CP -->|schedule| TASK -->|Sentinel tick| PS
   end
 
-  CC["CONTENT-ADDRESSED<br/>CONTINUITY CONTRACT<br/><small>grant · manifest · revocation<br/>receipt · attestation</small>"]:::verify
+  subgraph R2["2 · GOVERN SUCCESSION"]
+    direction LR
+    V18["v18 + GOOGLE ADK<br/><small>Gemini 3.6 Flash<br/>one cited bounded plan</small>"]:::agent
+    POLICY["DETERMINISTIC POLICY<br/><small>plan admission · epoch CAS<br/>v17 action + memory denied</small>"]:::control
+    GATE["v18 ACTION GATEWAY<br/><small>identity · epoch · policy<br/>compliance · idempotency</small>"]:::control
+    DB[("FIRESTORE<br/><small>transactional event/outbox<br/>authority · compliance · one effect</small>")]:::state
+    V18 -->|non-authoritative plan| POLICY -->|activate v18| GATE -->|one transaction| DB
+  end
 
-  OP -->|"1 · start canonical run"| CP
-  CP -->|"2 · persist + transactional outbox"| FS
-  FS -->|"3 · publish"| PS
-  PS -->|"4 · deliver + deliberate redelivery"| PUSH
-  PUSH -->|"5 · scoped evidence"| V18
-  V18 <-->|"ADK request + typed response"| VX
-  V18 -->|"6 · idempotency key"| FX
 
-  CP -->|"post-succession action attempt"| V17
-  FX -->|"7 · six-artifact bundle"| IV
-  IV -->|"8 · PASS / FAIL / INCONCLUSIVE"| CC
+  subgraph R3["3 · PROVE THE OUTCOME"]
+    direction LR
+    FIVE["FIVE CONTROL CLAIMS<br/><small>obligation · grant · manifest<br/>revocation · receipt</small>"]:::verify
+    IV["INDEPENDENT VERIFIER<br/><small>private Cloud Run<br/>Firestore read-only identity</small>"]:::verify
+    SIX["ARTIFACT SIX<br/><small>VERIFIED · FAILED · INCONCLUSIVE<br/>verifier-issued attestation</small>"]:::verify
+    TRACE["CLOUD TRACE<br/><small>real OTel spans from every service<br/>exact Trace API read</small>"]:::state
+    FIVE --> IV -->|alone issues| SIX
+    IV -. correlated evidence .-> TRACE
+  end
 
-  PUSH -. "all components emit correlated evidence" .-> OBS
+  OP --> CP
+  PS -->|redelivery causes transition| V18
+  DB -->|direct authority + compliance + provider reads| IV
+  GATE --> FIVE

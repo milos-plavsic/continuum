@@ -10,23 +10,29 @@ The vendor-neutral Continuity Contract is bound to Google Cloud as follows:
 - Pub/Sub transports canonical lifecycle events with at-least-once delivery.
 - Gateways verify Google-signed ID tokens for the configured Cloud Run audience,
   then map the authenticated service-account email to a registry principal.
-- OpenTelemetry exports the common run/trace ID to Cloud Observability.
+- Cloud Tasks invokes the control service only after the persisted expectation
+  deadline; the operator does not simulate time or manually advance the run.
+- OpenTelemetry exports lifecycle and HTTP spans under the canonical run trace
+  ID through the Google Cloud Trace API.
 
 Cloud Run deployments must use Application Default Credentials from assigned
 service identities. Never set `GOOGLE_APPLICATION_CREDENTIALS` or deploy a key
 file. Epoch fencing remains the immediate application authorization boundary;
 IAM credential invalidation is separate.
 
-The source adapters are implemented, but the `reference-google-cloud` profile
-cannot pass until real project IDs, revisions, identities, Firestore writes,
-Pub/Sub redelivery, Vertex AI calls, and traces are captured from deployment.
+Source adapters and the prior reference deployment exist, but the current
+`reference-google-cloud` release remains unproven until its exact commit is
+deployed and fresh project IDs, revisions, identities, Firestore writes,
+Pub/Sub redelivery, Vertex AI calls, and traces are captured.
 
 The cloud surface includes authenticated wrapped-push decoding, message-ID and
-payload-digest conflict detection, Firestore execution reservation/outcome
-records, transactional event/projection/outbox writes, and an at-least-once
-outbox dispatcher. The offline evidence verifier uses no Google credentials or
-network access and returns `NOT_ASSESSED` rather than inferring cloud truth from
-source code or missing captures.
+payload-digest conflict detection, Firestore execution records guarded by one
+authority + compliance + idempotency transaction, transactional
+event/projection/outbox writes, and an at-least-once outbox dispatcher. The
+separately deployed verifier has read-only Firestore access and produces
+VERIFIED, FAILED, or INCONCLUSIVE. A second offline evidence verifier uses no
+Google credentials or network access and returns `NOT_ASSESSED` rather than
+inferring cloud truth from source code or missing captures.
 
 Official implementation references:
 

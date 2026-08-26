@@ -54,8 +54,12 @@ contradiction returns `FAIL`; absence never becomes a false pass.
 - Deployment replaces each invocation policy: only Pub/Sub may invoke control,
   and only control may invoke v17, v18, or the verifier. Stale public or group
   bindings are not preserved.
-- v17 and v18 receive no direct Firestore or Pub/Sub roles.
-- The control identity receives only datastore, publishing, and Vertex AI roles.
+- v17 receives no direct Firestore, Pub/Sub, Cloud Tasks, or Vertex role.
+- v18 receives Vertex invocation and Firestore transaction rights because the
+  action gateway executes inside its service boundary; its ADC identity must
+  exactly equal the configured v18 workload identity.
+- The control identity receives datastore, Pub/Sub publishing, Cloud Tasks
+  enqueue, and trace-export roles; it does not call Vertex AI.
 - The independent verifier receives `roles/datastore.viewer` only; it cannot
   mutate evidence, publish lifecycle events, execute actions, or call Vertex.
 - Pub/Sub token minting is scoped to the dedicated push service account and the

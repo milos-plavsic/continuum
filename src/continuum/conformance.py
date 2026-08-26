@@ -11,7 +11,7 @@ import time
 from typing import Callable
 
 from .contract import ContractError, canonical_bytes, validate_envelope
-from .core import ActionGateway, AgentRegistry, VendorRegistry
+from .core import ActionGateway, AgentRegistry, ComplianceRegistry, VendorRegistry
 from .models import AgentStatus, AgentVersion, Denied
 from .scenario import run_scenario
 from .standard import build_contract_bundle, verify_bundle
@@ -193,10 +193,13 @@ def _fabricated_citation() -> bool:
 
 
 def _idempotency_conflict(path: Path) -> bool:
-    path.mkdir(parents=True); registry = _registry(); gateway = ActionGateway(registry, VendorRegistry(path / "provider.sqlite3"))
-    base = dict(tenant="acme", version="v1", epoch=7, vendor="one", idempotency_key="key", decision_id="decision")
+    path.mkdir(parents=True); registry = _registry(); compliance = ComplianceRegistry()
+    compliance.verify(evidence_id="e1", tenant="acme", obligation_id="o1", subject="one", document_hash="doc")
+    gateway = ActionGateway(registry, VendorRegistry(path / "provider.sqlite3"), compliance)
+    base = dict(tenant="acme", version="v1", epoch=7, vendor="one", obligation_id="o1",
+                compliance_evidence_id="e1", idempotency_key="key", decision_id="decision")
     gateway.create_vendor(**base)
-    try: gateway.create_vendor(**(base | {"vendor": "two"}))
+    try: gateway.create_vendor(**(base | {"decision_id": "other"}))
     except Denied as error:
         gateway.provider.close()
         return error.reason == "IDEMPOTENCY_KEY_CONFLICT"
@@ -206,9 +209,12 @@ def _idempotency_conflict(path: Path) -> bool:
 
 def _restart_reconciliation(path: Path) -> bool:
     path.mkdir(parents=True); registry = _registry(); provider = VendorRegistry(path / "provider.sqlite3")
-    args = dict(tenant="acme", version="v1", epoch=7, vendor="one", idempotency_key="key", decision_id="decision")
-    first, duplicate1 = ActionGateway(registry, provider).create_vendor(**args)
-    second, duplicate2 = ActionGateway(registry, provider).create_vendor(**args)
+    compliance = ComplianceRegistry()
+    compliance.verify(evidence_id="e1", tenant="acme", obligation_id="o1", subject="one", document_hash="doc")
+    args = dict(tenant="acme", version="v1", epoch=7, vendor="one", obligation_id="o1",
+                compliance_evidence_id="e1", idempotency_key="key", decision_id="decision")
+    first, duplicate1 = ActionGateway(registry, provider, compliance).create_vendor(**args)
+    second, duplicate2 = ActionGateway(registry, provider, compliance).create_vendor(**args)
     result = first == second and not duplicate1 and duplicate2 and provider.count() == 1
     provider.close()
     return result

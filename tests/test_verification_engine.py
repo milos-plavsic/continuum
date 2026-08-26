@@ -1,0 +1,152 @@
+from __future__ import annotations
+
+from copy import deepcopy
+from pathlib import Path
+from tempfile import TemporaryDirectory
+import unittest
+
+from continuum.contract import artifact_digest
+from continuum.standard import build_contract_bundle
+from continuum.verification import IndependentVerificationEngine
+from continuum.verification import FirestoreVerificationReader
+from tests.test_cloud_adapters_complete import Firestore
+
+
+class Reader:
+    def __init__(self, authority=None, compliance=None, provider=None):
+        self.authority = authority
+        self.compliance = compliance
+        self.provider = provider
+        self.reads: list[str] = []
+
+    def read_authority(self, run_id): self.reads.append(f"authority:{run_id}"); return self.authority
+    def read_compliance(self, run_id): self.reads.append(f"compliance:{run_id}"); return self.compliance
+    def read_provider(self, run_id): self.reads.append(f"provider:{run_id}"); return self.provider
+
+
+def pre_bundle():
+    with TemporaryDirectory() as directory:
+        full = build_contract_bundle(Path(directory))
+    bundle = deepcopy(full)
+    bundle["profile"] = "reference-google-cloud"
+    bundle["artifacts"] = [
+        item for item in bundle["artifacts"]
+        if item["artifact_type"] != "continuity_attestation"
+    ]
+    receipt = next(item for item in bundle["artifacts"] if item["artifact_type"] == "execution_receipt")
+    receipt["extensions"] = {"continuum.dev/compliance": {
+        "evidence_id": "compliance-1", "obligation_id": "obl-1",
+        "document_hash": "sha256:compliance-document",
+    }}
+    receipt["digest"] = {"alg": "sha-256", "value": artifact_digest(receipt)}
+    return bundle
+
+
+def observations(bundle):
+    manifest = next(item for item in bundle["artifacts"] if item["artifact_type"] == "succession_manifest")
+    receipt = next(item for item in bundle["artifacts"] if item["artifact_type"] == "execution_receipt")
+    return {
+        "authority": {
+            "active_principal": manifest["body"]["successor"]["principal_id"],
+            "epoch": manifest["body"]["successor"]["epoch"],
+            "revoked_through_epoch": manifest["body"]["predecessor"]["epoch"],
+        },
+        "compliance": {"status": "VERIFIED", "evidence_id": "compliance-1",
+                       "obligation_id": "obl-1", "document_hash": "sha256:compliance-document"},
+        "provider": {"effect_count": 1, "provider_ref": receipt["body"]["provider"]["resource_ref"],
+                     "request_digest": receipt["body"]["request_digest"],
+                     "compliance_evidence_id": "compliance-1"},
+    }
+
+
+class IndependentVerificationEngineTests(unittest.TestCase):
+    def test_verifier_alone_issues_sixth_artifact_after_three_direct_reads(self):
+        bundle = pre_bundle(); state = observations(bundle)
+        reader = Reader(**state)
+        engine = IndependentVerificationEngine(reader, clock=lambda: "2026-08-17T10:06:00Z")
+        result = engine.verify(run_id="run-1", bundle=bundle,
+                               verifier_principal="urn:continuum:principal:independent-verifier")
+        self.assertEqual(result["outcome"], "VERIFIED")
+        self.assertEqual(reader.reads, ["authority:run-1", "compliance:run-1", "provider:run-1"])
+        self.assertEqual(len(bundle["artifacts"]), 5)
+        self.assertEqual(len(result["bundle"]["artifacts"]), 6)
+        self.assertEqual(result["bundle"]["artifacts"][-1]["issuer"],
+                         "urn:continuum:principal:independent-verifier")
+
+    def test_missing_provider_state_is_inconclusive_and_issues_no_attestation(self):
+        bundle = pre_bundle(); state = observations(bundle); state["provider"] = None
+        result = IndependentVerificationEngine(Reader(**state)).verify(
+            run_id="run-1", bundle=bundle,
+            verifier_principal="urn:continuum:principal:independent-verifier")
+        self.assertEqual(result["outcome"], "INCONCLUSIVE")
+        self.assertNotIn("bundle", result)
+
+    def test_mutated_claim_or_provider_contradiction_fails_closed(self):
+        bundle = pre_bundle(); state = observations(bundle)
+        changed = deepcopy(bundle)
+        changed["artifacts"][0]["body"]["status"] = "OPEN"
+        invalid = IndependentVerificationEngine(Reader(**state)).verify(
+            run_id="run-1", bundle=changed,
+            verifier_principal="urn:continuum:principal:independent-verifier")
+        self.assertEqual(invalid["outcome"], "FAILED")
+        self.assertIn("DIGEST_MISMATCH", invalid["reason_codes"])
+        state["provider"]["effect_count"] = 2
+        contradicted = IndependentVerificationEngine(Reader(**state)).verify(
+            run_id="run-1", bundle=bundle,
+            verifier_principal="urn:continuum:principal:independent-verifier")
+        self.assertEqual(contradicted["reason_codes"], ["PROVIDER_STATE_MISMATCH"])
+
+    def test_all_structural_and_semantic_contradictions_are_explicit(self):
+        bundle = pre_bundle(); state = observations(bundle)
+        engine = IndependentVerificationEngine(Reader(**state))
+        self.assertEqual(engine.verify(run_id="r", bundle={"protocol": "other", "artifacts": []},
+            verifier_principal="urn:v")["reason_codes"], ["UNSUPPORTED_PROTOCOL"])
+        self.assertEqual(engine.verify(run_id="r", bundle={"protocol": "continuum/0.1-draft", "artifacts": []},
+            verifier_principal="urn:v")["reason_codes"], ["PRE_ATTESTATION_ARTIFACT_SET_INVALID"])
+        duplicate = deepcopy(bundle)
+        duplicate["artifacts"][1]["artifact_id"] = duplicate["artifacts"][0]["artifact_id"]
+        duplicate["artifacts"][1]["digest"] = {"alg": "sha-256", "value": artifact_digest(duplicate["artifacts"][1])}
+        self.assertIn("DUPLICATE_ARTIFACT_ID", engine.verify(run_id="r", bundle=duplicate,
+            verifier_principal="urn:v")["reason_codes"])
+        broken = deepcopy(bundle)
+        manifest = next(a for a in broken["artifacts"] if a["artifact_type"] == "succession_manifest")
+        manifest["body"]["obligations"][0]["digest"]["value"] = "0" * 64
+        manifest["digest"] = {"alg": "sha-256", "value": artifact_digest(manifest)}
+        self.assertIn("BROKEN_ARTIFACT_REFERENCE", engine.verify(run_id="r", bundle=broken,
+            verifier_principal="urn:v")["reason_codes"])
+        self.assertEqual(engine._reason(Exception("!"), "FALLBACK"), "FALLBACK")
+
+        indexed = engine._validate_pre_attestation_bundle(bundle)
+        variants = [
+            ({**state["authority"], "epoch": -1}, state["compliance"], state["provider"], "AUTHORITY_STATE_MISMATCH"),
+            (state["authority"], state["compliance"], state["provider"], "GRANT_SUCCESSOR_BINDING_MISMATCH"),
+            (state["authority"], state["compliance"], state["provider"], "REVOCATION_STATE_MISMATCH"),
+            (state["authority"], {**state["compliance"], "status": "FAILED"}, state["provider"], "COMPLIANCE_STATE_MISMATCH"),
+            (state["authority"], state["compliance"], state["provider"], "EXECUTION_SUCCESSOR_BINDING_MISMATCH"),
+        ]
+        for index, (authority, compliance, provider, code) in enumerate(variants):
+            changed = deepcopy(indexed)
+            if index == 1: changed["authority_grant"]["body"]["status"] = "REVOKED"
+            if index == 2: changed["revocation_proof"]["body"]["status"] = "PENDING"
+            if index == 4: changed["execution_receipt"]["body"]["disposition"] = "FAILED"
+            self.assertIn(code, engine._compare(changed, authority, compliance, provider))
+
+    def test_firestore_reader_distinguishes_absence_duplicates_and_one_effect(self):
+        db = Firestore(); reader = FirestoreVerificationReader(db)
+        self.assertIsNone(reader.read_authority("r"))
+        self.assertIsNone(reader.read_compliance("r"))
+        self.assertIsNone(reader.read_provider("r"))
+        db.data["continuity_authority/a"] = {"run_id": "r", "epoch": 1}
+        self.assertEqual(reader.read_authority("r")["epoch"], 1)
+        db.data["continuity_authority/b"] = {"run_id": "r", "epoch": 2}
+        self.assertEqual(reader.read_authority("r"), {"observation_count": 2})
+        db.data["continuity_compliance/r"] = {"status": "VERIFIED"}
+        self.assertEqual(reader.read_compliance("r")["status"], "VERIFIED")
+        db.data["continuity_sandbox_vendors/a"] = {"run_id": "r", "provider_ref": "p"}
+        self.assertEqual(reader.read_provider("r")["effect_count"], 1)
+        db.data["continuity_sandbox_vendors/b"] = {"run_id": "r", "provider_ref": "q"}
+        self.assertEqual(reader.read_provider("r")["effect_count"], 2)
+
+
+if __name__ == "__main__":
+    unittest.main()

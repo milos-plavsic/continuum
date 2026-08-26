@@ -28,7 +28,16 @@ For every future incorporation, record:
 - Date incorporated
 
 Standard open-source frameworks and libraries must remain declared through the
-project's dependency manifests and license notices.
+project’s dependency manifests and license notices.
+
+## External review provenance
+
+PR #5 from `phahim1` was inspected as comparative design input for independent
+verification boundaries. No source from that PR was copied or merged. The
+current five-claim/read-only-provider/sole-attestation engine in
+`src/continuum/verification.py` was authored independently here; the review
+influenced only the decision to make three-valued verdicts and the read-only
+boundary explicit.
 
 ## August 17, 2026 implementation note
 

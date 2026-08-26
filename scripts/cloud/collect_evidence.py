@@ -18,13 +18,34 @@ RUN_SERVICES = {
 }
 RUN_OBJECTS = (
     "firestore-event", "firestore-projection", "firestore-outbox",
-    "pubsub-publish", "pubsub-deliveries", "vertex-call", "trace-export",
+    "pubsub-publish", "pubsub-deliveries", "vertex-call",
     "contract-export",
 )
 
 
 class CommandRunner(Protocol):
     def json(self, argv: Sequence[str]) -> Any: ...
+
+
+class TraceReader(Protocol):
+    def read(self, scope: "CaptureScope") -> dict[str, Any]: ...
+
+
+class GoogleTraceReader:
+    """Read the exact trace through the owning Cloud Trace API."""
+    def read(self, scope: "CaptureScope") -> dict[str, Any]:
+        import google.auth
+        from google.auth.transport.requests import AuthorizedSession
+        credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/trace.readonly"])
+        response = AuthorizedSession(credentials).get(
+            f"https://cloudtrace.googleapis.com/v1/projects/{scope.project}/traces/{scope.trace_id}",
+            timeout=30)
+        response.raise_for_status()
+        trace = response.json()
+        if trace.get("traceId") != scope.trace_id:
+            raise ValueError("TRACE_ID_MISMATCH")
+        return {"run_id": scope.run_id, "trace_id": trace["traceId"],
+                "spans": trace.get("spans", []), "source": "cloud-trace-api"}
 
 
 class SubprocessRunner:
@@ -116,7 +137,8 @@ def _logged_payload(entries: Any, scope: CaptureScope, object_id: str) -> dict[s
 
 
 def collect(scope: CaptureScope, destination: Path, runner: CommandRunner,
-            *, services: dict[str, tuple[str, str]] | None = None) -> dict[str, Any]:
+            *, services: dict[str, tuple[str, str]] | None = None,
+            trace_reader: TraceReader | None = None) -> dict[str, Any]:
     """Collect available objects; never invent a missing observation."""
     destination.mkdir(parents=True, exist_ok=True)
     service_map = services or RUN_SERVICES
@@ -146,6 +168,12 @@ def collect(scope: CaptureScope, destination: Path, runner: CommandRunner,
             captured.append(object_id)
         except (KeyError, TypeError, ValueError, subprocess.CalledProcessError, json.JSONDecodeError) as exc:
             unavailable[object_id] = type(exc).__name__
+    try:
+        trace = (trace_reader or GoogleTraceReader()).read(scope)
+        _write(destination, "trace-export", trace)
+        captured.append("trace-export")
+    except Exception as exc:
+        unavailable["trace-export"] = type(exc).__name__
     report = {"schema": "continuum/cloud-evidence-capture/0.1",
               "read_only": True, "run_id": scope.run_id,
               "captured": sorted(captured), "unavailable": unavailable}

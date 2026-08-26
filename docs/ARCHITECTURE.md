@@ -32,19 +32,20 @@ Promise Ledger ----> Negative Space Sentinel
              Evidence and audit timeline
 ```
 
-## Initial Google stack hypothesis
+## Implemented Google reference stack
 
 - Google ADK for multi-agent orchestration
 - Gemini 3.5 Flash for evidence synthesis, policy reasoning, and test generation
 - Cloud Run for independently deployable services
 - Pub/Sub for lifecycle and domain events
 - Firestore for the initial event/state projection
-- Cloud Scheduler for temporal expectation checks
-- Secret Manager and service identities for least-privilege access
-- OpenTelemetry traces exported to Google Cloud Observability
+- Cloud Tasks for persisted, real-time deadline callbacks
+- Cloud Run service identities and IAM for least-privilege access
+- OpenTelemetry spans exported through the Google Cloud Trace exporter
 
-This is a hypothesis, not a locked design. Validate current service availability
-and hackathon access before implementation.
+The cloud path is an implemented reference binding. A release claim is valid
+only after that exact commit is deployed and a fresh exact-run evidence bundle
+passes the offline semantic verifier.
 
 ## Reference implementation boundary
 
@@ -68,10 +69,13 @@ be marked complete.
 
 ## Portable protocol boundary
 
-The Continuity Contract sits outside the runtime projections. It exports six
-content-addressed artifacts: obligation, authority grant, succession manifest,
-revocation proof, execution receipt, and continuity attestation. Internal
-Firestore documents or Python dataclasses are not wire contracts.
+The Continuity Contract sits outside the runtime projections. The control plane
+exports exactly five pre-attestation, content-addressed artifacts: obligation,
+authority grant, succession manifest, revocation proof, and execution receipt.
+The independent verifier recomputes every digest, directly reads authority,
+compliance, and provider state, and only then authors the sixth artifact—the
+continuity attestation. Internal Firestore documents or Python dataclasses are
+not wire contracts.
 
 The executor produces a receipt but cannot attest its own success. A separately
 authorized verifier reads provider state, resolves every referenced digest, and

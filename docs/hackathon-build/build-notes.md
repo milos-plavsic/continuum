@@ -12,7 +12,9 @@
 - Implemented nine automated tests covering the canonical flow, negative causal
   controls, deterministic replay, fencing, tenant isolation, memory pre-filtering,
   idempotency conflicts, and manifest exclusions.
-- Ran 22 evaluation scenarios: canonical, benign silence, and 20 exact replays.
+- Historical checkpoint: ran 22 evaluation scenarios under the earlier suite.
+  The current report executes all eight signal combinations, five deterministic
+  replays, and every C0–C6 conformance case, recording actual inputs and outputs.
   Observed zero duplicate effects, zero benign-silence quarantines, zero revoked
   candidates exposed, and zero replay divergence.
 - Cloud Run, Firestore, Pub/Sub, Vertex AI/ADK, and Cloud Trace evidence remains a
@@ -75,12 +77,13 @@
   verification are obtained from configured production ports.
 - Wired the production composition to immutable canonical incident events,
   authenticated v18 ADK/Gemini investigation, persisted epoch fencing, an
-  idempotent Firestore sandbox provider with read reconciliation, six observed
+  idempotent Firestore sandbox provider with read reconciliation, five observed
   contract artifacts, and an independently authenticated verifier service.
 - Added deliberate Pub/Sub redelivery for one marked lifecycle event, durable
   inbox deduplication, and structured exact-run evidence records. The collector
   retries boundedly for asynchronous logs, packages only the 12 mandatory
-  objects, and the offline verifier recomputes the full six-artifact bundle.
+  pre-attestation objects; the independent verifier authors artifact six only
+  after direct reads, and the offline verifier recomputes the final bundle.
 - Hardened deployment with digest pinning, exact private invocation policies,
   a validated single operator principal, scoped verifier read access, OIDC push
   identity, fail-closed readiness, and correlated run/trace metadata.
@@ -100,3 +103,35 @@
 - Made the Google binding test doubles self-contained so identity-token tests
   no longer depend on suite import order. The full production source remains
   subject to genuine 100% line and branch coverage before cloud deployment.
+
+## Winner-hardening plan
+
+- The participant explicitly authorized every item from the skeptical winning
+  review plus mandatory CI and a production-grade independent verifier.
+- Planning remains autonomous with automated checkpoints and no manual pause.
+  The signature moment is one operator start followed by real deadline detection,
+  compliance remediation, succession, stale-agent denial, redelivery-safe effect,
+  and verifier-issued attestation.
+- PR #5 by `phahim1` was reviewed as comparative design input only. No source was
+  copied or merged. Continuum's new verifier will be authored independently and
+  integrated with the current five-artifact/provider/authority cloud boundary.
+
+## Winner-hardening implementation checkpoint — August 26
+
+- Fresh, bound compliance evidence is now a hard gateway prerequisite.
+- Cloud Tasks owns the delayed Sentinel callback; Pub/Sub redelivery causally
+  resumes the effect-bearing lifecycle.
+- v18 owns a Firestore transaction that jointly checks action input, authority
+  epoch, policy, compliance binding and idempotency.
+- Control exports five claims. The original read-only verifier directly reads
+  authority, compliance and provider state and alone issues artifact six.
+- Gemini recommends one bounded action; deterministic admission of that action
+  changes the next permitted transition without granting model authority.
+- Synthetic trace evidence was removed. Real OpenTelemetry spans export to
+  Cloud Trace and capture reads the exact trace from the owning API.
+- A one-click cockpit, pinned least-privilege CI, distinct measured cases and
+  succession-first narrative are implemented.
+- Local gate checkpoint: 124 tests, genuine 100.0% statement/branch coverage,
+  and release gate PASS.
+- External gates remain: final push and green CI, exact-commit deployment,
+  fresh autonomous cloud run, direct evidence recapture and rehearsal.

@@ -7,11 +7,12 @@ import json
 from typing import Any, Awaitable, Callable
 
 from .contract import canonical_bytes
-from .standard import verify_bundle
+from .verification import FirestoreVerificationReader, IndependentVerificationEngine
 
 
 Investigator = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[str, Any]]]
 Verifier = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[str, Any]]]
+ALLOWED_REMEDIATIONS = {"initiate_governed_succession", "request_operator_review"}
 
 
 def workload_service_account(*, credentials_provider: Callable[[], tuple[Any, Any]] | None = None,
@@ -49,12 +50,21 @@ def validate_investigation(result: dict[str, Any]) -> dict[str, Any]:
     """Keep model output non-authoritative and evidence-cited."""
     required = {"hypotheses", "evidence_ids", "unsupported_assumptions", "risk",
                 "reversibility", "proposed_actions"}
-    if not required.issubset(result) or not isinstance(result["evidence_ids"], list):
+    if (not required.issubset(result) or not isinstance(result["evidence_ids"], list)
+            or not isinstance(result["proposed_actions"], list)):
         raise ValueError("INVESTIGATION_RESULT_INVALID")
     forbidden = {"policy_decision", "authority_grant", "execution_receipt"}
     if forbidden.intersection(result):
         raise ValueError("INVESTIGATION_ASSERTS_AUTHORITY")
     return result
+
+
+def admit_remediation_plan(proposal: dict[str, Any]) -> str:
+    """Admit one bounded model recommendation; policy remains deterministic."""
+    actions = proposal.get("proposed_actions")
+    if not isinstance(actions, list) or len(actions) != 1 or actions[0] not in ALLOWED_REMEDIATIONS:
+        raise ValueError("REMEDIATION_PLAN_UNSUPPORTED")
+    return str(actions[0])
 
 
 async def live_adk_investigator(payload: dict[str, Any], workload_identity: str) -> dict[str, Any]:
@@ -98,18 +108,22 @@ def canonical_request(payload: dict[str, Any], workload_identity: str) -> bytes:
                       separators=(",", ":"), ensure_ascii=False).encode("utf-8")
 
 
-def independent_contract_verifier(payload: dict[str, Any], workload_identity: str) -> dict[str, Any]:
-    """Recompute a submitted contract chain from the verifier workload."""
+def independent_contract_verifier(payload: dict[str, Any], workload_identity: str,
+                                  reader: Any | None = None) -> dict[str, Any]:
+    """Read provider state and issue (never consume) the continuity attestation."""
     bundle = payload.get("bundle")
     if not isinstance(bundle, dict):
         raise ValueError("CONTRACT_BUNDLE_REQUIRED")
-    verify_bundle(bundle)
-    attestation = next(
-        artifact for artifact in bundle["artifacts"]
-        if artifact["artifact_type"] == "continuity_attestation")
-    declared = attestation["body"]["verification"]["verifier_principal"]
-    if declared not in {workload_identity, f"mailto:{workload_identity}"}:
-        raise ValueError("VERIFIER_IDENTITY_MISMATCH")
-    return {"status": "PASS", "outcome": attestation["body"]["outcome"],
-            "attestation_digest": attestation["digest"],
-            "bundle_digest": hashlib.sha256(canonical_bytes(bundle)).hexdigest()}
+    run_id = payload.get("run_id")
+    if not isinstance(run_id, str) or not run_id:
+        raise ValueError("RUN_ID_REQUIRED")
+    if reader is None:
+        import os
+        from google.cloud import firestore
+        project = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+        if not project:
+            raise RuntimeError("CLOUD_PROJECT_NOT_CONFIGURED")
+        reader = FirestoreVerificationReader(firestore.Client(project=project))
+    principal = workload_identity if ":" in workload_identity else f"mailto:{workload_identity}"
+    return IndependentVerificationEngine(reader).verify(
+        run_id=run_id, bundle=bundle, verifier_principal=principal)

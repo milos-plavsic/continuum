@@ -44,10 +44,39 @@ curl --config - --fail-with-body --silent --show-error --request POST "$control_
 python3 - "$response_file" <<'PY'
 import json, pathlib, sys
 result = json.loads(pathlib.Path(sys.argv[1]).read_text())
+if result.get("phase") != "WAITING_FOR_DEADLINE":
+    raise SystemExit(f'cloud scenario did not persist its deadline: {result.get("phase")}')
+PY
+
+# Cloud Tasks crosses the real deadline and Pub/Sub redelivery resumes the run.
+# The operator only observes; it does not tick or advance lifecycle state.
+for attempt in $(seq 1 90); do
+  printf 'header = "Authorization: Bearer %s"\n' "$token" | \
+  curl --config - --fail-with-body --silent --show-error \
+    --header "X-Continuum-Run-ID: $run_id" \
+    --header "traceparent: 00-$trace_id-0000000000000001-01" \
+    "$control_url/cloud-smoke/$run_id" >"$response_file"
+  phase="$(python3 - "$response_file" <<'PY'
+import json, pathlib, sys
+print(json.loads(pathlib.Path(sys.argv[1]).read_text()).get("phase", ""))
+PY
+)"
+  if [[ "$phase" == VERIFIED ]]; then
+    break
+  fi
+  if [[ "$phase" == FAILED ]]; then
+    echo "cloud scenario entered FAILED" >&2; exit 3
+  fi
+  sleep 2
+done
+
+python3 - "$response_file" <<'PY'
+import json, pathlib, sys
+result = json.loads(pathlib.Path(sys.argv[1]).read_text())
 verification = result.get("verification", {})
 if (result.get("phase") != "VERIFIED" or verification.get("status") != "PASS"
         or verification.get("outcome") != "VERIFIED"):
-    raise SystemExit("cloud scenario did not reach independent PASS")
+    raise SystemExit(f'cloud scenario did not reach independent PASS: {result.get("phase")}')
 PY
 
 export CONTINUUM_RUN_ID="$run_id" CONTINUUM_TRACE_ID="$trace_id"

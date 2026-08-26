@@ -6,10 +6,13 @@ import unittest
 from unittest.mock import patch
 
 from continuum.cloud_scenario_adapters import (
-    AuthenticatedJsonClient, FirestoreAuthority, FirestoreLifecycleEvidence,
-    FirestoreSandboxEffects, ObservedContractExporter, RemoteInvestigator,
+    AuthenticatedJsonClient, CloudTasksDeadlineScheduler, FirestoreAuthority, FirestoreLifecycleEvidence,
+    FirestoreCompliance, FirestoreSandboxEffects, ObservedContractExporter, RemoteInvestigator,
     RemoteVerifier, build_production_scenario_service, google_id_token,
 )
+from continuum.cloud_gateway import FirestoreActionGateway
+from continuum.contract import canonical_bytes
+from hashlib import sha256
 from continuum.standard import verify_bundle
 
 
@@ -22,7 +25,7 @@ class Snapshot:
 
 class Document:
     def __init__(self, client, path): self.client, self.path, self.id = client, path, path.rsplit("/", 1)[-1]
-    def get(self): return Snapshot(self.client, self.path)
+    def get(self, transaction=None): return Snapshot(self.client, self.path)
     def create(self, value):
         hook = self.client.create_hooks.pop(self.path, None)
         if hook: return hook(self, value)
@@ -52,6 +55,13 @@ class Collection:
 class Firestore:
     def __init__(self): self.data, self.create_hooks, self.last_where = {}, {}, None
     def collection(self, name): return Collection(self, name)
+    def transaction(self): return Transaction(self)
+
+
+class Transaction:
+    def __init__(self, client): self.client = client
+    def create(self, ref, value): return ref.create(value)
+    def set(self, ref, value, merge=False): return ref.set(value, merge=merge)
 
 
 class Publisher:
@@ -61,16 +71,26 @@ class Publisher:
 
 class Workload:
     def __init__(self, actor): self.actor, self.calls = actor, []
-    def post(self, url, payload, *, run_id): self.calls.append((url, payload, run_id)); return {"actor": self.actor}
+    def post(self, url, payload, *, run_id):
+        self.calls.append((url, payload, run_id))
+        return {"actor": self.actor, **({"state": "DISPATCHED"} if payload.get("operation") else {})}
 
 
 def request(run="run-1"):
     return {"run_id": run, "correlation_id": "a" * 32, "obligation_id": "o",
             "tenant_id": "acme", "principal": "v17", "epoch": 41,
-            "decision_id": "d", "idempotency_key": "key", "request_digest": "digest"}
+            "decision_id": "d", "idempotency_key": "key", "request_digest": "digest",
+            "operation": "vendor.create"}
 
 
 class CloudAdapterCompleteTests(unittest.TestCase):
+    def setUp(self):
+        self.transactional = patch("google.cloud.firestore.transactional", lambda fn: fn)
+        self.transactional.start()
+
+    def tearDown(self):
+        self.transactional.stop()
+
     def test_authenticated_json_client_without_trace_and_invalid_response(self):
         observed = {}
         class Response:
@@ -85,16 +105,30 @@ class CloudAdapterCompleteTests(unittest.TestCase):
 
     def test_lifecycle_evidence_create_reuse_emission_and_content_conflict(self):
         db, publisher = Firestore(), Publisher(); adapter = FirestoreLifecycleEvidence(db, publisher)
-        observed = adapter.observe(request())
+        command = {**request(), "deadline": "2026-08-26T10:00:00Z", "now": "2026-08-26T10:00:01Z"}
+        adapter.record_initial(command); adapter.detect_missing(command)
+        observed = adapter.observe(command)
         self.assertEqual(len(observed), 3); self.assertEqual(len(publisher.events), 3)
-        self.assertEqual(adapter.observe(request()), observed); self.assertEqual(len(publisher.events), 3)
+        self.assertEqual(len(adapter.record_initial(command)), 2)
+        self.assertEqual(adapter.observe(command), observed); self.assertEqual(len(publisher.events), 3)
         path = next(path for path, value in db.data.items() if path.startswith("continuity_events/") and value["event_type"] == "action.denied")
         db.data[path]["source"] = "tampered"
-        with self.assertRaisesRegex(ValueError, "LIFECYCLE_EVENT_CONTENT_CONFLICT"): adapter.observe(request())
+        with self.assertRaisesRegex(ValueError, "LIFECYCLE_EVENT_CONTENT_CONFLICT"):
+            adapter.record_initial(command)
+
+        early = {**request("early"), "deadline": "2026-08-26T10:00:01Z",
+                 "now": "2026-08-26T10:00:00Z"}
+        adapter = FirestoreLifecycleEvidence(Firestore(), Publisher())
+        adapter.record_initial(early)
+        self.assertIsNone(adapter.detect_missing(early))
+        verified_event = {"event_id": "verified", "event_type": "compliance.evidence_verified",
+                          "correlation_id": early["correlation_id"]}
+        adapter.client.data["continuity_events/verified"] = verified_event
+        self.assertIsNone(adapter.detect_missing({**early, "now": "2026-08-26T10:00:02Z"}))
 
     def test_lifecycle_event_and_outbox_create_races_and_incomplete_query(self):
         db, publisher = Firestore(), Publisher(); adapter = FirestoreLifecycleEvidence(db, publisher)
-        first_type = sorted(adapter.REQUIRED)[0]
+        first_type = sorted(adapter.INITIAL)[0]
         import hashlib
         from continuum.contract import canonical_bytes
         event_id = hashlib.sha256(canonical_bytes({"run_id": "race", "event_type": first_type})).hexdigest()
@@ -104,11 +138,17 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         outbox_path = f"continuity_outbox/{event_id}"
         def outbox_race(doc, value): db.data[doc.path] = deepcopy(value); raise RuntimeError("race")
         db.create_hooks[outbox_path] = outbox_race
-        self.assertEqual(len(adapter.observe(request("race"))), 3)
+        command = {**request("race"), "deadline": "2026-08-26T10:00:00Z", "now": "2026-08-26T10:00:01Z"}
+        with self.assertRaisesRegex(RuntimeError, "race"):
+            adapter.record_initial(command)
+
+        clean = Firestore(); adapter = FirestoreLifecycleEvidence(clean, Publisher())
+        adapter.record_initial(command); adapter.detect_missing(command)
+        self.assertEqual(len(adapter.observe(command)), 3)
 
         broken = Firestore(); adapter = FirestoreLifecycleEvidence(broken, Publisher())
         broken.create_hooks[event_path] = lambda doc, value: (_ for _ in ()).throw(RuntimeError("lost"))
-        with self.assertRaisesRegex(RuntimeError, "lost"): adapter.observe(request("race"))
+        with self.assertRaisesRegex(RuntimeError, "lost"): adapter.record_initial(command)
 
         incomplete = Firestore(); adapter = FirestoreLifecycleEvidence(incomplete, Publisher())
         original_where = Collection.where
@@ -116,16 +156,43 @@ class CloudAdapterCompleteTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "LIFECYCLE_EVIDENCE_INCOMPLETE"): adapter.observe(request("incomplete"))
         self.assertIsNotNone(original_where)
 
+    def test_transaction_race_reuses_identical_event_and_rejects_substitution(self):
+        command = {**request("txn-race"), "deadline": "2026-08-26T10:00:00Z"}
+        event_type = "action.denied"
+        event_id = sha256(canonical_bytes({"run_id": "txn-race", "event_type": event_type})).hexdigest()
+        event_path = f"continuity_events/{event_id}"
+        expected = {"event_id": event_id, "event_type": event_type, "run_id": "txn-race",
+                    "correlation_id": "a" * 32, "obligation_id": "o",
+                    "source": "procurement-succession-v1", "redelivery_probe": False,
+                    "deadline": "2026-08-26T10:00:00Z"}
+        original = Document.get
+        for substituted in (False, True):
+            with self.subTest(substituted=substituted):
+                db = Firestore(); adapter = FirestoreLifecycleEvidence(db, Publisher()); calls = 0
+                def raced(doc, transaction=None):
+                    nonlocal calls
+                    if doc.path == event_path:
+                        calls += 1
+                        if calls == 2:
+                            db.data[event_path] = {**expected, **({"source": "attacker"} if substituted else {})}
+                    return original(doc, transaction=transaction)
+                with patch.object(Document, "get", raced):
+                    if substituted:
+                        with self.assertRaisesRegex(ValueError, "LIFECYCLE_EVENT_CONTENT_CONFLICT"):
+                            adapter._record(command, event_type)
+                    else:
+                        self.assertEqual(adapter._record(command, event_type), expected)
+
     def test_outbox_race_with_wrong_event_is_rejected(self):
         db, publisher = Firestore(), Publisher(); adapter = FirestoreLifecycleEvidence(db, publisher)
         import hashlib
         from continuum.contract import canonical_bytes
-        first_type = sorted(adapter.REQUIRED)[0]
+        first_type = sorted(adapter.INITIAL)[0]
         event_id = hashlib.sha256(canonical_bytes({"run_id": "race2", "event_type": first_type})).hexdigest()
         path = f"continuity_outbox/{event_id}"
         def wrong(doc, value): db.data[doc.path] = {**value, "event_id": "other"}; raise RuntimeError("race")
         db.create_hooks[path] = wrong
-        with self.assertRaisesRegex(RuntimeError, "race"): adapter.observe(request("race2"))
+        with self.assertRaisesRegex(RuntimeError, "race"): adapter.record_initial({**request("race2"), "deadline": "2026-08-26T10:00:00Z"})
 
     def test_remote_investigator_authority_and_all_denials(self):
         class Client:
@@ -137,10 +204,15 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         db = Firestore(); workload = Workload("v17@example")
         authority = FirestoreAuthority(db, workload, "https://v17", "v17@example")
         self.assertEqual(authority.decide([])["outcome"], "HOLD")
-        evidence = [{"evidence": {"signals": [{"event_type": value} for value in FirestoreLifecycleEvidence.REQUIRED]}}]
+        evidence = [{"evidence": {"signals": [{"event_type": value} for value in FirestoreLifecycleEvidence.REQUIRED],
+                                  "selected_plan": "initiate_governed_succession"}}]
         self.assertEqual(authority.decide(evidence)["outcome"], "APPROVE_SUCCESSION")
         with self.assertRaisesRegex(ValueError, "PREDECESSOR_NOT_FENCED"): authority.activate_successor(request())
         authority.fence_predecessor(request())
+        with self.assertRaisesRegex(ValueError, "AUTHORITY_EPOCH_REGRESSION"):
+            authority.fence_predecessor({**request(), "epoch": 40})
+        with self.assertRaisesRegex(ValueError, "SUCCESSOR_EPOCH_NOT_MONOTONIC"):
+            authority.activate_successor({**request(), "principal": "v18", "epoch": 41})
         activated = authority.activate_successor({**request(), "principal": "v18", "epoch": 42})
         self.assertEqual(activated["status"], "ACTIVE")
         self.assertFalse(authority.attempt_action(request())["allowed"])
@@ -157,24 +229,82 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         req = request()
         self.assertEqual(effects.reconcile(req), {"effect_count": 0, "provider_ref": None})
         self.assertEqual(effects.execute(req)["state"], "DISPATCHED")
-        self.assertEqual(effects.execute(req)["state"], "DEDUPLICATED")
+        ref = effects._ref(req)
+        ref.create({"provider_ref": f"firestore://continuity_sandbox_vendors/{ref.id}",
+                    "request_digest": "digest", "run_id": "run-1",
+                    "compliance_evidence_id": "e1"})
+        self.assertEqual(effects.execute(req)["state"], "DISPATCHED")
         self.assertEqual(effects.reconcile(req)["effect_count"], 1)
-        with self.assertRaisesRegex(ValueError, "IDEMPOTENCY_KEY_CONFLICT"):
-            effects.execute({**req, "request_digest": "other"})
         with self.assertRaisesRegex(ValueError, "PROVIDER_DIGEST_CONFLICT"):
             effects.reconcile({**req, "request_digest": "other"})
         effects.successor_identity = "other"
         with self.assertRaisesRegex(ValueError, "SUCCESSOR_IDENTITY_MISMATCH"): effects.execute(req)
+        effects.successor_identity = "v18@example"
+        class InvalidWorkload:
+            def post(self, *args, **kwargs): return {"actor": "v18@example", "state": "UNKNOWN"}
+        effects.workload_client = InvalidWorkload()
+        with self.assertRaisesRegex(ValueError, "ACTION_GATEWAY_RESULT_INVALID"):
+            effects.execute(req)
+
+    def test_compliance_adapter_and_transactional_action_gateway(self):
+        db = Firestore()
+        compliance = FirestoreCompliance(db)
+        command = {"run_id": "r", "tenant_id": "acme", "obligation_id": "o",
+                   "vendor_id": "vendor-042"}
+        evidence = compliance.verify(command)
+        self.assertEqual(compliance.verify(command), evidence)
+        db.data["continuity_compliance/r"]["status"] = "FAILED"
+        with self.assertRaisesRegex(ValueError, "COMPLIANCE_EVIDENCE_CONFLICT"):
+            compliance.verify(command)
+        db.data["continuity_compliance/r"] = evidence
+        db.data["continuity_authority/acme"] = {
+            "status": "ACTIVE", "active_principal": "v18", "epoch": 42,
+            "decision_id": "d", "run_id": "r",
+        }
+        base = {"run_id": "r", "correlation_id": "a" * 32, "tenant_id": "acme",
+                "principal": "v18", "epoch": 42, "obligation_id": "o",
+                "decision_id": "d", "idempotency_key": "key", "operation": "vendor.create",
+                "vendor_id": "vendor-042", "compliance_evidence_id": evidence["evidence_id"],
+                "compliance_document_hash": evidence["document_hash"]}
+        req = {**base, "request_digest": sha256(canonical_bytes(base)).hexdigest()}
+        def changed(**values):
+            unsigned = {**base, **values}
+            return {**unsigned, "request_digest": sha256(canonical_bytes(unsigned)).hexdigest()}
+        gateway = FirestoreActionGateway(db, expected_actor="v18@example")
+        first = gateway.execute_vendor_create(req, actor="v18@example")
+        self.assertEqual(first["state"], "DISPATCHED")
+        self.assertEqual(gateway.execute_vendor_create(req, actor="v18@example")["state"], "DEDUPLICATED")
+        with self.assertRaisesRegex(ValueError, "ACTION_REQUEST_INVALID"):
+            gateway.execute_vendor_create({"run_id": "r"}, actor="v18@example")
+        with self.assertRaisesRegex(ValueError, "ACTION_REQUEST_DIGEST_MISMATCH"):
+            gateway.execute_vendor_create({**req, "request_digest": "other"}, actor="v18@example")
+        with self.assertRaisesRegex(ValueError, "WORKLOAD_IDENTITY_DENIED"):
+            gateway.execute_vendor_create(req, actor="other@example")
+        provider_path = next(key for key in db.data if key.startswith("continuity_sandbox_vendors/"))
+        db.data[provider_path]["actor"] = "substituted@example"
+        with self.assertRaisesRegex(ValueError, "IDEMPOTENCY_KEY_CONFLICT"):
+            gateway.execute_vendor_create(req, actor="v18@example")
+        db.data[provider_path]["actor"] = "v18@example"
+        db.data["continuity_authority/acme"]["status"] = "FENCED"
+        with self.assertRaisesRegex(ValueError, "AUTHORITY_PRECONDITION_FAILED"):
+            gateway.execute_vendor_create(changed(idempotency_key="other"), actor="v18@example")
+        db.data["continuity_authority/acme"]["status"] = "ACTIVE"
+        db.data["continuity_compliance/r"]["status"] = "FAILED"
+        with self.assertRaisesRegex(ValueError, "COMPLIANCE_PRECONDITION_FAILED"):
+            gateway.execute_vendor_create(changed(idempotency_key="other"), actor="v18@example")
 
     def test_observed_export_remote_verification_and_google_token(self):
         run = {**request(), "predecessor": "v17", "predecessor_epoch": 41,
                "successor": "v18", "successor_epoch": 42,
+               "deadline": "2026-08-26T10:05:00Z",
+               "compliance": {"evidence_id": "e1", "document_hash": "doc"},
                "decision": {"outcome": "APPROVE_SUCCESSION", "decision_id": "d"},
-               "provider_observation": {"effect_count": 1, "provider_ref": "firestore://vendor/1", "request_digest": "digest"}}
+               "provider_observation": {"effect_count": 1, "provider_ref": "firestore://vendor/1", "request_digest": "digest", "compliance_evidence_id": "e1"}}
         exporter = ObservedContractExporter("mailto:control@example", "mailto:verifier@example")
-        bundle = exporter.export(run, [{"sequence": 1, "kind": "observed"}]); verify_bundle(bundle)
+        bundle = exporter.export(run, [{"sequence": 1, "kind": "observed"}])
+        self.assertEqual(len(bundle["artifacts"]), 5)
         class Client:
-            response = {"verification": {"status": "PASS", "outcome": "VERIFIED"}, "actor": "verifier@example"}
+            response = {"verification": {"status": "PASS", "outcome": "VERIFIED", "bundle": {"artifacts": []}}, "actor": "verifier@example"}
             def post(self, *args, **kwargs): return self.response
         verifier = RemoteVerifier(Client(), "https://verifier", "fallback@example")
         self.assertEqual(verifier.verify({"run_id": "r", "correlation_id": "a" * 32, "bundle": bundle})["verifier_principal"], "verifier@example")
@@ -183,14 +313,39 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         with patch("google.oauth2.id_token.fetch_id_token", return_value="token") as fetch:
             self.assertEqual(google_id_token("audience"), "token"); self.assertEqual(fetch.call_args.args[1], "audience")
 
+    def test_cloud_tasks_scheduler_is_deterministic_and_duplicate_safe(self):
+        class Task:
+            name = "projects/p/locations/r/queues/q/tasks/created"
+        class Client:
+            duplicate = False
+            def queue_path(self, *parts): return "/".join(parts)
+            def task_path(self, *parts): return "/".join(parts)
+            def create_task(self, **kwargs):
+                if self.duplicate:
+                    from google.api_core.exceptions import AlreadyExists
+                    raise AlreadyExists("exists")
+                self.request = kwargs; return Task()
+        client = Client(); scheduler = CloudTasksDeadlineScheduler(client, project="p", region="r",
+            queue="q", control_url="https://control.run.app", oidc_service_account="push@example")
+        first = scheduler.schedule(run_id="run", deadline="2026-08-26T10:00:08Z")
+        self.assertEqual(first["task_name"], Task.name)
+        self.assertEqual(client.request["task"]["http_request"]["oidc_token"]["audience"],
+                         "https://control.run.app")
+        client.duplicate = True
+        self.assertIn("sentinel-", scheduler.schedule(
+            run_id="run", deadline="2026-08-26T10:00:08Z")["task_name"])
+
     def test_production_factory_builds_complete_graph(self):
         required = {"GOOGLE_CLOUD_PROJECT": "p", "CONTINUUM_V17_URL": "https://v17",
                     "CONTINUUM_V18_URL": "https://v18", "CONTINUUM_VERIFIER_URL": "https://verifier",
                     "CONTINUUM_CONTROL_IDENTITY": "control@example", "CONTINUUM_V17_IDENTITY": "v17@example",
-                    "CONTINUUM_V18_IDENTITY": "v18@example", "CONTINUUM_VERIFIER_IDENTITY": "verifier@example"}
+                    "CONTINUUM_V18_IDENTITY": "v18@example", "CONTINUUM_VERIFIER_IDENTITY": "verifier@example",
+                    "CONTINUUM_CONTROL_URL": "https://control", "CONTINUUM_DEADLINE_QUEUE": "q",
+                    "CONTINUUM_PUBSUB_PUSH_IDENTITY": "push@example", "CONTINUUM_REGION": "r"}
         db = Firestore()
         with patch.dict(os.environ, required, clear=True), \
              patch("google.cloud.firestore.Client", return_value=db), \
+             patch("google.cloud.tasks_v2.CloudTasksClient", return_value=object()), \
              patch("continuum.cloud_scenario_adapters.PubSubLifecyclePublisher", return_value=Publisher()):
             service = build_production_scenario_service()
         self.assertIsNotNone(service); self.assertIs(service.store.client, db)

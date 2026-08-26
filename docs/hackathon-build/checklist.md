@@ -106,3 +106,66 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   What to build: one-command local proof, one-command cloud run/capture/verify flow, complete runbook, provenance/build notes, and claim matrix.
   Acceptance: clean test/container/audit run and explicit external deployment prerequisite only.
   Verify: full suite plus generated local artifacts and clean Git state after commit.
+
+## Winner-hardening release — autonomous
+
+- [x] **21. Correct the obligation and remediation semantics**
+  Spec ref: `spec.md > Winner-hardening release`
+  What to build: Make fresh compliance acquisition and validation a prerequisite to vendor creation and attestation.
+  Acceptance: Missing or invalid compliance evidence cannot discharge onboarding; escalation remains safe.
+  Verify: canonical, missing, invalid, and stale compliance tests.
+- [ ] **22. Implement a real temporal Negative Space Sentinel**
+  Spec ref: `spec.md > Winner-hardening release`
+  What to build: Persist deadlines and expected evidence; add an idempotent scheduler tick that observes absence after real time.
+  Acceptance: scenario start cannot author `expectation.missed`; early and duplicate ticks are harmless.
+  Verify: virtual-clock unit tests and deployed Cloud Scheduler invocation proof.
+- [x] **23. Make the Google lifecycle literally event driven**
+  Spec ref: `spec.md > Winner-hardening release`
+  What to build: Use transactional event/projection/outbox persistence and let Pub/Sub delivery advance the effect-bearing workflow.
+  Acceptance: a duplicate delivered message reaches the same transition and produces one provider effect.
+  Verify: crash, retry, redelivery, and direct Firestore state tests.
+- [x] **24. Centralize transactional authority enforcement**
+  Spec ref: `spec.md > Winner-hardening release`
+  What to build: One gateway CAS over tenant/authority domain with workload-derived principal and full execution preconditions.
+  Acceptance: v17 receives `STALE_EPOCH`; v18 succeeds; races and forged identities fail closed.
+  Verify: gateway concurrency and authenticated black-box tests.
+- [x] **25. Implement the independent Verification Engine**
+  Spec ref: `spec.md > Winner-hardening release`
+  What to build: Original read-only engine that verifies five input artifacts and provider/authority/compliance state, then issues the sole attestation.
+  Acceptance: control cannot pre-author attestation; verdicts are VERIFIED, FAILED, or INCONCLUSIVE; all digests and observations are independently recomputed.
+  Verify: mutation, omission, expiry, signer separation, replay, and read-only integration tests.
+- [x] **26. Make Gemini causally useful but non-authoritative**
+  Spec ref: `spec.md > Winner-hardening release`
+  What to build: Bounded remediation-plan schema, citation validation, deterministic admission, and explicit HOLD paths.
+  Acceptance: selected plan changes the permitted next transition; fabricated citations and unsupported plans cannot mutate state.
+  Verify: model-output ablation and policy tests.
+- [ ] **27. Replace synthetic observability with owned evidence**
+  Spec ref: `spec.md > Winner-hardening release`
+  What to build: Real OpenTelemetry spans and direct Firestore/Trace collection with precise source-authority labels.
+  Acceptance: trace and state are retrieved from owning Google APIs for the exact run and revision.
+  Verify: collector provenance tests and a live correlated trace capture.
+- [x] **28. Build the one-click cloud cockpit**
+  Spec ref: `spec.md > Winner-hardening release`
+  What to build: Cloud-backed asynchronous start/status UI showing each autonomous phase and signature proof without additional action buttons.
+  Acceptance: one start visibly reaches attestation while showing compliance, denials, deliveries, and one effect.
+  Verify: browser smoke plus API phase-progression tests.
+- [x] **29. Execute a truthful adversarial evaluation matrix**
+  Spec ref: `spec.md > Winner-hardening release`
+  What to build: Distinct runnable cases for silence, bad citations, competing successors, provider ambiguity, expiry, races, duplicates, and verifier disagreement.
+  Acceptance: report contains actual per-case inputs/outcomes and no duplicated fixture labels.
+  Verify: regenerate report and independently compare case digests.
+- [ ] **30. Enforce continuous verification in GitHub Actions**
+  Spec ref: `spec.md > Winner-hardening release`
+  What to build: Least-privilege pinned workflow for locked quality, conformance, release, syntax, secret, and container gates with concurrency cancellation.
+  Acceptance: every PR and main push runs; workflow has read-only default permissions and no cloud credentials.
+  Verify: local workflow audit, commit/push, and successful GitHub check run.
+- [x] **31. Simplify and synchronize judge-facing claims**
+  Spec ref: `spec.md > Winner-hardening release`
+  What to build: Succession-first README, rubric map, explicit limitations, current diagram, executable demo story, and sanitized evidence publication plan.
+  Acceptance: no stale run, unsupported Foundry headline, or inaccessible proof is presented as current.
+  Verify: claims-to-evidence audit against exact release metadata.
+- [ ] **32. Deploy, recapture, and prepare the Devpost handoff**
+  Spec ref: `prd.md > Acceptance outcomes`
+  What to build: Deploy exact final commit, run the one-touch scenario, capture owned evidence, publish a sanitized bundle, and freeze the four-minute narrative.
+  Acceptance: source, image, services, run, bundle, CI and judge links all agree and independently verify.
+  Verify: live unedited rehearsal, offline PASS, green required CI, and clean Git state.

@@ -5,9 +5,10 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from continuum.core import ActionGateway, AgentRegistry, MemoryGateway, VendorRegistry, validate_manifest
+from continuum.core import ActionGateway, AgentRegistry, ComplianceRegistry, MemoryGateway, VendorRegistry, validate_manifest
 from continuum.models import AgentStatus, AgentVersion, Denied, TransferManifest
 from continuum.scenario import run_scenario
+from continuum.sentinel import NegativeSpaceSentinel, parse_utc
 
 
 class ScenarioTests(unittest.TestCase):
@@ -70,11 +71,16 @@ class BoundaryTests(unittest.TestCase):
     def test_idempotency_key_cannot_change_meaning(self):
         with TemporaryDirectory() as directory:
             provider = VendorRegistry(Path(directory) / "vendors.sqlite3")
-            gateway = ActionGateway(self.registry, provider)
-            args = dict(tenant="acme", version="v1", epoch=7, vendor="one", idempotency_key="stable", decision_id="d1")
+            compliance = ComplianceRegistry()
+            compliance.verify(evidence_id="e1", tenant="acme", obligation_id="o1",
+                              subject="one", document_hash="sha256:doc")
+            gateway = ActionGateway(self.registry, provider, compliance)
+            args = dict(tenant="acme", version="v1", epoch=7, vendor="one",
+                        obligation_id="o1", compliance_evidence_id="e1",
+                        idempotency_key="stable", decision_id="d1")
             gateway.create_vendor(**args)
             with self.assertRaisesRegex(Denied, "IDEMPOTENCY_KEY_CONFLICT"):
-                gateway.create_vendor(**(args | {"vendor": "two"}))
+                gateway.create_vendor(**(args | {"decision_id": "d2"}))
             self.assertEqual(provider.count(), 1)
             provider.close()
 
@@ -83,6 +89,39 @@ class BoundaryTests(unittest.TestCase):
             ("raw_untrusted_document",), ("raw_untrusted_document", "secret", "revoked_private_notes"), ("e",), "d")
         with self.assertRaisesRegex(Denied, "UNSAFE_MANIFEST_CONTENT"):
             validate_manifest(unsafe)
+
+    def test_negative_space_requires_elapsed_deadline_and_is_idempotent(self):
+        sentinel = NegativeSpaceSentinel()
+        args = dict(required_evidence=("compliance.evidence_verified",),
+                    deadline="2026-08-17T10:05:00Z", observed_evidence=())
+        self.assertEqual(sentinel.evaluate(**args, now="2026-08-17T10:04:59Z"), ())
+        due = sentinel.evaluate(**args, now="2026-08-17T10:05:00Z")
+        self.assertEqual(due[0].evidence_type, "compliance.evidence_verified")
+        self.assertEqual(sentinel.evaluate(**args, now="2026-08-17T10:05:01Z",
+                                           already_reported=(due[0].evidence_type,)), ())
+        self.assertEqual(sentinel.evaluate(**(args | {"observed_evidence": ("compliance.evidence_verified",)}),
+                                           now="2026-08-17T10:05:01Z"), ())
+        with self.assertRaisesRegex(ValueError, "UTC_Z_REQUIRED"):
+            parse_utc("2026-08-17T10:05:00+00:00")
+
+    def test_compliance_registry_fails_closed_for_every_invalid_binding(self):
+        from continuum.core import ComplianceRegistry
+        compliance = ComplianceRegistry()
+        for values in [dict(evidence_id="", document_hash="doc"),
+                       dict(evidence_id="e", document_hash="")]:
+            with self.assertRaisesRegex(Denied, "COMPLIANCE_EVIDENCE_REQUIRED"):
+                compliance.verify(tenant="acme", obligation_id="o", subject="v", **values)
+        compliance.verify(evidence_id="e", tenant="acme", obligation_id="o",
+                          subject="v", document_hash="doc")
+        with self.assertRaisesRegex(Denied, "COMPLIANCE_EVIDENCE_CONFLICT"):
+            compliance.verify(evidence_id="e", tenant="acme", obligation_id="o",
+                              subject="v", document_hash="other")
+        with self.assertRaisesRegex(Denied, "COMPLIANCE_EVIDENCE_REQUIRED"):
+            compliance.authorize(evidence_id="", tenant="acme", obligation_id="o", subject="v")
+        with self.assertRaisesRegex(Denied, "COMPLIANCE_EVIDENCE_NOT_VERIFIED"):
+            compliance.authorize(evidence_id="missing", tenant="acme", obligation_id="o", subject="v")
+        with self.assertRaisesRegex(Denied, "COMPLIANCE_EVIDENCE_BINDING_MISMATCH"):
+            compliance.authorize(evidence_id="e", tenant="other", obligation_id="o", subject="v")
 
 
 if __name__ == "__main__":

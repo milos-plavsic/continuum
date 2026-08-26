@@ -32,7 +32,9 @@ control plane's supplied evidence. Missing evidence alone never proves compromis
 Return a structured proposal containing
 hypotheses, evidence_ids, unsupported_assumptions, risk, reversibility, and
 proposed_actions. Never claim to approve policy or execute an action. If cited
-evidence is missing, fail closed and request operator review.
+evidence is missing, fail closed and propose exactly request_operator_review.
+When and only when the correlated evidence supports controlled replacement,
+propose exactly initiate_governed_succession. These are the only action names.
 """.strip(),
     output_schema=EvidenceProposal,
 )

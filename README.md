@@ -1,22 +1,22 @@
 # Continuum
 
-Continuum is an institutional agent-continuity system for keeping autonomous
-organizations safe when workflows fail, agents conflict, people leave, or an
-agent must evolve or retire.
+Continuum is a succession control plane for autonomous agents: when an agent
+silently fails or must be retired, its verified obligations move to a fenced
+successor without transferring untrusted memory or repeating side effects.
 
 The project is a new implementation for the 2026 All Things Agentic Hackathon.
-It targets the **Fortified Enterprise Fleet** category and combines five
-lifecycle capabilities behind one event-driven platform:
+It targets **Fortified Enterprise Fleet**. Succession Protocol is the product;
+Promise Ledger, Negative Space Sentinel, deterministic policy and independent
+verification are the minimum services required to prove one coherent lifecycle.
 
-1. Promise Ledger — records obligations and expected outcomes.
-2. Negative Space Sentinel — detects meaningful events that never happened.
-3. Constitutional Court — resolves conflicting proposed actions.
-4. Antibody Foundry — turns failures into independently verified defenses.
-5. Succession Protocol — replaces or retires agents without orphaning work,
-   leaking memory, or repeating side effects.
+## The 60-second judge path
 
-The headline workflow is Succession Protocol. The other capabilities support a
-single end-to-end demonstration rather than acting as separate products.
+1. Click once. Continuum persists a compliance obligation and schedules its real deadline.
+2. Cloud Tasks wakes the Sentinel; Pub/Sub deliberately redelivers the missing-event signal.
+3. Gemini 3.6 Flash, through Google ADK, cites live events and proposes one bounded remediation.
+4. Deterministic policy fences v17; its action and memory requests are denied.
+5. v18 obtains fresh compliance evidence and a transactional gateway creates one provider record.
+6. A read-only verifier directly reads authority, compliance and provider state, then alone issues artifact six: the continuity attestation.
 
 Its portable boundary is the **Continuity Contract Profile 0.1-draft**: an open,
 vendor-neutral protocol proposal for obligations, authority grants, succession
@@ -26,12 +26,12 @@ standard and not yet a third-party interoperability claim.
 
 ## Status
 
-The repository contains both a deterministic local reference implementation and
-a production-composed Google Cloud vertical slice. The cloud path uses Cloud
-Run identities, Firestore, Pub/Sub redelivery, Google ADK with Gemini 3.6 Flash,
-independent verification, and exact-run evidence capture. A cloud claim remains
-an explicit deployment gate: local results are never presented as proof that a
-Google project was deployed.
+The repository contains a deterministic reference and a production-composed
+Google Cloud slice using private Cloud Run identities, Firestore transactions,
+Cloud Tasks, Pub/Sub redelivery, Google ADK with Gemini 3.6 Flash, and a
+read-only verifier. Cloud Trace is populated by real OpenTelemetry spans and
+collected through the owning Trace API. Cloud claims remain deployment-gated;
+local success is never relabelled as cloud proof.
 
 ## Run the reference scenario
 
@@ -73,8 +73,8 @@ the external Google Cloud deployment prerequisites are configured:
 uv run python scripts/release_gate.py
 ```
 
-The evaluation writes `artifacts/evaluation/report.json` and distinguishes
-observed local results from pending live-model and Google Cloud evidence.
+The evaluation writes actual inputs, outcomes and digests for eight distinct
+signal combinations, five deterministic replays and every C0–C6 case.
 
 ## Run the incident cockpit
 

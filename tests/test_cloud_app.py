@@ -149,11 +149,17 @@ class CloudAppTests(unittest.TestCase):
         agent = TestClient(create_cloud_app(store=self.store, role="agent-v17",
                                            identity_resolver=lambda: "v17@example.com"))
         self.assertEqual(agent.post("/pubsub/push").status_code, 404)
+        self.assertEqual(agent.get("/").status_code, 404)
         result = agent.post("/internal/attempt-action", json={"actor": "forged@example.com"}).json()
         self.assertEqual(result["role"], "agent-v17")
         self.assertEqual(result["actor"], "v17@example.com")
         memory = agent.post("/internal/attempt-memory", json={"actor": "forged@example.com"}).json()
         self.assertEqual(memory["actor"], "v17@example.com")
+
+    def test_control_root_serves_one_click_cloud_cockpit(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("One click", response.text)
 
     def test_live_investigation_is_injected_typed_and_workload_derived(self):
         observed = {}
@@ -252,6 +258,13 @@ class CloudAppTests(unittest.TestCase):
         agent = TestClient(create_cloud_app(role="agent-v18"))
         self.assertEqual(agent.post("/cloud-smoke/start", json={"run_id": "x"}).status_code, 404)
         self.assertEqual(agent.get("/cloud-smoke/x").status_code, 404)
+        self.assertEqual(agent.post("/cloud-smoke/x/tick").status_code, 404)
+        service.tick.return_value = {"phase": "WAITING_FOR_DEADLINE"}
+        self.assertEqual(control.post("/cloud-smoke/valid/tick").json()["phase"], "WAITING_FOR_DEADLINE")
+        service.tick.side_effect = KeyError("missing")
+        self.assertEqual(control.post("/cloud-smoke/missing/tick").status_code, 404)
+        without_service = TestClient(create_cloud_app(role="control", scenario_service=None))
+        self.assertEqual(without_service.post("/cloud-smoke/x/tick").status_code, 503)
 
     def test_role_endpoint_configuration_and_identity_failures(self):
         control = TestClient(create_cloud_app(role="control", scenario_service=unittest.mock.Mock()))
@@ -269,6 +282,46 @@ class CloudAppTests(unittest.TestCase):
         self.assertEqual(no_verifier.post("/internal/verify", json={}).status_code, 503)
         bad_verifier = TestClient(create_cloud_app(role="verifier", verifier=lambda p, i: (_ for _ in ()).throw(ValueError("bad")), identity_resolver=lambda: "v"))
         self.assertEqual(bad_verifier.post("/internal/verify", json={}).status_code, 422)
+
+    def test_v18_action_endpoint_uses_injected_transactional_gateway_and_fails_closed(self):
+        gateway = unittest.mock.Mock()
+        gateway.execute_vendor_create.return_value = {
+            "state": "DISPATCHED", "actor": "v18@example.com", "provider_ref": "p"}
+        agent = TestClient(create_cloud_app(role="agent-v18", action_gateway=gateway,
+            identity_resolver=lambda: "v18@example.com"))
+        self.assertEqual(agent.post("/internal/attempt-action", json={"request": 1}).json()["state"], "DISPATCHED")
+        gateway.execute_vendor_create.side_effect = ValueError("DENIED")
+        self.assertEqual(agent.post("/internal/attempt-action", json={}).status_code, 409)
+        unavailable = TestClient(create_cloud_app(role="agent-v18", action_gateway=None,
+            identity_resolver=lambda: "v18@example.com"))
+        self.assertEqual(unavailable.post("/internal/attempt-action", json={}).status_code, 503)
+        with patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "p"}), \
+             patch("google.cloud.firestore.Client", return_value=object()), \
+             patch("continuum.cloud_gateway.FirestoreActionGateway", return_value=gateway):
+            lazy = TestClient(create_cloud_app(role="agent-v18",
+                identity_resolver=lambda: "v18@example.com"))
+            gateway.execute_vendor_create.side_effect = None
+            self.assertEqual(lazy.post("/internal/attempt-action", json={}).status_code, 200)
+
+    def test_pubsub_event_causally_resumes_scenario_and_missing_run_is_rejected(self):
+        service = unittest.mock.Mock()
+        service.handle_event.side_effect = KeyError("missing")
+        client = TestClient(create_cloud_app(store=_Store(), role="control", scenario_service=service,
+            token_verifier=lambda token, audience: {"email": "push@example.iam.gserviceaccount.com"}))
+        event = {"event_id": "e-causal", "event_type": "expectation.missed",
+                 "correlation_id": "trace", "run_id": "missing"}
+        response = client.post("/pubsub/push", json=_payload(event),
+                               headers={"Authorization": "Bearer token"})
+        self.assertEqual(response.status_code, 409)
+        service.handle_event.side_effect = None
+        service.reset_mock(); store = _Store()
+        client = TestClient(create_cloud_app(store=store, role="control", scenario_service=service,
+            token_verifier=lambda token, audience: {"email": "push@example.iam.gserviceaccount.com"}))
+        self.assertEqual(client.post("/pubsub/push", json=_payload(event),
+                                    headers={"Authorization": "Bearer token"}).status_code, 204)
+        self.assertEqual(client.post("/pubsub/push", json=_payload(event),
+                                    headers={"Authorization": "Bearer token"}).status_code, 204)
+        service.handle_event.assert_called_once()
 
     def test_push_requires_bearer_and_lazy_repository_requires_project(self):
         self.assertEqual(self.client.post("/pubsub/push", json={}).status_code, 401)
