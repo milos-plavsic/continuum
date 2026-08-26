@@ -160,6 +160,9 @@ class CloudAppTests(unittest.TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertIn("One click", response.text)
+        self.assertIn("SAME-RUN PROOF", response.text)
+        self.assertIn("Focus same-run proof", response.text)
+        self.assertIn("predecessor.denials_observed", response.text)
 
     def test_live_investigation_is_injected_typed_and_workload_derived(self):
         observed = {}
