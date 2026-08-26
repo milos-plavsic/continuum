@@ -55,6 +55,16 @@ configuration. All state-changing and internal endpoints therefore fail closed
 with `404`; the page links to the separately released credential-free evidence
 packet instead of claiming to execute the historical run.
 
+The currently published judge surface is
+https://continuum-showcase-rdzvxiysbq-ew.a.run.app. Revision
+`continuum-showcase-00001-z9j` runs source commit
+`b00866f90353bc936fde5c4799e2ba5fba99cb81` as immutable image digest
+`sha256:3ba085bd39f147bef5d9e7bbdea9ea7513913e14e9ad401f26c19cbbab0bb0bb`.
+Its service identity is
+`continuum-showcase@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com`;
+the identity has no project-level role. The service IAM policy contains only
+the intentional `allUsers`/`roles/run.invoker` binding.
+
 ## Evidence interpretation
 
 The initial smoke captures infrastructure objects only, so the verifier should
