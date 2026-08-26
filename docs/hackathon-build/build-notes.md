@@ -6,16 +6,17 @@
   checks before merge. Two real integration mismatches and one proof-query drift
   were discovered by fresh cloud runs, fixed with regression tests, and never
   relabelled as successful evidence.
-- Exact source `4d676b1ed4bbf2394dbac777fcaa1499f54f560b` was deployed across
+- Exact source `0ceda492a439466bef4536f695f86d2a7b8f01e4` was deployed across
   five private, identity-separated Cloud Run services on image digest
-  `sha256:b87b7ce0242a98abe1e35427f3e3447c3f43c55ea8bb25c3a0be04bf23f66e92`.
-- Fresh run `golden-4d676b1-20260826-04` reached independent `VERIFIED`:
+  `sha256:ddc57999674ec755ffc92a9c004d7265ada06ff56424f9ee46121c7b511a7b96`.
+- Fresh run `golden-0ceda49-20260826-182725` reached independent `VERIFIED`:
   Gemini selected deployable v18 from eligible v18/v19 candidates, v20 was
   rejected, two facts crossed, four context classes were excluded, v17 was
   denied, and two Pub/Sub deliveries produced one provider effect.
-- Read-only capture produced 13 content-addressed objects and 69 exact-trace
+- Read-only capture produced 13 content-addressed objects and 104 exact-trace
   spans. The network-free, credential-free verifier returned `PASS` for bundle
-  `urn:uuid:e8cf6157-2a35-46ad-a399-4a35d5b56988`.
+  `urn:uuid:be58870d-6398-4bf5-a1a2-90dc3eca3e86`. A security-audited packet
+  with nested checksums is prepared as the `cloud-proof-0ceda49` release asset.
 
 ## Golden-standard extension — August 26
 

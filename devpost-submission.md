@@ -14,7 +14,7 @@ The buyer is an enterprise platform, security, compliance, or operations team ru
 
 ## Solution
 
-Continuum treats succession as a governed lifecycle, not a restart. Negative Space Sentinel observes that required evidence did not arrive by a persisted deadline. A deterministic eligibility gate assesses multiple registry candidates using tenant, health, capability, memory scope, jurisdiction, contract profile, and trust constraints. Google ADK and Gemini 3.6 Flash then choose only from the eligible set and must cite the selected deployment evidence.
+Continuum treats succession as a governed lifecycle, not a restart. A persisted deadline monitor detects that required evidence did not arrive. A deterministic eligibility gate assesses multiple registry candidates using tenant, health, capability, memory scope, jurisdiction, contract profile, and trust constraints. Google ADK and Gemini 3.6 Flash then choose only from the eligible set and must cite the selected deployment evidence.
 
 Deterministic policy validates that non-authoritative model choice, fences the old epoch, reconstructs the minimum authorized context, and sends one effect through the selected successor's identity. A separate read-only verifier recomputes the selection and context receipts, directly reads authority, compliance, and provider state, and alone may issue the sixth continuity attestation: VERIFIED, FAILED, or INCONCLUSIVE.
 
@@ -40,8 +40,8 @@ No source was copied from prior projects or external contributor pull requests. 
 
 ## Key Features
 
-- **Promise Ledger:** append-only obligations and explicit lifecycle transitions.
-- **Negative Space Sentinel:** a Cloud Tasks deadline detects missing evidence; real Pub/Sub redelivery resumes work.
+- **Obligation continuity:** append-only commitments and explicit lifecycle transitions.
+- **Missing-evidence detection:** a Cloud Tasks deadline detects silence; real Pub/Sub redelivery resumes work.
 - **Bounded successor selection:** v18/v19/v20 registry assessment, deterministic pre-filter, typed evidence-cited Gemini choice.
 - **Succession Protocol:** epoch CAS, predecessor fencing, separate successor identities, and idempotent roll-forward.
 - **Minimum-context reconstruction:** two verified facts included; raw injection, secrets, model inference, and revoked notes excluded before retrieval.
@@ -88,7 +88,7 @@ export CONTINUUM_EVIDENCE_DIR="artifacts/cloud/$(date -u +%Y%m%dT%H%M%SZ)"
 bash scripts/cloud/run-cloud-proof.sh
 ```
 
-The accepted exact-source proof is documented in `docs/CLOUD_PROOF.md`: 13/13 read-only objects, 69 correlated spans, and a network-free/credential-free offline semantic PASS.
+The accepted exact-source proof is documented in `docs/CLOUD_PROOF.md`: 13/13 read-only objects, 104 correlated spans, and a network-free/credential-free offline semantic PASS. The complete security-audited packet is publicly downloadable from the checksum-pinned `cloud-proof-0ceda49` GitHub Release.
 
 ## Public Demo Link
 
@@ -110,12 +110,12 @@ Demo outline: `docs/DEMO_SCRIPT.md`.
 2. Candidate panel: v18/v19 eligible, v20 rejected, Gemini-selected v18 with citations.
 3. Minimum-context receipt: two included, four excluded with reason codes.
 4. Continuity proof: two Pub/Sub deliveries, one provider effect, v17 denied, verifier-issued artifact six.
-5. Google Cloud evidence: five Cloud Run revisions/identities and the exact 69-span Cloud Trace.
+5. Google Cloud evidence: five Cloud Run revisions/identities and the exact 104-span Cloud Trace.
 
 ## Submission Readiness Notes
 
 - Fortified Enterprise Fleet is the target category.
-- Public repository, reproducible README, architecture PNG, exact cloud identifiers, and offline proof are ready.
+- Public repository, reproducible README, architecture PNG, exact cloud identifiers, and a downloadable offline-verifiable proof packet are ready.
 - The attached Devpost project is currently a pre-draft named “Untitled”; rename and update it only during the final submit flow.
 - Remaining required asset: record/upload the approximately four-minute live demo and add its URL.
 - Remaining presentation assets: capture the five screenshots above and upload `docs/diagrams/architecture.png` to the required architecture field.
@@ -139,7 +139,7 @@ Demo outline: `docs/DEMO_SCRIPT.md`.
 - **Repository (28141):** https://github.com/milos-plavsic/continuum
 - **Reproducible README (28089):** Yes
 - **Hosted project (28088, optional):** leave blank; private IAM cockpit is demonstrated in video
-- **Private testing instructions (28090):** Use `./scripts/quality-gate.sh`; exact cloud proof and immutable identifiers are in `docs/CLOUD_PROOF.md`. Contact the submitter if temporary IAM cockpit access is required.
+- **Private testing instructions (28090):** Use `./scripts/quality-gate.sh`; exact cloud proof, immutable identifiers, public packet URL, archive checksum, and credential-free verification command are in `docs/CLOUD_PROOF.md`. Contact the submitter if temporary IAM cockpit access is required.
 - **Google SDK (28091):** Agent Development Kit (ADK)
 - **Google Cloud services (28142):** Cloud Run, Firestore, Pub/Sub
 - **Architecture upload (28092):** `docs/diagrams/architecture.png`
