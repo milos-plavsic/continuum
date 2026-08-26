@@ -145,7 +145,8 @@ class RemoteInvestigator:
         _emit(request["run_id"], "vertex-call", {"run_id": request["run_id"],
               "provider": "vertex-ai", "model": "gemini-3.6-flash",
               "service_account": response["actor"],
-              "evidence_event_ids": proposal["evidence_ids"]})
+              "evidence_event_ids": proposal["evidence_ids"],
+              "proposed_actions": proposal["proposed_actions"]})
         return proposal
 
 

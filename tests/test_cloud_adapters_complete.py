@@ -197,7 +197,9 @@ class CloudAdapterCompleteTests(unittest.TestCase):
     def test_remote_investigator_authority_and_all_denials(self):
         class Client:
             def post(self, url, payload, *, run_id):
-                return {"actor": "v18@example", "proposal": {"evidence_ids": ["e1"]}}
+                return {"actor": "v18@example", "proposal": {
+                    "evidence_ids": ["e1"],
+                    "proposed_actions": ["initiate_governed_succession"]}}
         proposal = RemoteInvestigator(Client(), "https://v18").investigate({"run_id": "r"})
         self.assertEqual(proposal["evidence_ids"], ["e1"])
 

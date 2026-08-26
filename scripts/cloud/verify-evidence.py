@@ -113,6 +113,8 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
     citations = vertex.get("evidence_event_ids")
     if not isinstance(citations, list) or event_id not in citations:
         errors.append("VERTEX_EVIDENCE_CITATION_MISSING")
+    if vertex.get("proposed_actions") != ["initiate_governed_succession"]:
+        errors.append("VERTEX_REMEDIATION_NOT_ADMITTED")
 
     trace = objects["trace-export"]
     _same(trace.get("trace_id"), scope["trace_id"], "TRACE_ID_MISMATCH", errors)

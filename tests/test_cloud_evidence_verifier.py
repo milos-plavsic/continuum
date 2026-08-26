@@ -49,7 +49,8 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
             "vertex-call": {"run_id": "run-001", "provider": "vertex-ai",
                             "model": "gemini-3.6-flash",
                             "service_account": "v18@example.iam.gserviceaccount.com",
-                            "evidence_event_ids": ["evt-001"]},
+                            "evidence_event_ids": ["evt-001"],
+                            "proposed_actions": ["initiate_governed_succession"]},
             "trace-export": {"run_id": "run-001", "trace_id": "a" * 32,
                              "spans": [{"name": name} for name in
                                        ("continuum.missing_event_published",
