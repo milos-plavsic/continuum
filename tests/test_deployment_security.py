@@ -16,6 +16,7 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
     def setUpClass(cls):
         cls.bootstrap = (ROOT / "scripts/cloud/bootstrap.sh").read_text()
         cls.deploy = (ROOT / "scripts/cloud/build-deploy.sh").read_text()
+        cls.showcase = (ROOT / "scripts/cloud/deploy-showcase.sh").read_text()
 
     def test_services_are_private_digest_pinned_and_replace_invoker_policy(self):
         self.assertIn('--image "$image_ref"', self.deploy)
@@ -25,6 +26,18 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertNotIn('allUsers', self.deploy)
         self.assertNotIn('allAuthenticatedUsers', self.deploy)
         self.assertIn('^(user|serviceAccount):[A-Za-z0-9._%+@-]+$', self.deploy)
+
+    def test_only_the_presentation_only_showcase_is_public(self):
+        self.assertIn('CONTINUUM_ROLE=showcase', self.showcase)
+        self.assertIn('--no-allow-unauthenticated', self.showcase)
+        self.assertIn('gcloud run services set-iam-policy', self.showcase)
+        self.assertIn('  - allUsers', self.showcase)
+        self.assertNotIn('roles/datastore.', self.showcase)
+        self.assertNotIn('roles/pubsub.', self.showcase)
+        self.assertNotIn('roles/aiplatform.', self.showcase)
+        self.assertNotIn('CONTINUUM_CONTROL_URL', self.showcase)
+        self.assertNotIn('GOOGLE_APPLICATION_CREDENTIALS', self.showcase)
+        self.assertIn('CONTINUUM_OBSERVABILITY_ENABLED=false', self.showcase)
 
     def test_invocation_graph_is_push_to_control_and_control_to_workers(self):
         self.assertIn('write_invoker_policy "$policy_dir/control.yaml" "serviceAccount:$push_identity" "$CONTINUUM_OPERATOR_MEMBER"', self.deploy)

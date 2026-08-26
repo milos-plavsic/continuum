@@ -164,6 +164,26 @@ class CloudAppTests(unittest.TestCase):
         self.assertIn("Focus same-run proof", response.text)
         self.assertIn("predecessor.denials_observed", response.text)
 
+    def test_public_showcase_is_static_hardened_and_has_no_mutation_surface(self):
+        showcase = TestClient(create_cloud_app(role="showcase"))
+        response = showcase.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Public read-only showcase", response.text)
+        self.assertIn("13 required objects", response.text)
+        self.assertIn("default-src 'none'", response.headers["Content-Security-Policy"])
+        self.assertEqual(response.headers["Referrer-Policy"], "no-referrer")
+        self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
+        self.assertEqual(showcase.get("/docs").status_code, 404)
+        self.assertEqual(showcase.get("/openapi.json").status_code, 404)
+        self.assertEqual(showcase.get("/cloud-smoke/x").status_code, 404)
+        self.assertEqual(showcase.post("/cloud-smoke/start", json={"run_id": "x"}).status_code, 404)
+        self.assertEqual(showcase.post("/cloud-smoke/x/tick").status_code, 404)
+        self.assertEqual(showcase.post("/pubsub/push", json={}).status_code, 404)
+        self.assertEqual(showcase.post("/internal/attempt-action", json={}).status_code, 404)
+        self.assertEqual(showcase.post("/internal/attempt-memory").status_code, 404)
+        self.assertEqual(showcase.post("/internal/investigate", json={}).status_code, 404)
+        self.assertEqual(showcase.post("/internal/verify", json={}).status_code, 404)
+
     def test_live_investigation_is_injected_typed_and_workload_derived(self):
         observed = {}
         async def investigate(payload, identity):

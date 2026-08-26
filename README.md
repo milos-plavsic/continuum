@@ -47,6 +47,11 @@ identifiers and the validity boundary are recorded in
 checksum-pinned GitHub Release asset, so judges can run its semantic verifier
 without Google credentials. Local success is never relabelled as cloud proof.
 
+The hosted judge surface is a separate, public **read-only showcase**. Its
+dedicated Cloud Run identity has no Firestore, Pub/Sub, Vertex AI, agent, or
+control-plane privileges; every mutation route returns `404`. It links to the
+credential-free proof packet while the effect-bearing runtime remains private.
+
 ## Run the reference scenario
 
 Python 3.11 or newer is sufficient; the deterministic core has no runtime
@@ -134,6 +139,26 @@ exposes the signature proof controls: stale v17 action, revoked v17 memory,
 successor effect, redelivery, and the exact six-artifact contract bundle.
 Mutation endpoints are disabled unless `CONTINUUM_DEMO_MODE=1`; Cloud Run must
 remain IAM-authenticated and use a separate operator boundary.
+
+## Deploy the public read-only showcase
+
+The optional hosted judge surface is deployed independently, so publishing it
+does not redeploy or invalidate the exact private runtime captured in the cloud
+proof:
+
+```bash
+set -a
+source deploy/cloud.env
+set +a
+export CONTINUUM_GIT_SHA="$(git rev-parse HEAD)"
+bash scripts/cloud/deploy-showcase.sh
+```
+
+The script builds an immutable image, creates a no-role service identity, deploys
+privately first, and then replaces the service's invoker policy with only the
+intentional `allUsers` binding. The page exposes `/build-info`, but it has no
+credential, datastore role, mutation handler, or connection to the private
+control plane.
 
 ## Documentation
 
