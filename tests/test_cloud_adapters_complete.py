@@ -283,7 +283,8 @@ class CloudAdapterCompleteTests(unittest.TestCase):
                 "principal": "v18", "epoch": 42, "obligation_id": "o",
                 "decision_id": "d", "idempotency_key": "key", "operation": "vendor.create",
                 "vendor_id": "vendor-042", "compliance_evidence_id": evidence["evidence_id"],
-                "compliance_document_hash": evidence["document_hash"]}
+                "compliance_document_hash": evidence["document_hash"],
+                "context_receipt_digest": "sha256:context"}
         req = {**base, "request_digest": sha256(canonical_bytes(base)).hexdigest()}
         def changed(**values):
             unsigned = {**base, **values}
@@ -291,6 +292,8 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         gateway = FirestoreActionGateway(db, expected_actor="v18@example")
         first = gateway.execute_vendor_create(req, actor="v18@example")
         self.assertEqual(first["state"], "DISPATCHED")
+        provider_path = next(key for key in db.data if key.startswith("continuity_sandbox_vendors/"))
+        self.assertEqual("sha256:context", db.data[provider_path]["context_receipt_digest"])
         self.assertEqual(gateway.execute_vendor_create(req, actor="v18@example")["state"], "DEDUPLICATED")
         with self.assertRaisesRegex(ValueError, "ACTION_REQUEST_INVALID"):
             gateway.execute_vendor_create({"run_id": "r"}, actor="v18@example")
@@ -298,7 +301,6 @@ class CloudAdapterCompleteTests(unittest.TestCase):
             gateway.execute_vendor_create({**req, "request_digest": "other"}, actor="v18@example")
         with self.assertRaisesRegex(ValueError, "WORKLOAD_IDENTITY_DENIED"):
             gateway.execute_vendor_create(req, actor="other@example")
-        provider_path = next(key for key in db.data if key.startswith("continuity_sandbox_vendors/"))
         db.data[provider_path]["actor"] = "substituted@example"
         with self.assertRaisesRegex(ValueError, "IDEMPOTENCY_KEY_CONFLICT"):
             gateway.execute_vendor_create(req, actor="v18@example")
