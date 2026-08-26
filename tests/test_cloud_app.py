@@ -1,7 +1,6 @@
 import base64
 import json
 import os
-from pathlib import Path
 from unittest.mock import patch
 import unittest
 
@@ -177,6 +176,101 @@ class CloudAppTests(unittest.TestCase):
         response = verifier.post("/internal/verify", json={"digest": "abc"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["actor"], "verifier@example.iam.gserviceaccount.com")
+
+    def test_decoder_rejects_every_structural_boundary(self):
+        event = {"event_id": "e", "event_type": "t", "correlation_id": "c"}
+        valid = _payload(event)
+        mutations = []
+        extra = json.loads(json.dumps(valid)); extra["extra"] = 1; mutations.append(extra)
+        wrong_message = json.loads(json.dumps(valid)); wrong_message["message"] = []; mutations.append(wrong_message)
+        message_extra = json.loads(json.dumps(valid)); message_extra["message"]["extra"] = 1; mutations.append(message_extra)
+        alias_time = json.loads(json.dumps(valid)); alias_time["message"]["publish_time"] = "different"; mutations.append(alias_time)
+        empty_id = json.loads(json.dumps(valid)); empty_id["message"]["messageId"] = ""; mutations.append(empty_id)
+        bad_time = json.loads(json.dumps(valid)); bad_time["message"]["publishTime"] = "not-utc"; mutations.append(bad_time)
+        invalid_data = json.loads(json.dumps(valid)); invalid_data["message"]["data"] = "!!!"; mutations.append(invalid_data)
+        for payload in mutations:
+            with self.subTest(payload=payload), self.assertRaisesRegex(ValueError, "INVALID_PUBSUB_ENVELOPE"):
+                decode_pubsub_push(payload, expected_subscription="projects/p/subscriptions/control")
+        for bad_event in [[], {"event_id": "e"}, {**event, "unsupported": object()}]:
+            if isinstance(bad_event, dict) and "unsupported" in bad_event:
+                raw = b'{"correlation_id":"c","event_id":"e","event_type":"t", "unsupported": 1}'
+                payload = _payload(event); payload["message"]["data"] = base64.b64encode(raw).decode()
+            else:
+                payload = _payload(event); raw = json.dumps(bad_event).encode(); payload["message"]["data"] = base64.b64encode(raw).decode()
+            with self.assertRaisesRegex(ValueError, "INVALID_LIFECYCLE_EVENT"):
+                decode_pubsub_push(payload, expected_subscription="projects/p/subscriptions/control")
+
+    def test_correlation_boundary_rejects_invalid_values_and_emits_headers(self):
+        self.assertEqual(self.client.get("/health", headers={"X-Continuum-Run-ID": "bad id"}).status_code, 400)
+        self.assertEqual(self.client.get("/health", headers={"traceparent": "bad"}).status_code, 400)
+        trace = "a" * 32
+        response = self.client.get("/health", headers={"X-Continuum-Run-ID": "run:1", "traceparent": f"00-{trace}-0000000000000001-01"})
+        self.assertEqual(response.headers["X-Continuum-Run-ID"], "run:1")
+        self.assertEqual(response.headers["X-Cloud-Trace-Context"], f"{trace}/0;o=1")
+
+    def test_readiness_reports_each_invalid_deployment_field_and_accepts_valid_agent(self):
+        bad = {"GOOGLE_CLOUD_PROJECT": "p", "GIT_SHA": "bad", "CONTINUUM_IMAGE_DIGEST": "bad",
+               "CONTINUUM_DEPLOYMENT_ID": "mismatch", "CONTINUUM_PROTOCOL": "bad",
+               "K_SERVICE": "s", "K_REVISION": "r"}
+        with patch.dict(os.environ, bad, clear=True):
+            response = TestClient(create_cloud_app(role="control", scenario_service=None)).get("/ready")
+        self.assertEqual(response.status_code, 503)
+        self.assertTrue({"git_sha", "image_digest", "deployment_id", "protocol", "push_configuration", "scenario_service"}.issubset(response.json()["detail"]["invalid"]))
+        sha = "a" * 40; digest = "sha256:" + "b" * 64
+        good = {"GOOGLE_CLOUD_PROJECT": "p", "GIT_SHA": sha, "CONTINUUM_IMAGE_DIGEST": digest,
+                "CONTINUUM_DEPLOYMENT_ID": f"{sha}@{digest}", "CONTINUUM_PROTOCOL": "continuum/0.1-draft",
+                "K_SERVICE": "agent", "K_REVISION": "agent-1"}
+        with patch.dict(os.environ, good, clear=True):
+            client = TestClient(create_cloud_app(role="agent-v18"))
+            self.assertEqual(client.get("/ready").json()["status"], "ready")
+            self.assertEqual(client.get("/build-info").json()["revision"], "agent-1")
+
+    def test_cloud_scenario_http_failure_paths(self):
+        service = unittest.mock.Mock()
+        service.run.side_effect = ValueError("RUN_CONFLICT")
+        service.status.side_effect = KeyError("missing")
+        control = TestClient(create_cloud_app(role="control", scenario_service=service))
+        self.assertEqual(control.post("/cloud-smoke/start", content=b"not-json", headers={"content-type": "application/json"}).status_code, 400)
+        self.assertEqual(control.post("/cloud-smoke/start", json={"run_id": "bad id"}).status_code, 400)
+        self.assertEqual(control.post("/cloud-smoke/start", json={"run_id": "valid"}).status_code, 409)
+        self.assertEqual(control.get("/cloud-smoke/bad id").status_code, 400)
+        self.assertEqual(control.get("/cloud-smoke/missing").status_code, 404)
+        agent = TestClient(create_cloud_app(role="agent-v18"))
+        self.assertEqual(agent.post("/cloud-smoke/start", json={"run_id": "x"}).status_code, 404)
+        self.assertEqual(agent.get("/cloud-smoke/x").status_code, 404)
+
+    def test_role_endpoint_configuration_and_identity_failures(self):
+        control = TestClient(create_cloud_app(role="control", scenario_service=unittest.mock.Mock()))
+        self.assertEqual(control.post("/internal/attempt-action").status_code, 404)
+        self.assertEqual(control.post("/internal/attempt-memory").status_code, 404)
+        failing = lambda: (_ for _ in ()).throw(RuntimeError("adc"))
+        agent = TestClient(create_cloud_app(role="agent-v17", identity_resolver=failing))
+        self.assertEqual(agent.post("/internal/attempt-action").status_code, 503)
+        self.assertEqual(agent.post("/internal/attempt-memory").status_code, 503)
+        self.assertEqual(agent.post("/internal/investigate", json={}).status_code, 422)
+        no_investigator = TestClient(create_cloud_app(role="agent-v18", investigator=None))
+        self.assertEqual(no_investigator.post("/internal/investigate", json={}).status_code, 503)
+        self.assertEqual(control.post("/internal/investigate", json={}).status_code, 404)
+        no_verifier = TestClient(create_cloud_app(role="verifier", verifier=None))
+        self.assertEqual(no_verifier.post("/internal/verify", json={}).status_code, 503)
+        bad_verifier = TestClient(create_cloud_app(role="verifier", verifier=lambda p, i: (_ for _ in ()).throw(ValueError("bad")), identity_resolver=lambda: "v"))
+        self.assertEqual(bad_verifier.post("/internal/verify", json={}).status_code, 422)
+
+    def test_push_requires_bearer_and_lazy_repository_requires_project(self):
+        self.assertEqual(self.client.post("/pubsub/push", json={}).status_code, 401)
+        event = {"event_id": "e", "event_type": "t", "correlation_id": "c"}
+        with patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": ""}):
+            client = TestClient(create_cloud_app(store=None, role="control", scenario_service=unittest.mock.Mock(),
+                token_verifier=lambda token, audience: {"email": "push@example.iam.gserviceaccount.com"}))
+            self.assertEqual(client.post("/pubsub/push", json=_payload(event), headers={"Authorization": "Bearer token"}).status_code, 503)
+        lazy_store = _Store()
+        with patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "p"}), \
+             patch("continuum.cloud_app.FirestoreContinuityStore", return_value=lazy_store):
+            client = TestClient(create_cloud_app(store=None, role="control", scenario_service=unittest.mock.Mock(),
+                token_verifier=lambda token, audience: {"email": "push@example.iam.gserviceaccount.com"}))
+            self.assertEqual(client.post("/pubsub/push", json=_payload(event), headers={"Authorization": "Bearer token"}).status_code, 204)
+        without_service = TestClient(create_cloud_app(role="control", scenario_service=None))
+        self.assertEqual(without_service.get("/cloud-smoke/missing").status_code, 503)
 
 
 if __name__ == "__main__":

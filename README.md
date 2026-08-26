@@ -48,10 +48,18 @@ scenario creates a fresh append-only JSONL event log and a separately persisted
 SQLite sandbox vendor registry. Re-delivery returns the recorded execution and
 does not create another vendor.
 
-Run all automated tests and the measured evaluation:
+Run the complete quality gate. It covers every module under `src/continuum`
+with branch measurement and fails below a genuine 100.0%; no files or lines are
+excluded and there are no `pragma: no cover` shortcuts:
 
 ```bash
-python3 -m unittest discover -s tests -v
+./scripts/quality-gate.sh
+```
+
+Then regenerate the measured evaluation and portable artifacts when their
+fixtures change:
+
+```bash
 python3 scripts/run_evaluation.py
 python3 scripts/run_conformance.py
 python3 scripts/generate_contract_bundle.py

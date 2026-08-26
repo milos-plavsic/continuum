@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import replace
-import json
 from pathlib import Path
 import sqlite3
 from typing import Iterable
 from uuid import UUID, uuid5
 
 from .models import (
-    AgentStatus, AgentVersion, Denied, Event, Obligation, PolicyDecision,
+    AgentStatus, AgentVersion, Denied, Event, PolicyDecision,
     TransferManifest, canonical, digest,
 )
 

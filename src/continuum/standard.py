@@ -6,7 +6,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
-from .contract import ContractError, artifact_ref, canonical_bytes, make_envelope, validate_envelope
+from .contract import ContractError, artifact_ref, make_envelope, validate_envelope
 from .scenario import load_fixture, run_scenario
 
 ISSUED = "2026-08-17T10:05:00Z"

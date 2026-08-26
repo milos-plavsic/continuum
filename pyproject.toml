@@ -22,8 +22,18 @@ web = [
   "uvicorn[standard]>=0.35,<1"
 ]
 test = [
+  "coverage[toml]>=7.10,<8",
   "httpx>=0.28,<1"
 ]
+
+[tool.coverage.run]
+branch = true
+source = ["src/continuum"]
+
+[tool.coverage.report]
+fail_under = 100
+precision = 1
+show_missing = true
 
 [tool.setuptools]
 package-dir = {"" = "src"}

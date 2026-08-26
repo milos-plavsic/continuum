@@ -336,6 +336,8 @@ def _execution_document_id(scope: str, idempotency_key: str) -> str:
 
 
 def _parse_timestamp(value: str) -> datetime:
+    if not isinstance(value, str):
+        raise ValueError("INVALID_LEASE_TIMESTAMP")
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except (TypeError, ValueError) as error:
