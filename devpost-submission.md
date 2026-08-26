@@ -211,4 +211,5 @@ Demo outline: `docs/DEMO_SCRIPT.md`.
   (`veo-3.1-lite-generate-001`); Lyria 3 Clip Preview
   (`lyria-3-clip-preview`)
 - **Demo video:** TODO URL
-- **Optional public content/social links:** TODO only if genuinely published; do not claim bonus points otherwise
+- **Optional public content (28106):** https://dev.to/milos-plavsic/the-agent-failed-the-promise-did-not-building-verifiable-agent-succession-oe4
+- **Optional social post (28107):** https://www.linkedin.com/feed/update/urn:li:share:7498513309642616832/

@@ -211,6 +211,8 @@ https://continuum-showcase-rdzvxiysbq-ew.a.run.app and pinned to image digest
 - [Four-minute demo](docs/DEMO_SCRIPT.md)
 - [Verified Google Cloud proof](docs/CLOUD_PROOF.md)
 - [Hackathon compliance matrix](docs/HACKATHON_COMPLIANCE.md)
+- [Public technical write-up](https://dev.to/milos-plavsic/the-agent-failed-the-promise-did-not-building-verifiable-agent-succession-oe4)
+- [Public LinkedIn build post](https://www.linkedin.com/feed/update/urn:li:share:7498513309642616832/)
 - [Architecture diagram](docs/diagrams/architecture.svg) ·
   [editable Mermaid source](docs/diagrams/architecture.mmd) ·
   [demo-ready PNG](docs/diagrams/architecture.png)

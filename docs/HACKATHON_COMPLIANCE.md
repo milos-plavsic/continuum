@@ -39,13 +39,21 @@ point, producing a maximum final score of 6:
 
 | Bonus | Maximum | Current proof | Current claimable score |
 |---|---:|---|---:|
-| Public build content | +0.2 | Serious dev.to draft prepared; it is not public yet. It must explicitly say it was created for entering this hackathon. | 0.0 |
-| Public social post | +0.2 | LinkedIn draft prepared; it is not public yet. It must include `#AllThingsAgenticHackathon`. | 0.0 |
+| Public build content | +0.2 | The public dev.to article explicitly says it was created for entering the hackathon and links the implementation and proof. | +0.2 demonstrated; not yet submitted |
+| Public social post | +0.2 | The public LinkedIn post promotes Continuum and includes the exact `#AllThingsAgenticHackathon` hashtag. | +0.2 demonstrated; not yet submitted |
 | Additional Google AI models | +0.6 | Gemma 4, Veo 3.1 Lite and Lyria 3 completed one verifier-gated managed-cloud run, each in the causal path, with a digest-bound receipt and GCS objects. The public `multimodal-proof-8bec862` release contains the receipt and both media assets with SHA-256 checksums. The models still must be entered in field 28143. | +0.6 demonstrated; not yet submitted |
 
 One blog plus one LinkedIn post is enough to reach the two publication maxima;
 multiple posts do not stack beyond +0.2 in either publication category. Each of
 the three additional successfully integrated models contributes +0.2.
+
+Public URLs:
+
+- Content: https://dev.to/milos-plavsic/the-agent-failed-the-promise-did-not-building-verifiable-agent-succession-oe4
+- Social: https://www.linkedin.com/feed/update/urn:li:share:7498513309642616832/
+
+All optional contributions now support the full **+1.0** bonus. The score is not
+formally claimed until these URLs and models are included in the submitted form.
 
 ## Judging readiness
 
