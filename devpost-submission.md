@@ -31,6 +31,11 @@ Google Cloud is the reference deployment, not an adoption prerequisite. A cloud-
 - Typed output requires the remediation, exact successor ID, objective, rationale, incident evidence IDs, and every candidate evidence citation.
 - The model cannot grant authority or execute. Deterministic policy independently revalidates its choice and can hold or deny it before mutation.
 - In the fresh cloud proof, Gemini selected deployed v18 from eligible v18/v19 records; v20 was excluded for degraded health and wrong jurisdiction.
+- After independent verification, Gemma 4 produced a five-citation resilience
+  plan that deterministically admitted the exact Veo 3.1 Lite and Lyria 3 calls.
+  Their digest-bound receipt and generated media are public at
+  https://github.com/milos-plavsic/continuum/releases/tag/multimodal-proof-8bec862.
+  The outputs are explicitly derivative and cannot become authority or evidence.
 
 ## How We Used Codex
 
@@ -133,7 +138,7 @@ export CONTINUUM_EVIDENCE_DIR="artifacts/cloud/$(date -u +%Y%m%dT%H%M%SZ)"
 bash scripts/cloud/run-cloud-proof.sh
 ```
 
-The accepted exact-source proof is documented in `docs/CLOUD_PROOF.md`: 13/13 read-only objects, 104 correlated spans, and a network-free/credential-free offline semantic PASS. The complete security-audited packet is publicly downloadable from the checksum-pinned `cloud-proof-0ceda49` GitHub Release.
+The accepted exact-source proof is documented in `docs/CLOUD_PROOF.md`: 13/13 read-only objects, 104 correlated spans, and a network-free/credential-free offline semantic PASS. The complete security-audited packet is publicly downloadable from the checksum-pinned `cloud-proof-0ceda49` GitHub Release. The separate `multimodal-proof-8bec862` release publishes the exact Gemma/Veo/Lyria receipt and both generated assets with SHA-256 checksums.
 
 ## Hosted Project
 
