@@ -15,6 +15,19 @@ record through an idempotent gateway.
 - Persistent governed sandbox side effect and duplicate-delivery proof.
 - Action and memory denial for the retired predecessor.
 - Incident evidence view, architecture diagram, demo script, and cloud proof plan.
+- Evidence-backed discovery across multiple successor candidates, followed by
+  deterministic eligibility filtering and a typed Gemini choice that cannot
+  manufacture authority.
+- A minimum-context reconstruction receipt that proves what crossed the handoff
+  boundary, what was excluded, and why.
+- A vendor-neutral three-call SDK and a non-Google local consumer of the same
+  Continuity Contract, so adoption does not require a cloud migration.
+- A deterministic resilience lab covering crash, retry, redelivery, ambiguity,
+  races, stale messages, invalid citations, verifier disagreement, and bounded
+  network partitions.
+- A business-first incident cockpit that makes the protected obligation, risk,
+  selection rationale, avoided duplicate effect, and independent proof legible
+  before infrastructure detail.
 
 ## Out of scope
 
@@ -22,4 +35,5 @@ record through an idempotent gateway.
   language, production vector search, and autonomous prompt rewriting.
 - Universal exactly-once claims. The bounded guarantee covers effects admitted by
   Continuum with a stable idempotency key and a reconcilable adapter.
-
+- Byzantine-fault-tolerance claims. An optional multi-witness profile can measure
+  agreement, but it is not represented as consensus or a universal trust root.

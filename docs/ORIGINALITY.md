@@ -1,5 +1,18 @@
 # Originality and provenance
 
+## Golden-standard extension (August 26, 2026)
+
+The successor eligibility engine, bounded Gemini choice, minimum-context
+reconstruction, portable SDK/local runtime, resilience lab, witness aggregation,
+business-first cockpit, and their tests were authored in this repository during
+the submission period. No source was copied from RecallOps, LineageGuard,
+Fahim's PRs, or another prior project. The implementation uses only the
+repository's Apache-2.0 code and declared third-party packages in `pyproject.toml`.
+
+Witness aggregation is explicitly an optional evidence profile, not a claim of
+Byzantine consensus. The local SDK consumer proves portability of the contract
+and integration surface; it is not presented as third-party interoperability.
+
 Continuum was initialized on August 17, 2026 as a new repository for the All
 Things Agentic Hackathon submission period.
 

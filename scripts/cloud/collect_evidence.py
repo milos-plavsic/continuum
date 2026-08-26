@@ -14,6 +14,7 @@ RUN_SERVICES = {
     "cloud-run-control": ("control", "continuum-control"),
     "cloud-run-v17": ("agent-v17", "continuum-agent-v17"),
     "cloud-run-v18": ("agent-v18", "continuum-agent-v18"),
+    "cloud-run-v19": ("agent-v19", "continuum-agent-v19"),
     "cloud-run-verifier": ("verifier", "continuum-verifier"),
 }
 RUN_OBJECTS = (

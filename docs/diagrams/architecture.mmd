@@ -16,13 +16,24 @@ flowchart TB
     CP -->|schedule| TASK -->|Sentinel tick| PS
   end
 
-  subgraph R2["2 · GOVERN SUCCESSION"]
-    direction LR
-    V18["v18 + GOOGLE ADK<br/><small>Gemini 3.6 Flash<br/>one cited bounded plan</small>"]:::agent
-    POLICY["DETERMINISTIC POLICY<br/><small>plan admission · epoch CAS<br/>v17 action + memory denied</small>"]:::control
-    GATE["v18 ACTION GATEWAY<br/><small>identity · epoch · policy<br/>compliance · idempotency</small>"]:::control
-    DB[("FIRESTORE<br/><small>transactional event/outbox<br/>authority · compliance · one effect</small>")]:::state
-    V18 -->|non-authoritative plan| POLICY -->|activate v18| GATE -->|one transaction| DB
+  subgraph R2["2 · SELECT, FENCE, RECONSTRUCT"]
+    direction TB
+    subgraph R2A[" "]
+      direction LR
+      REG["SUCCESSOR REGISTRY<br/><small>v18 · v19 · v20<br/>signed health + build evidence</small>"]:::state
+      FILTER["ELIGIBILITY GATE<br/><small>health · capability · jurisdiction<br/>contract · scope · trust</small>"]:::control
+      GEM["GOOGLE ADK + GEMINI 3.6<br/><small>chooses only from eligible records<br/>cites candidate evidence</small>"]:::agent
+      POLICY["DETERMINISTIC POLICY<br/><small>validates choice · epoch CAS<br/>v17 action + memory denied</small>"]:::control
+      REG --> FILTER -->|eligible set only| GEM -->|non-authoritative choice| POLICY
+    end
+    subgraph R2B[" "]
+      direction LR
+      CTX["MINIMUM CONTEXT<br/><small>verified facts included<br/>poisoned + secret context excluded</small>"]:::control
+      GATE["SELECTED ACTION GATEWAY<br/><small>identity · epoch · policy<br/>compliance · idempotency</small>"]:::control
+      DB[("FIRESTORE<br/><small>transactional event/outbox<br/>authority · compliance · one effect</small>")]:::state
+      CTX --> GATE -->|one transaction| DB
+    end
+    R2A --> R2B
   end
 
 
@@ -36,7 +47,6 @@ flowchart TB
     IV -. correlated evidence .-> TRACE
   end
 
-  OP --> CP
-  PS -->|redelivery causes transition| V18
-  DB -->|direct authority + compliance + provider reads| IV
-  GATE --> FIVE
+  OP --> R1
+  R1 -->|redelivery causes transition| R2
+  R2 --> R3

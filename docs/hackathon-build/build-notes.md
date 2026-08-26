@@ -1,5 +1,32 @@
 # Build notes
 
+## Golden-standard extension — August 26
+
+- The participant explicitly authorized full autonomous implementation beyond the
+  prior scope wherever it measurably improves winning probability.
+- The remaining critical risks were translated into items 33–42: dynamic bounded
+  successor selection, minimum-context reconstruction, migration-free adoption,
+  resilience evidence, optional independent witnesses, and a business-first demo.
+- Planning mode remains autonomous, with automated verification and commentary
+  checkpoints rather than manual look-at-it pauses. The signature line is:
+  “The agent failed, but the organization’s promise did not.”
+- No deepening interview was necessary because the participant had already directed
+  the exact quality bar and authorized the expanded winning scope.
+- Implemented three candidate records and a content-addressed deterministic gate;
+  v18 and v19 are eligible and separately routable, while v20 is rejected before
+  the model for health and jurisdiction.
+- Gemini's typed output now includes an exact successor and candidate citations.
+  The lifecycle stores that choice, activates it, and routes effects through its
+  distinct Cloud Run identity; invalid choices do not reach policy or mutation.
+- Added a reconstruction receipt with two canonical included facts and four
+  excluded context classes. The independent verifier recomputes both selection
+  and reconstruction receipt digests from the manifest.
+- Added a cloud-neutral SDK/local consumer, ten-case resilience lab, optional
+  same-bundle witness aggregation, quantified cockpit, and updated architecture.
+- Verification checkpoint: 136 tests, genuine 100.0% statement/branch coverage,
+  C0–C6 conformance, release gate PASS, shell/compile checks, and a successful
+  non-root production image build/import smoke. Item 42 remains the live gate.
+
 ## August 26 winner-hardening release proof
 
 - GitHub Actions passed the genuine 100.0% statement/branch gate, all 124 tests,

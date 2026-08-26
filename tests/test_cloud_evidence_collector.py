@@ -37,7 +37,7 @@ class FakeRunner:
         if argv[1:4] == ["run", "services", "describe"]:
             service = argv[4]
             role = {"control": "control", "v17": "agent-v17", "v18": "agent-v18",
-                    "verifier": "verifier"}[service]
+                    "v19": "agent-v19", "verifier": "verifier"}[service]
             return {"metadata": {"name": service},
                     "spec": {"template": {"spec": {
                         "serviceAccountName": f"{role}@example.iam.gserviceaccount.com",
@@ -77,6 +77,7 @@ class EvidenceCollectorTests(unittest.TestCase):
             "cloud-run-control": ("control", "control"),
             "cloud-run-v17": ("agent-v17", "v17"),
             "cloud-run-v18": ("agent-v18", "v18"),
+            "cloud-run-v19": ("agent-v19", "v19"),
             "cloud-run-verifier": ("verifier", "verifier"),
         }
 
@@ -87,9 +88,9 @@ class EvidenceCollectorTests(unittest.TestCase):
         runner = FakeRunner(self.scope)
         report = collector.collect(self.scope, self.destination, runner, services=self.services,
                                    trace_reader=FakeTraceReader(self.scope))
-        self.assertEqual(12, len(report["captured"]))
+        self.assertEqual(13, len(report["captured"]))
         self.assertEqual({}, report["unavailable"])
-        self.assertEqual(12, len([path for path in self.destination.glob("*.json")
+        self.assertEqual(13, len([path for path in self.destination.glob("*.json")
                                   if not path.name.startswith(".")]))
         for command in runner.commands:
             self.assertIn(command[1], {"run", "logging"})

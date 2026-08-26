@@ -16,8 +16,15 @@ investigation; it never independently authorizes quarantine.
 | Successor failure | Health loss after commit | Higher-epoch roll-forward | No eligible successor |
 | Cross-tenant request | Tenant mismatch | Deny without resource disclosure | Never autonomous transfer |
 | Invalid model proposal | Schema/citation failure | Fail closed; operator task | Required to continue |
+| Candidate registry poisoning | Unknown digest, stale health, wrong jurisdiction/profile | Reject before model prompt | Registry trust-anchor repair |
+| Context laundering | Secret, raw, inferred, stale, revoked, or out-of-purpose item | Exclude before retrieval and attest decision | Explicit new grant and evidence |
+| Verifier outage/disagreement | Missing verdict or dissent over one bundle | `INCONCLUSIVE`/`FAILED`; no self-attestation | Independent evidence review |
+| Bounded network partition | Timeout before/after dispatch | Retry before dispatch; reconcile after dispatch | Unreadable provider remains `INCONCLUSIVE` |
 
 The deterministic policy approves compromise succession only when all three
 canonical evidence classes are cited. Gemini may rank hypotheses and generate a
 typed proposal, but it cannot authorize execution.
 
+Continuum tolerates crash/retry faults within a declared reconcilable-effect
+boundary. Optional witness aggregation makes disagreement visible; it is not a
+Byzantine-consensus protocol and does not defend against a compromised trust root.

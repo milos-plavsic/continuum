@@ -24,7 +24,7 @@ if ! gcloud firestore databases describe --project "$CONTINUUM_PROJECT_ID" --dat
     --location "$CONTINUUM_FIRESTORE_LOCATION" --type=firestore-native
 fi
 
-for account in continuum-control continuum-v17 continuum-v18 continuum-verifier continuum-pubsub-push; do
+for account in continuum-control continuum-v17 continuum-v18 continuum-v19 continuum-verifier continuum-pubsub-push; do
   if ! gcloud iam service-accounts describe "$account@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" --project "$CONTINUUM_PROJECT_ID" >/dev/null 2>&1; then
     gcloud iam service-accounts create "$account" --project "$CONTINUUM_PROJECT_ID" --display-name "$account"
   fi
@@ -41,6 +41,9 @@ gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
   --role roles/aiplatform.user --condition=None >/dev/null
 gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
   --member "serviceAccount:continuum-v18@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" \
+  --role roles/datastore.user --condition=None >/dev/null
+gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
+  --member "serviceAccount:continuum-v19@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" \
   --role roles/datastore.user --condition=None >/dev/null
 
 # The independent verifier can resolve persisted evidence, but cannot publish,
@@ -76,7 +79,7 @@ gcloud iam service-accounts add-iam-policy-binding "$push_identity" \
   --project "$CONTINUUM_PROJECT_ID" \
   --member "serviceAccount:$control" \
   --role roles/iam.serviceAccountUser >/dev/null
-for account in continuum-v17 continuum-v18 continuum-verifier; do
+for account in continuum-v17 continuum-v18 continuum-v19 continuum-verifier; do
   gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
     --member "serviceAccount:$account@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" \
     --role roles/cloudtrace.agent --condition=None >/dev/null

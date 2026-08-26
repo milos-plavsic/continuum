@@ -7,6 +7,7 @@ from hashlib import sha256
 from typing import Any, Callable, Protocol
 
 from .contract import ContractError, artifact_ref, canonical_bytes, make_envelope, validate_envelope
+from .models import digest
 
 
 PRE_ATTESTATION_TYPES = {
@@ -123,7 +124,38 @@ class IndependentVerificationEngine:
         IndependentVerificationEngine._require_ref(manifest["body"]["obligations"][0], obligation)
         IndependentVerificationEngine._require_ref(manifest["body"]["included_grants"][0], grant)
         IndependentVerificationEngine._require_ref(receipt["body"]["obligation"], obligation)
+        IndependentVerificationEngine._validate_handoff_extensions(manifest)
         return by_type
+
+    @staticmethod
+    def _validate_handoff_extensions(manifest: dict[str, Any]) -> None:
+        extensions = manifest.get("extensions", {})
+        selection = extensions.get("continuum.dev/successor-selection")
+        reconstruction = extensions.get("continuum.dev/context-reconstruction")
+        if not isinstance(selection, dict) or not isinstance(reconstruction, dict):
+            raise ContractError("HANDOFF_EVIDENCE_MISSING")
+        selection_body = {
+            "requirements": selection.get("requirements_digest"),
+            "candidates": selection.get("candidates_digest"),
+            "assessments": selection.get("assessments"),
+        }
+        if selection.get("receipt_digest") != digest(selection_body):
+            raise ContractError("SUCCESSOR_ASSESSMENT_DIGEST_MISMATCH")
+        reconstruction_body = {
+            "succession_id": reconstruction.get("succession_id"),
+            "successor_principal": reconstruction.get("successor_principal"),
+            "purpose": reconstruction.get("purpose"),
+            "allowed_scopes": reconstruction.get("allowed_scopes"),
+            "decisions": reconstruction.get("decisions"),
+        }
+        if reconstruction.get("receipt_digest") != digest(reconstruction_body):
+            raise ContractError("CONTEXT_RECONSTRUCTION_DIGEST_MISMATCH")
+        if reconstruction.get("successor_principal") != manifest["body"]["successor"]["principal_id"]:
+            raise ContractError("CONTEXT_SUCCESSOR_MISMATCH")
+        decisions = reconstruction.get("decisions")
+        if (not isinstance(decisions, list) or not any(item.get("included") for item in decisions)
+                or not any(not item.get("included") for item in decisions)):
+            raise ContractError("CONTEXT_DECISIONS_INCOMPLETE")
 
     @staticmethod
     def _require_ref(reference: dict[str, Any], target: dict[str, Any]) -> None:

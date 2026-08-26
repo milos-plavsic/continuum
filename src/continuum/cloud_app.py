@@ -257,20 +257,22 @@ def create_cloud_app(*, store: Any | None = None,
 
     @app.post("/internal/attempt-action")
     async def attempt_action(request: Request) -> dict[str, Any]:
-        if active_role not in {"agent-v17", "agent-v18"}:
+        if active_role not in {"agent-v17", "agent-v18", "agent-v19"}:
             raise HTTPException(status_code=404, detail={"code": "NOT_FOUND"})
         try:
             identity = identity_resolver()
         except Exception as error:
             raise HTTPException(status_code=503, detail={"code": "WORKLOAD_IDENTITY_UNAVAILABLE"}) from error
-        if active_role == "agent-v18":
+        if active_role in {"agent-v18", "agent-v19"}:
             nonlocal action_gateway
             if action_gateway is None and project:
                 from google.cloud import firestore
                 from .cloud_gateway import FirestoreActionGateway
                 action_gateway = FirestoreActionGateway(
                     firestore.Client(project=project),
-                    expected_actor=os.getenv("CONTINUUM_V18_IDENTITY") or None)
+                    expected_actor=os.getenv(
+                        "CONTINUUM_V18_IDENTITY" if active_role == "agent-v18"
+                        else "CONTINUUM_V19_IDENTITY") or None)
             if action_gateway is None:
                 raise HTTPException(status_code=503, detail={"code": "ACTION_GATEWAY_NOT_CONFIGURED"})
             try:
@@ -283,7 +285,7 @@ def create_cloud_app(*, store: Any | None = None,
 
     @app.post("/internal/attempt-memory")
     def attempt_memory() -> dict[str, Any]:
-        if active_role not in {"agent-v17", "agent-v18"}:
+        if active_role not in {"agent-v17", "agent-v18", "agent-v19"}:
             raise HTTPException(status_code=404, detail={"code": "NOT_FOUND"})
         try:
             identity = identity_resolver()
@@ -294,7 +296,7 @@ def create_cloud_app(*, store: Any | None = None,
 
     @app.post("/internal/investigate")
     async def investigate(request: Request) -> dict[str, Any]:
-        if active_role not in {"agent-v17", "agent-v18"}:
+        if active_role not in {"agent-v17", "agent-v18", "agent-v19"}:
             raise HTTPException(status_code=404, detail={"code": "NOT_FOUND"})
         if investigator is None:
             raise HTTPException(status_code=503, detail={"code": "LIVE_INVESTIGATOR_NOT_CONFIGURED"})

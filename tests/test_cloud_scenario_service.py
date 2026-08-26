@@ -1,4 +1,5 @@
 from copy import deepcopy
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sys
@@ -9,7 +10,8 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from continuum.cloud_scenario_service import DurableCloudScenarioService, FirestoreScenarioStore, ScenarioConflict
+from continuum.cloud_scenario_service import (DurableCloudScenarioService, FirestoreScenarioStore,
+    ScenarioConflict, canonical_context_items, canonical_successor_candidates)
 from continuum.cloud_app import create_cloud_app
 
 
@@ -35,10 +37,14 @@ class Investigator:
     calls = 0
     def investigate(self, request):
         self.calls += 1
+        selected = max(request["eligible_candidates"], key=lambda item: item["trust_score"])
         return {"evidence_ids": [item["event_id"] if "event_id" in item else item["type"]
                                  for item in request["evidence"]],
                 "hypothesis": "compromised",
-                "proposed_actions": ["initiate_governed_succession"]}
+                "proposed_actions": ["initiate_governed_succession"],
+                "successor_choice": {"selected_candidate_id": selected["candidate_id"],
+                    "candidate_evidence_refs": selected["evidence_refs"],
+                    "rationale": "highest verified trust", "objective": request["selection_objective"]}}
 
 
 class Evidence:
@@ -128,6 +134,7 @@ class CloudScenarioServiceTests(unittest.TestCase):
             "expectation.persisted", "missing_event.published",
             "investigation.observed", "policy.decision_observed",
             "predecessor.denials_observed", "successor.activation_observed",
+            "context.reconstruction_observed",
             "compliance.evidence_verified",
             "provider.effect_observed", "contract.exported",
             "independent.verification_observed"])
@@ -206,8 +213,10 @@ class CloudScenarioServiceTests(unittest.TestCase):
     def test_every_observation_gate_rejects_contradiction(self):
         def current(phase):
             return {**self.service._new_run("gate"), "phase": phase,
+                    "successor": "v18", "candidate_assessment": {"receipt_digest": "candidate"},
                     "decision": {"decision_id": "d"},
                     "compliance": {"status": "VERIFIED", "evidence_id": "e", "document_hash": "h"},
+                    "context_reconstruction": {"receipt_digest": "context"},
                     "provider_observation": {"effect_count": 1, "provider_ref": "p", "request_digest": "r", "compliance_evidence_id": "e"},
                     "contract_bundle": {"profile": "reference-google-cloud", "artifacts": [{}]}}
         for evidence in ("bad", ["bad"]):
@@ -222,8 +231,21 @@ class CloudScenarioServiceTests(unittest.TestCase):
         self.service.authority = Authority()
         self.service.investigator.investigate = lambda request: {
             "evidence_types": [item["type"] for item in request["evidence"]],
-            "proposed_actions": ["request_operator_review"]}
+            "proposed_actions": ["request_operator_review"], "successor_choice": {}}
         with self.assertRaisesRegex(ValueError, "INVESTIGATION_RECOMMENDS_HOLD"):
+            self.service._advance(current("MISSING_EVENT_PUBLISHED"))
+        self.service.investigator = Investigator()
+        self.service.successor_candidates = tuple(replace(item, health="DOWN")
+                                                  for item in canonical_successor_candidates())
+        with self.assertRaisesRegex(ValueError, "NO_ELIGIBLE_SUCCESSOR"):
+            self.service._advance(current("MISSING_EVENT_PUBLISHED"))
+        self.service.successor_candidates = canonical_successor_candidates()
+        self.service.investigator.investigate = lambda request: {
+            "evidence_types": [item["type"] for item in request["evidence"]],
+            "proposed_actions": ["initiate_governed_succession"],
+            "successor_choice": {"selected_candidate_id": "unknown",
+                "candidate_evidence_refs": ["unknown"], "rationale": "x", "objective": "x"}}
+        with self.assertRaisesRegex(ValueError, "SUCCESSOR_CHOICE_UNKNOWN"):
             self.service._advance(current("MISSING_EVENT_PUBLISHED"))
         self.service.investigator = Investigator()
         for fenced in ({"status": "BAD", "revoked_through_epoch": 41},
@@ -245,9 +267,17 @@ class CloudScenarioServiceTests(unittest.TestCase):
             self.service.authority.activate_successor = lambda request, value=activation: value
             with self.assertRaisesRegex(ValueError, "SUCCESSOR_ACTIVATION_NOT_OBSERVED"): self.service._advance(current("PREDECESSOR_FENCED"))
         self.service.authority = Authority()
+        self.service.context_items = tuple(replace(item, classification="SECRET")
+                                           for item in canonical_context_items())
+        with self.assertRaisesRegex(ValueError, "CONTEXT_RECONSTRUCTION_INCOMPLETE"):
+            self.service._advance(current("SUCCESSOR_ACTIVE"))
+        self.service.context_items = (canonical_context_items()[0],)
+        with self.assertRaisesRegex(ValueError, "CONTEXT_RECONSTRUCTION_INCOMPLETE"):
+            self.service._advance(current("SUCCESSOR_ACTIVE"))
+        self.service.context_items = canonical_context_items()
         self.service.compliance.verify = lambda request: {"status": "FAILED"}
         with self.assertRaisesRegex(ValueError, "COMPLIANCE_EVIDENCE_NOT_VERIFIED"):
-            self.service._advance(current("SUCCESSOR_ACTIVE"))
+            self.service._advance(current("CONTEXT_RECONSTRUCTED"))
         self.service.compliance = Compliance()
         for observation in ({"effect_count": 2, "provider_ref": "p"}, {"effect_count": 1, "provider_ref": None}):
             self.service.effects.reconcile = lambda request, value=observation: value

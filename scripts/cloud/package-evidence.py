@@ -18,7 +18,7 @@ from continuum.contract import canonical_bytes
 NON_CLAIMS = ["global_credential_revocation", "tamper_proof",
               "third_party_interoperability", "universal_exactly_once"]
 EVIDENCE_OBJECTS = {
-    "cloud-run-control", "cloud-run-v17", "cloud-run-v18", "cloud-run-verifier",
+    "cloud-run-control", "cloud-run-v17", "cloud-run-v18", "cloud-run-v19", "cloud-run-verifier",
     "firestore-event", "firestore-projection", "firestore-outbox",
     "pubsub-publish", "pubsub-deliveries", "vertex-call", "trace-export",
     "contract-export",
