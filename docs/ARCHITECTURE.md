@@ -35,7 +35,7 @@ Promise Ledger ----> Negative Space Sentinel
 ## Implemented Google reference stack
 
 - Google ADK for multi-agent orchestration
-- Gemini 3.5 Flash for evidence synthesis, policy reasoning, and test generation
+- Gemini 3.6 Flash for bounded evidence synthesis and successor recommendation
 - Cloud Run for independently deployable services
 - Pub/Sub for lifecycle and domain events
 - Firestore for the initial event/state projection

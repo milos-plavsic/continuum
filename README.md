@@ -1,14 +1,16 @@
 # Continuum
 
+[![Continuum CI](https://github.com/milos-plavsic/continuum/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/milos-plavsic/continuum/actions/workflows/ci.yml)
+
 Continuum is a vendor-neutral continuity layer for autonomous agents: when an
 agent silently fails or must be retired, its verified obligations move to an
 evidence-selected, fenced successor without transferring poisoned context or
 repeating side effects. **The agent failed. The organization’s promise did not.**
 
 The project is a new implementation for the 2026 All Things Agentic Hackathon.
-It targets **Fortified Enterprise Fleet**. Succession Protocol is the product;
-Promise Ledger, Negative Space Sentinel, deterministic policy and independent
-verification are the minimum services required to prove one coherent lifecycle.
+It targets **Fortified Enterprise Fleet**. Governed agent succession is the
+product; obligation tracking, missing-evidence detection, deterministic policy
+and independent verification prove one coherent lifecycle.
 
 ## The 60-second judge path
 
@@ -35,14 +37,15 @@ standard and not yet a third-party interoperability claim.
 The repository contains a deterministic reference and a production-composed
 Google Cloud slice using private Cloud Run identities, Firestore transactions,
 Cloud Tasks, Pub/Sub redelivery, Google ADK with Gemini 3.6 Flash, and a
-read-only verifier. Release `4d676b1` has a fresh 13-object Google Cloud evidence
-bundle with an offline semantic `PASS`; Cloud Trace contains 69 real
+read-only verifier. Release `0ceda49` has a fresh 13-object Google Cloud evidence
+bundle with an offline semantic `PASS`; Cloud Trace contains 104 real
 OpenTelemetry spans read through the owning API. The capture includes distinct
 v18 and v19 warm-successor identities, Gemini's evidence-cited selection, the
 minimum-context receipt and one provider effect despite redelivery. Exact release
 identifiers and the validity boundary are recorded in
-[the cloud proof](docs/CLOUD_PROOF.md). Local success is never relabelled as
-cloud proof.
+[the cloud proof](docs/CLOUD_PROOF.md). The complete evidence packet is a public,
+checksum-pinned GitHub Release asset, so judges can run its semantic verifier
+without Google credentials. Local success is never relabelled as cloud proof.
 
 ## Run the reference scenario
 
