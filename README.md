@@ -51,6 +51,8 @@ The hosted judge surface is a separate, public **read-only showcase**. Its
 dedicated Cloud Run identity has no Firestore, Pub/Sub, Vertex AI, agent, or
 control-plane privileges; every mutation route returns `404`. It links to the
 credential-free proof packet while the effect-bearing runtime remains private.
+Open the [hosted Continuum showcase](https://continuum-showcase-rdzvxiysbq-ew.a.run.app)
+for the judge-first product path.
 
 ## Run the reference scenario
 
@@ -158,7 +160,10 @@ The script builds an immutable image, creates a no-role service identity, deploy
 privately first, and then replaces the service's invoker policy with only the
 intentional `allUsers` binding. The page exposes `/build-info`, but it has no
 credential, datastore role, mutation handler, or connection to the private
-control plane.
+control plane. The current deployment is
+`continuum-showcase-00001-z9j`, available at
+https://continuum-showcase-rdzvxiysbq-ew.a.run.app and pinned to image digest
+`sha256:3ba085bd39f147bef5d9e7bbdea9ea7513913e14e9ad401f26c19cbbab0bb0bb`.
 
 ## Documentation
 

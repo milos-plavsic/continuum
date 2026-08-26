@@ -195,3 +195,18 @@
   and release gate PASS.
 - External gates remain: final push and green CI, exact-commit deployment,
   fresh autonomous cloud run, direct evidence recapture and rehearsal.
+
+## Public judge surface — August 26
+
+- Added a sixth, independently deployed read-only showcase; it does not alter
+  or redeploy the five private canonical services or their accepted proof.
+- Cloud Run revision `continuum-showcase-00001-z9j` runs exact source commit
+  `b00866f90353bc936fde5c4799e2ba5fba99cb81` at immutable image digest
+  `sha256:3ba085bd39f147bef5d9e7bbdea9ea7513913e14e9ad401f26c19cbbab0bb0bb`.
+- Live probes returned `200` only for the showcase and health/build metadata;
+  docs, OpenAPI, cloud-smoke, and internal verifier routes returned `404`.
+- The dedicated identity has no project role. Only this service has the
+  intentional public `roles/run.invoker` binding.
+- PR #15 merged four green CI checks after 140 tests, genuine 100.0% statement
+  and branch coverage, conformance C0–C6, release-gate PASS, and a reproducible
+  runtime-image build.

@@ -136,7 +136,11 @@ no-role identity and no mutation surface. It links to the checksum-pinned proof
 packet; the IAM-authenticated control plane and effect-bearing agents remain
 private by design.
 
-Hosted URL: TODO — insert the URL printed by `scripts/cloud/deploy-showcase.sh`
+Hosted URL: https://continuum-showcase-rdzvxiysbq-ew.a.run.app
+
+The live surface is revision `continuum-showcase-00001-z9j`, pinned to source
+commit `b00866f90353bc936fde5c4799e2ba5fba99cb81` and immutable image digest
+`sha256:3ba085bd39f147bef5d9e7bbdea9ea7513913e14e9ad401f26c19cbbab0bb0bb`.
 
 Judge-facing Devpost project page: https://devpost.com/software/continuum-lq35x2
 
@@ -184,7 +188,7 @@ Demo outline: `docs/DEMO_SCRIPT.md`.
 - **Project start date (28087):** 08-17-26
 - **Repository (28141):** https://github.com/milos-plavsic/continuum
 - **Reproducible README (28089):** Yes
-- **Hosted project (28088, optional):** TODO — public read-only Cloud Run showcase URL
+- **Hosted project (28088, optional):** https://continuum-showcase-rdzvxiysbq-ew.a.run.app
 - **Private testing instructions (28090):** Use `./scripts/quality-gate.sh`; exact cloud proof, immutable identifiers, public packet URL, archive checksum, and credential-free verification command are in `docs/CLOUD_PROOF.md`. Contact the submitter if temporary IAM cockpit access is required.
 - **Google SDK (28091):** Agent Development Kit (ADK)
 - **Google Cloud service (28142):** Cloud Run (primary selection if the live field permits only one; the project also uses Firestore and Pub/Sub)
