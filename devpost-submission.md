@@ -94,6 +94,8 @@ The accepted exact-source proof is documented in `docs/CLOUD_PROOF.md`: 13/13 re
 
 No unauthenticated production endpoint. The private IAM-authenticated Cloud Run cockpit is shown live in the demo video; this is an intentional least-privilege boundary, not a missing deployment.
 
+Judge-facing Devpost project page: https://devpost.com/software/continuum-lq35x2
+
 ## Public Repository Link
 
 https://github.com/milos-plavsic/continuum
@@ -116,10 +118,10 @@ Demo outline: `docs/DEMO_SCRIPT.md`.
 
 - Fortified Enterprise Fleet is the target category.
 - Public repository, reproducible README, architecture PNG, exact cloud identifiers, and a downloadable offline-verifiable proof packet are ready.
-- The attached Devpost project is currently a pre-draft named “Untitled”; rename and update it only during the final submit flow.
+- The Devpost project page is published as “Continuum” with the workflow-first description, technology stack, repository, and public proof-release links. It is not yet entered into the hackathon submission: live `submitted_at` remains empty.
 - Remaining required asset: record/upload the approximately four-minute live demo and add its URL.
 - Remaining presentation assets: capture the five screenshots above and upload `docs/diagrams/architecture.png` to the required architecture field.
-- Nothing in this local draft changes the existing Devpost project.
+- The final video URL and required hackathon form answers remain intentionally unset until the rebuilt film is approved.
 
 ## Known Limitations
 
