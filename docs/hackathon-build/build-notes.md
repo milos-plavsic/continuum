@@ -335,3 +335,12 @@
   genuine 100.0% statement and branch coverage. Item 66 remains active: protected
   merge, exact-commit deployment, fresh proof, release/showcase/Devpost truth sync.
   Video remains deliberately deferred.
+- The first post-merge cloud attempt `judge-final-ec17dcc-20260827T215707Z`
+  stopped safely at `CONTEXT_RECONSTRUCTED`: GLEIF produced a LIVE cached record,
+  while VIES returned its structured `MS_UNAVAILABLE` outage response. That response
+  exposed one remaining semantic-error path still expressed as a raw `ValueError`.
+  No compliance record, provider effect, contract, or attestation was issued.
+- The follow-up hotfix classifies VIES semantic availability codes, retries transient
+  codes inside the same wall-clock budget, and converts exhaustion to the normal
+  pre-model HOLD. Malformed GLEIF/VIES payloads now share the stable external-tool
+  taxonomy. Regression tests preserve the observed outage shape.
