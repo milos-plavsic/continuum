@@ -138,7 +138,13 @@ class IndependentVerificationEngineTests(unittest.TestCase):
         engine = IndependentVerificationEngine(Reader(**state))
         self.assertEqual(engine.verify(run_id="r", bundle={"protocol": "other", "artifacts": []},
             verifier_principal="urn:v")["reason_codes"], ["UNSUPPORTED_PROTOCOL"])
-        self.assertEqual(engine.verify(run_id="r", bundle={"protocol": "continuum/0.1-draft", "artifacts": []},
+        self.assertEqual(engine.verify(run_id="r", bundle={"protocol": "continuum/0.1-draft",
+                                                           "canonicalization_profile": "other",
+                                                           "artifacts": []},
+            verifier_principal="urn:v")["reason_codes"], ["UNSUPPORTED_CANONICALIZATION_PROFILE"])
+        self.assertEqual(engine.verify(run_id="r", bundle={"protocol": "continuum/0.1-draft",
+                                                           "canonicalization_profile": "urn:ietf:rfc:8785",
+                                                           "artifacts": []},
             verifier_principal="urn:v")["reason_codes"], ["PRE_ATTESTATION_ARTIFACT_SET_INVALID"])
         duplicate = deepcopy(bundle)
         duplicate["artifacts"][1]["artifact_id"] = duplicate["artifacts"][0]["artifact_id"]

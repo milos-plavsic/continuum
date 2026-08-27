@@ -155,8 +155,7 @@ async def live_adk_supplier_assessor(payload: dict[str, Any],
 
 
 def canonical_request(payload: dict[str, Any], workload_identity: str) -> bytes:
-    return json.dumps({"identity": workload_identity, "payload": payload}, sort_keys=True,
-                      separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    return canonical_bytes({"identity": workload_identity, "payload": payload})
 
 
 def independent_contract_verifier(payload: dict[str, Any], workload_identity: str,

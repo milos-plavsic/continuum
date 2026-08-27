@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from typing import Any, Callable, Protocol
 
+from .canonicalization import PROFILE as CANONICALIZATION_PROFILE
 from .contract import ContractError, artifact_ref, canonical_bytes, make_envelope, validate_envelope
 from .models import digest
 
@@ -106,6 +107,8 @@ class IndependentVerificationEngine:
     def _validate_pre_attestation_bundle(bundle: dict[str, Any]) -> dict[str, dict[str, Any]]:
         if bundle.get("protocol") != "continuum/0.1-draft":
             raise ContractError("UNSUPPORTED_PROTOCOL")
+        if bundle.get("canonicalization_profile") != CANONICALIZATION_PROFILE:
+            raise ContractError("UNSUPPORTED_CANONICALIZATION_PROFILE")
         artifacts = bundle.get("artifacts")
         if (not isinstance(artifacts, list) or len(artifacts) != 5 or
                 {item.get("artifact_type") for item in artifacts if isinstance(item, dict)} != PRE_ATTESTATION_TYPES):

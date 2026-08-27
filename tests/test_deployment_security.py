@@ -17,6 +17,8 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         cls.bootstrap = (ROOT / "scripts/cloud/bootstrap.sh").read_text()
         cls.deploy = (ROOT / "scripts/cloud/build-deploy.sh").read_text()
         cls.showcase = (ROOT / "scripts/cloud/deploy-showcase.sh").read_text()
+        cls.cloudbuild = (ROOT / "deploy/cloudbuild.yaml").read_text()
+        cls.provenance_check = (ROOT / "scripts/cloud/verify-build-provenance.sh").read_text()
 
     def test_services_are_private_digest_pinned_and_replace_invoker_policy(self):
         self.assertIn('--image "$image_ref"', self.deploy)
@@ -67,6 +69,17 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
             self.assertIn(name, self.deploy)
         self.assertIn('image_ref="${image_tag%:*}@$digest"', self.deploy)
         self.assertNotIn('GOOGLE_APPLICATION_CREDENTIALS', self.bootstrap + self.deploy)
+
+    def test_build_requires_google_signed_provenance_for_deployed_digest(self):
+        self.assertIn("requestedVerifyOption: VERIFIED", self.cloudbuild)
+        self.assertIn('images:', self.cloudbuild)
+        self.assertIn('--show-provenance', self.deploy)
+        self.assertIn('provenance_summary', self.deploy)
+        self.assertIn('containeranalysis.googleapis.com', self.bootstrap)
+        self.assertIn('slsa-verifier verify-image', self.provenance_check)
+        self.assertIn('--source-uri "$CONTINUUM_EXPECTED_SOURCE_URI"', self.provenance_check)
+        self.assertIn('--builder-id https://cloudbuild.googleapis.com/GoogleHostedWorker',
+                      self.provenance_check)
 
 
 class DeploymentReadinessTests(unittest.TestCase):

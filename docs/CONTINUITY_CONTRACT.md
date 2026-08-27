@@ -15,9 +15,11 @@ UTC issuance time, issuer, typed body, required features, namespaced extensions,
 SHA-256 content digest, and optional signatures. IDs are opaque URIs and imply
 no trust. Unknown required features or protocol versions fail closed.
 
-The draft implementation canonicalizes a deliberately restricted JSON subset:
-objects, arrays, strings, integers, booleans, and null. Floats are forbidden.
-The digest input is:
+Every security-relevant JSON value MUST use RFC 8785 JSON Canonicalization
+Scheme (`urn:ietf:rfc:8785`). RFC 8785 constrains values to I-JSON, applies
+ECMAScript number serialization, sorts properties by UTF-16 code units, and
+emits UTF-8. Non-finite numbers, integers outside the interoperable domain,
+lone surrogates, and non-string object keys fail closed. The digest input is:
 
 ```text
 SHA-256("continuum-contract\0continuum/0.1-draft\0" || canonical unsigned envelope)
@@ -27,6 +29,8 @@ The digest excludes `digest` and `signatures`. It provides content addressing,
 not authenticity. Cross-trust-boundary exchange MUST add a trusted asymmetric
 signature binding. The reference supports Ed25519 signatures while leaving key
 identity, rotation, revocation, and trust policy to the deployment.
+Language-neutral conformance vectors are published in
+[`fixtures/canonicalization-rfc8785-v1.json`](../fixtures/canonicalization-rfc8785-v1.json).
 
 ## Six portable artifacts
 
@@ -89,4 +93,3 @@ unless negotiated.
 
 The normative machine-readable envelope is
 [`schemas/continuity-contract/0.1/contract.schema.json`](../schemas/continuity-contract/0.1/contract.schema.json).
-

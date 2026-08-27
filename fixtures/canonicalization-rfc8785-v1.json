@@ -1,0 +1,29 @@
+{
+  "profile": "urn:ietf:rfc:8785",
+  "vectors": [
+    {
+      "name": "object-order-unicode",
+      "input": {"z": 3, "é": "café", "a": [true, null, "line\nfeed"]},
+      "canonical_base64": "eyJhIjpbdHJ1ZSxudWxsLCJsaW5lXG5mZWVkIl0sInoiOjMsIsOpIjoiY2Fmw6kifQ==",
+      "sha256": "e0ba9b37d6429cfa2b2b67bf299d275a56e720d0c254c137da0f625ad6bca9fe"
+    },
+    {
+      "name": "number-normalization",
+      "input": {"negative_zero": -0.0, "small": 1e-7, "large": 1e30, "fraction": 0.5},
+      "canonical_base64": "eyJmcmFjdGlvbiI6MC41LCJsYXJnZSI6MWUrMzAsIm5lZ2F0aXZlX3plcm8iOjAsInNtYWxsIjoxZS03fQ==",
+      "sha256": "596623ab9418ae2c6c2ae138998a7b243a540bddde260b965e50b062ffee5a82"
+    },
+    {
+      "name": "utf16-property-order",
+      "input": {"€": "euro", "😀": "grin", "ö": "o-diaeresis", "1": "one", "\r": "cr"},
+      "canonical_base64": "eyJcciI6ImNyIiwiMSI6Im9uZSIsIsO2Ijoiby1kaWFlcmVzaXMiLCLigqwiOiJldXJvIiwi8J+YgCI6ImdyaW4ifQ==",
+      "sha256": "1e9267b61c76e1a1ab9f705c3a36b8c6c71d3f659765734a0e03b374392f24c6"
+    },
+    {
+      "name": "nested",
+      "input": {"b": {"y": 2, "x": 1}, "a": [{"d": 4, "c": 3}]},
+      "canonical_base64": "eyJhIjpbeyJjIjozLCJkIjo0fV0sImIiOnsieCI6MSwieSI6Mn19",
+      "sha256": "97e3fc81fc2f5b216529c1318d29cfa5d768cd82c38e8842196ffb2c9474d8e3"
+    }
+  ]
+}

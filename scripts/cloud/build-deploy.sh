@@ -25,10 +25,15 @@ if [[ "$(git rev-parse HEAD)" != "$CONTINUUM_GIT_SHA" ]]; then
   echo "CONTINUUM_GIT_SHA does not match checkout" >&2; exit 2
 fi
 
-gcloud builds submit --project "$CONTINUUM_PROJECT_ID" --tag "$image_tag" .
+gcloud builds submit --project "$CONTINUUM_PROJECT_ID" \
+  --config deploy/cloudbuild.yaml --substitutions "_IMAGE=$image_tag" .
 digest="$(gcloud artifacts docker images describe "$image_tag" --project "$CONTINUUM_PROJECT_ID" --format='value(image_summary.digest)')"
 [[ "$digest" == sha256:* ]] || { echo "Could not resolve immutable image digest" >&2; exit 3; }
 image_ref="${image_tag%:*}@$digest"
+provenance="$(gcloud artifacts docker images describe "$image_ref" \
+  --project "$CONTINUUM_PROJECT_ID" --show-provenance --format=json)"
+python -c 'import json,sys; value=json.load(sys.stdin); assert value.get("provenance_summary", {}).get("provenance"), "signed build provenance unavailable"' \
+  <<<"$provenance"
 deployment_id="$CONTINUUM_GIT_SHA@$digest"
 
 deploy_role() {

@@ -58,7 +58,9 @@ class SuccessorSelectionTests(unittest.TestCase):
         self.assertEqual(reasons[unhealthy.principal_id], ("HEALTH_UNVERIFIED",))
         self.assertEqual(model_candidate_view([wrong_region, good, unhealthy], receipt)[0]["candidate_id"], good.principal_id)
         choice = {"selected_candidate_id": good.principal_id,
-                  "candidate_evidence_refs": list(good.evidence_refs),
+                  "evidence_manifest_refs": list(good.evidence_refs),
+                  "supporting_citations": [{"claim": "BUILD_PROVENANCE",
+                                             "evidence_refs": [good.evidence_refs[1]]}],
                   "rationale": "highest verified trust", "objective": "assurance"}
         self.assertEqual(admit_successor_choice(choice, receipt), good.principal_id)
         self.assertEqual(receipt.to_dict()["eligible_ids"], [good.principal_id])
@@ -90,13 +92,38 @@ class SuccessorSelectionTests(unittest.TestCase):
         good = candidate()
         bad = candidate("urn:agent:v19", health="BAD")
         receipt = assess_candidates([good, bad], requirements())
+        def choice(selected, manifest, citations):
+            return {"selected_candidate_id": selected, "evidence_manifest_refs": manifest,
+                    "supporting_citations": citations, "rationale": "x", "objective": "x"}
+        build_citation = [{"claim": "BUILD_PROVENANCE",
+                           "evidence_refs": [good.evidence_refs[1]]}]
         cases = [
             ({}, "SUCCESSOR_CHOICE_SCHEMA_INVALID"),
-            ({"selected_candidate_id": 1, "candidate_evidence_refs": [], "rationale": "x", "objective": "x"}, "SUCCESSOR_CHOICE_SCHEMA_INVALID"),
-            ({"selected_candidate_id": "unknown", "candidate_evidence_refs": ["x"], "rationale": "x", "objective": "x"}, "SUCCESSOR_CHOICE_UNKNOWN"),
-            ({"selected_candidate_id": bad.principal_id, "candidate_evidence_refs": list(bad.evidence_refs), "rationale": "x", "objective": "x"}, "SUCCESSOR_CHOICE_INELIGIBLE"),
-            ({"selected_candidate_id": good.principal_id, "candidate_evidence_refs": ["fabricated"], "rationale": "x", "objective": "x"}, "SUCCESSOR_CHOICE_CITATION_INVALID"),
-            ({"selected_candidate_id": good.principal_id, "candidate_evidence_refs": [good.evidence_refs[0]], "rationale": "x", "objective": "x"}, "SUCCESSOR_CHOICE_EVIDENCE_INCOMPLETE"),
+            ({"selected_candidate_id": 1, "evidence_manifest_refs": [],
+              "supporting_citations": [], "rationale": "x", "objective": "x"},
+             "SUCCESSOR_CHOICE_SCHEMA_INVALID"),
+            (choice("unknown", ["x"], [{"claim": "BUILD_PROVENANCE",
+                                         "evidence_refs": ["x"]}]),
+             "SUCCESSOR_CHOICE_UNKNOWN"),
+            (choice(bad.principal_id, list(bad.evidence_refs),
+                    [{"claim": "BUILD_PROVENANCE", "evidence_refs": [bad.evidence_refs[1]]}]),
+             "SUCCESSOR_CHOICE_INELIGIBLE"),
+            (choice(good.principal_id, ["fabricated"], build_citation),
+             "SUCCESSOR_CHOICE_EVIDENCE_INCOMPLETE"),
+            (choice(good.principal_id, [good.evidence_refs[0]], build_citation),
+             "SUCCESSOR_CHOICE_EVIDENCE_INCOMPLETE"),
+            (choice(good.principal_id, [*good.evidence_refs, good.evidence_refs[0]],
+                    build_citation), "SUCCESSOR_CHOICE_MANIFEST_INVALID"),
+            (choice(good.principal_id, list(good.evidence_refs),
+                    [{"claim": "BUILD_PROVENANCE", "evidence_refs": ["fabricated"]}]),
+             "SUCCESSOR_CHOICE_CITATION_INVALID"),
+            (choice(good.principal_id, list(good.evidence_refs), [{}]),
+             "SUCCESSOR_CHOICE_CITATION_INVALID"),
+            (choice(good.principal_id, list(good.evidence_refs),
+                    [{"claim": "HEALTH_ATTESTED", "evidence_refs": [good.evidence_refs[1]]}]),
+             "SUCCESSOR_CHOICE_CITATION_INVALID"),
+            (choice(good.principal_id, list(good.evidence_refs), [*build_citation, *build_citation]),
+             "SUCCESSOR_CHOICE_CITATION_DUPLICATE"),
         ]
         for value, code in cases:
             with self.subTest(code=code), self.assertRaisesRegex(Denied, code):

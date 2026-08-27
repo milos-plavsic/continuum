@@ -7,6 +7,14 @@ from typing import Any, Iterable
 from .models import AgentStatus, Denied, digest
 
 
+SUPPORT_CLAIMS: dict[str, tuple[str, ...]] = {
+    "BUILD_PROVENANCE": ("build:", "image:"),
+    "HEALTH_ATTESTED": ("health:",),
+    "RUNTIME_IDENTITY": ("identity:",),
+    "SERVICE_REVISION": ("cloud-run:",),
+}
+
+
 @dataclass(frozen=True)
 class SuccessorCandidate:
     principal_id: str
@@ -149,12 +157,22 @@ def model_candidate_view(candidates: Iterable[SuccessorCandidate],
 
 
 def admit_successor_choice(choice: dict[str, Any], receipt: AssessmentReceipt) -> str:
-    """Validate the non-authoritative model choice against the policy receipt."""
-    if set(choice) != {"selected_candidate_id", "candidate_evidence_refs", "rationale", "objective"}:
+    """Validate complete consideration separately from selective support.
+
+    ``evidence_manifest_refs`` proves which bounded evidence entered the model
+    context. ``supporting_citations`` binds individual model claims to the
+    subset that materially supports them. Neither field grants authority.
+    """
+    if set(choice) != {"selected_candidate_id", "evidence_manifest_refs",
+                       "supporting_citations", "rationale", "objective"}:
         raise Denied("SUCCESSOR_CHOICE_SCHEMA_INVALID")
     selected = choice.get("selected_candidate_id")
-    citations = choice.get("candidate_evidence_refs")
-    if not isinstance(selected, str) or not isinstance(citations, list) or not citations:
+    manifest = choice.get("evidence_manifest_refs")
+    citations = choice.get("supporting_citations")
+    if (not isinstance(selected, str) or not isinstance(manifest, list) or not manifest
+            or not isinstance(citations, list) or not citations
+            or not isinstance(choice.get("rationale"), str) or not choice["rationale"].strip()
+            or not isinstance(choice.get("objective"), str) or not choice["objective"].strip()):
         raise Denied("SUCCESSOR_CHOICE_SCHEMA_INVALID")
     assessment = next((item for item in receipt.assessments
                        if item.candidate_id == selected), None)
@@ -162,8 +180,28 @@ def admit_successor_choice(choice: dict[str, Any], receipt: AssessmentReceipt) -
         raise Denied("SUCCESSOR_CHOICE_UNKNOWN")
     if not assessment.eligible:
         raise Denied("SUCCESSOR_CHOICE_INELIGIBLE")
-    if not set(citations).issubset(set(assessment.evidence_refs)):
-        raise Denied("SUCCESSOR_CHOICE_CITATION_INVALID")
-    if not set(assessment.evidence_refs).issubset(set(citations)):
+    if (any(not isinstance(item, str) or not item for item in manifest)
+            or len(manifest) != len(set(manifest))):
+        raise Denied("SUCCESSOR_CHOICE_MANIFEST_INVALID")
+    if set(manifest) != set(assessment.evidence_refs):
         raise Denied("SUCCESSOR_CHOICE_EVIDENCE_INCOMPLETE")
+    cited_refs: list[str] = []
+    claims: list[str] = []
+    for citation in citations:
+        if (not isinstance(citation, dict) or set(citation) != {"claim", "evidence_refs"}
+                or not isinstance(citation.get("claim"), str)
+                or citation["claim"] not in SUPPORT_CLAIMS
+                or not isinstance(citation.get("evidence_refs"), list)
+                or not citation["evidence_refs"]):
+            raise Denied("SUCCESSOR_CHOICE_CITATION_INVALID")
+        claim = citation["claim"]
+        refs = citation["evidence_refs"]
+        if (any(not isinstance(ref, str) or ref not in manifest for ref in refs)
+                or len(refs) != len(set(refs))
+                or any(not ref.startswith(SUPPORT_CLAIMS[claim]) for ref in refs)):
+            raise Denied("SUCCESSOR_CHOICE_CITATION_INVALID")
+        claims.append(claim)
+        cited_refs.extend(refs)
+    if len(claims) != len(set(claims)) or len(cited_refs) != len(set(cited_refs)):
+        raise Denied("SUCCESSOR_CHOICE_CITATION_DUPLICATE")
     return selected

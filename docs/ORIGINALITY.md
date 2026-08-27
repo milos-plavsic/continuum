@@ -108,8 +108,19 @@ another project were incorporated.
 
 ## Continuity Contract implementation note
 
-The Continuity Contract Profile 0.1-draft, restricted canonicalization profile,
+The Continuity Contract Profile 0.1-draft, RFC 8785 canonicalization boundary,
 schema, golden vector, artifact builders, bundle verifier, Ed25519 adapter, and
 cumulative conformance harness were authored new for Continuum on August 17,
-2026. The optional `cryptography` dependency is declared in `pyproject.toml` and
-is used only for standard Ed25519 primitives; no third-party source was copied.
+2026. The `rfc8785` package and optional `cryptography` dependency are declared
+in `pyproject.toml` and used only for their standardized primitives; no
+third-party source was copied. Cross-language vectors and Continuum integration
+code were authored in this repository.
+
+## August 27, 2026 provenance hardening note
+
+The Cloud Build verified-provenance configuration, SLSA subject binding,
+evidence-assurance separation, and selective successor citation design were
+authored new in this repository. Google Cloud emits the captured DSSE/SLSA
+metadata; it is third-party runtime evidence, not incorporated source code.
+The implementation follows the public RFC 8785, SLSA, DSSE, and Google Cloud
+Build specifications without copying source from another project.

@@ -84,9 +84,10 @@ of deployed Google infrastructure. The corresponding production ports are:
 | Local timeline | OpenTelemetry to Cloud Trace and Logging |
 | SQLite vendor registry | Controlled, reconcilable external provider adapter |
 
-The core remains deterministic and dependency-free. Cloud adapters must preserve
-the same contracts and pass adapter conformance tests before their evidence can
-be marked complete.
+The core and every adapter share one narrowly pinned RFC 8785 canonicalization
+boundary and published cross-language vectors; there is no second serializer
+for digests or signatures. Cloud adapters must preserve the same contracts
+and pass adapter conformance tests before their evidence can be marked complete.
 
 ## Portable protocol boundary
 
@@ -109,7 +110,9 @@ The selected successor receives the purpose-bound supplier application and
 calls two official, read-only sources: GLEIF for the exact LEI record and VIES
 for the exact EU VAT identifier. The host normalizes and hashes both responses;
 Gemini 3.6, invoked through ADK, may synthesize only a structured `ONBOARD` or
-`HOLD` decision pack with exact citations. Deterministic admission independently
+`HOLD` decision pack. A complete manifest records every bounded evidence input,
+while selective claim-linked citations identify which inputs support each
+assertion. Deterministic admission independently
 rechecks legal-name and country equality, entity/registration state, VAT result,
 required controls, citation completeness, unique references, requested action,
 and `SANDBOX_ONLY` scope. The model cannot grant authority or execute.

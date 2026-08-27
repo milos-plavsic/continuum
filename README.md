@@ -49,13 +49,18 @@ Cloud Tasks, Pub/Sub redelivery, Google ADK with Gemini 3.6 Flash, and a
 read-only verifier. Release `abb4472` has a fresh 14-object Google Cloud evidence
 bundle with an offline semantic `PASS`; Cloud Trace contains 118 real
 OpenTelemetry spans read through the owning API. The capture includes distinct
-v18 and v19 warm-successor identities, Gemini's evidence-cited selection, the
+v18 and v19 warm-successor identities, Gemini's complete evidence manifest and
+selective claim-linked citations, the
 minimum-context receipt, official GLEIF and EU VIES observations, the admitted
 supplier decision-pack binding, and one provider effect despite redelivery. Exact release
 identifiers and the validity boundary are recorded in
 [the cloud proof](docs/CLOUD_PROOF.md). The complete evidence packet is a public,
 checksum-pinned GitHub Release asset, so judges can run its semantic verifier
-without Google credentials. Local success is never relabelled as cloud proof.
+without Google credentials. That verdict proves archive integrity and semantic
+consistency, not capture provenance. New deployments also bind every Cloud Run
+revision to a Google-signed SLSA v1 image subject; the assurance boundary and
+independent signature check are in [the provenance guide](docs/PROVENANCE.md).
+Local success is never relabelled as cloud proof.
 
 The practical Supplier Assurance extension is included in release `abb4472`'s
 exact-commit cloud proof. The offline verifier requires its successor identity,
@@ -102,7 +107,7 @@ excluded and there are no `pragma: no cover` shortcuts:
 ./scripts/quality-gate.sh
 ```
 
-The current gate executes 159 tests and reports genuine **100.0% statement and
+The current gate executes 165 tests and reports genuine **100.0% statement and
 branch coverage**.
 
 To generate a verifier-gated multimodal resilience brief in an authorized

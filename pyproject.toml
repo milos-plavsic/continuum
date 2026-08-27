@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Governed succession control plane for enterprise agents"
 requires-python = ">=3.11"
 license = "Apache-2.0"
+dependencies = ["rfc8785>=0.1.4,<0.2"]
 
 [project.optional-dependencies]
 signatures = ["cryptography>=46,<47"]
