@@ -1,0 +1,1 @@
+This is one correlated Google Cloud run: five private Cloud Run identities, Firestore, Cloud Tasks, Pub/Sub, Vertex AI, and one hundred eighteen Trace spans. Fourteen content-addressed evidence objects are published with the exact commit and image. Anyone can run the offline verifier without Google credentials. It returns pass with no missing evidence and no reason codes.

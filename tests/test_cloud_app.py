@@ -160,9 +160,12 @@ class CloudAppTests(unittest.TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertIn("One click", response.text)
-        self.assertIn("SAME-RUN PROOF", response.text)
-        self.assertIn("Focus same-run proof", response.text)
+        self.assertIn("SAME-RUN GOOGLE CLOUD PROOF", response.text)
+        self.assertIn("The executor cannot grade its own homework", response.text)
         self.assertIn("predecessor.denials_observed", response.text)
+        self.assertIn("cursor-halo", response.text)
+        self.assertIn("GLEIF and EU VIES receipts", response.text)
+        self.assertIn("Two deliveries converge on one effect", response.text)
 
     def test_public_showcase_is_static_hardened_and_has_no_mutation_surface(self):
         showcase = TestClient(create_cloud_app(role="showcase"))
