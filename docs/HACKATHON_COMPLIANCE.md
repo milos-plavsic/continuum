@@ -24,7 +24,7 @@ submitted.
 |---|---:|---|
 | Text description: features, technology, data sources, learnings | 100% | Complete in `devpost-submission.md` and on the live project page. |
 | Public code repository | 100% | `https://github.com/milos-plavsic/continuum` |
-| Reproducible spin-up/testing instructions | 100% | README, locked dependencies, CI, C0–C6 conformance, release gate, 151 tests and genuine 100.0% branch coverage. |
+| Reproducible spin-up/testing instructions | 100% | README, locked dependencies, CI, C0–C6 conformance, local container, release gate, 180 tests and genuine 100.0% branch coverage. |
 | Architecture diagram | 80% | Clean PNG/SVG and Mermaid source exist. The PNG still must be uploaded to form field 28092. |
 | Hosted project URL | 100% | Public read-only Cloud Run showcase is live; this field is strongly recommended, not mandatory. |
 | Public demo video, at most about four minutes | 0% | Not yet recorded/uploaded. Must be public (not private or unlisted), English or subtitled, and show problem, value, live action and visible Google Cloud proof. |

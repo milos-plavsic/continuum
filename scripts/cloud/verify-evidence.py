@@ -199,6 +199,9 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
         errors.append("VERTEX_EVIDENCE_CITATION_MISSING")
     if vertex.get("proposed_actions") != ["initiate_governed_succession"]:
         errors.append("VERTEX_REMEDIATION_NOT_ADMITTED")
+    incident_digest = vertex.get("incident_assessment_digest")
+    if not isinstance(incident_digest, str) or not re.fullmatch(r"[0-9a-f]{64}", incident_digest):
+        errors.append("VERTEX_INCIDENT_ASSESSMENT_UNBOUND")
     selected = vertex.get("selected_candidate_id")
     if selected not in {"v18", "v19"}:
         errors.append("VERTEX_SUCCESSOR_CHOICE_INVALID")

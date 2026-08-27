@@ -1,5 +1,20 @@
 # Build notes
 
+## Standards-readiness hardening — August 27
+
+- Moved incident classification and the allowed-remediation set entirely out of
+  Gemini into versioned deterministic policy receipts. ADK now receives policy
+  output, never natural-language policy authority.
+- Added a closed Evidence Descriptor 1 schema, golden vector, trust/freshness
+  evaluation and verifier-side recomputation of the complete exported chain.
+- Added a second service-remediation domain, a barrier-synchronized 128-attempt
+  contention proof, and a complete credential-free local lifecycle/container.
+- Bounded Google ADK, rebuilt the image as non-root multi-stage targets, and
+  added pinned SPDX SBOM plus actionable HIGH/CRITICAL vulnerability gates.
+- Verification checkpoint: 180 tests at genuine 100.0% statement/branch
+  coverage and the full conformance/release gate pass. Exact cloud recapture
+  remains item 50 and is not claimed by this checkpoint.
+
 ## Practical-agent golden cloud proof — August 27
 
 - Protected PRs #21 and #22 added the practical Supplier Assurance & Onboarding

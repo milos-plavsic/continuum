@@ -7,6 +7,7 @@ import json
 from typing import Any, Awaitable, Callable
 
 from .contract import canonical_bytes
+from .incident_policy import admit_model_remediation
 from .verification import FirestoreVerificationReader, IndependentVerificationEngine
 from .supplier_assurance import (
     admit_supplier_assessment, check_eu_vat, lookup_gleif, model_supplier_view,
@@ -16,7 +17,6 @@ from .supplier_assurance import (
 Investigator = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[str, Any]]]
 Verifier = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[str, Any]]]
 SupplierAssessor = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[str, Any]]]
-ALLOWED_REMEDIATIONS = {"initiate_governed_succession", "request_operator_review"}
 
 
 def workload_service_account(*, credentials_provider: Callable[[], tuple[Any, Any]] | None = None,
@@ -64,12 +64,10 @@ def validate_investigation(result: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def admit_remediation_plan(proposal: dict[str, Any]) -> str:
-    """Admit one bounded model recommendation; policy remains deterministic."""
-    actions = proposal.get("proposed_actions")
-    if not isinstance(actions, list) or len(actions) != 1 or actions[0] not in ALLOWED_REMEDIATIONS:
-        raise ValueError("REMEDIATION_PLAN_UNSUPPORTED")
-    return str(actions[0])
+def admit_remediation_plan(proposal: dict[str, Any],
+                           incident_assessment: dict[str, Any]) -> str:
+    """Admit a model choice only inside the code-authored remediation set."""
+    return admit_model_remediation(proposal, incident_assessment)
 
 
 async def live_adk_investigator(payload: dict[str, Any], workload_identity: str) -> dict[str, Any]:

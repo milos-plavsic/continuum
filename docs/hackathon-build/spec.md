@@ -100,3 +100,30 @@ require separate evidence.
   candidate assessments, selected successor, excluded context, duplicate effect count,
   and independent verdict. Provider implementation evidence remains available as a
   secondary proof layer.
+
+## Standards-readiness hardening
+
+- A deterministic incident assessor validates formal evidence descriptors and
+  authors a content-addressed receipt containing the incident verdict and exact
+  allowed remediation set. The model receives that set as immutable context; it
+  may explain or rank choices but cannot expand it. Policy admission recomputes
+  the receipt and never depends on a natural-language rule.
+- Every evidence descriptor declares a protocol version, immutable ID, evidence
+  type, subject, issuer, source authority, observation and expiry timestamps,
+  canonical payload digest, authentication reference, and trust-policy version.
+  A deterministic trust policy rejects unknown authorities, stale/future items,
+  unsupported types, malformed digests, duplicate identities, and missing
+  authentication before evidence reaches policy or a model.
+- Portability is tested with a second incident-remediation domain using the same
+  three-call SDK and evidence boundary, while the supplier workflow remains the
+  only live judge narrative.
+- A barrier-synchronized stress profile measures concurrent runs, duplicate
+  idempotency keys, semantic conflicts, isolation, and effect counts. Results are
+  content-addressed and reproducible; this is bounded contention evidence, not a
+  global linearizability or Byzantine-fault claim.
+- A local container profile composes deterministic adapters and exposes a
+  credential-free full lifecycle. Google ADK/Gemini remains the required live
+  production reference, not a local prerequisite.
+- The production image is multi-stage, non-root, lockfile-built and OCI-labelled.
+  CI generates an SPDX JSON SBOM from the final image and gates documented
+  actionable HIGH/CRITICAL vulnerabilities with pinned scanner tooling.

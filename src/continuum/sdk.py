@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
+from threading import RLock
 from typing import Any, Callable, Protocol
 
 from .models import digest
@@ -59,6 +60,7 @@ class InProcessContinuum:
     """Small reference transport proving adoption without a cloud migration."""
 
     def __init__(self, effect: Callable[[dict[str, Any]], str]):
+        self._lock = RLock()
         self.effect = effect
         self.agents: dict[str, dict[str, Any]] = {}
         self.obligations: dict[str, dict[str, Any]] = {}
@@ -66,6 +68,10 @@ class InProcessContinuum:
         self.events: list[dict[str, Any]] = []
 
     def register_agent(self, registration: dict[str, Any]) -> dict[str, Any]:
+        with self._lock:
+            return self._register_agent(registration)
+
+    def _register_agent(self, registration: dict[str, Any]) -> dict[str, Any]:
         required = {"principal_id", "tenant_id", "capabilities", "artifact_digest"}
         if set(registration) != required or not registration["principal_id"]:
             raise ValueError("SDK_AGENT_REGISTRATION_INVALID")
@@ -77,6 +83,10 @@ class InProcessContinuum:
         return self._record("agent.registered", registration)
 
     def record_obligation(self, obligation: dict[str, Any]) -> dict[str, Any]:
+        with self._lock:
+            return self._record_obligation(obligation)
+
+    def _record_obligation(self, obligation: dict[str, Any]) -> dict[str, Any]:
         required = {"obligation_id", "tenant_id", "owner_principal",
                     "required_evidence", "value_at_risk"}
         if set(obligation) != required or obligation["owner_principal"] not in self.agents:
@@ -89,6 +99,10 @@ class InProcessContinuum:
         return self._record("obligation.recorded", obligation)
 
     def execute_idempotent(self, request: dict[str, Any]) -> dict[str, Any]:
+        with self._lock:
+            return self._execute_idempotent(request)
+
+    def _execute_idempotent(self, request: dict[str, Any]) -> dict[str, Any]:
         required = {"obligation_id", "principal_id", "capability",
                     "idempotency_key", "payload"}
         if set(request) != required or not request["idempotency_key"]:
@@ -121,8 +135,9 @@ class InProcessContinuum:
         return result
 
     def evidence(self) -> dict[str, Any]:
-        return {"profile": "continuum-local-sdk/1", "events": deepcopy(self.events),
-                "chain_digest": digest(self.events)}
+        with self._lock:
+            return {"profile": "continuum-local-sdk/1", "events": deepcopy(self.events),
+                    "chain_digest": digest(self.events)}
 
     def _record(self, event_type: str, body: dict[str, Any]) -> dict[str, Any]:
         event = {"sequence": len(self.events) + 1, "event_type": event_type,

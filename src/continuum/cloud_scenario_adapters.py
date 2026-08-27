@@ -18,6 +18,7 @@ from .canonicalization import PROFILE as CANONICALIZATION_PROFILE
 from .cloud_scenario_service import DurableCloudScenarioService, FirestoreScenarioStore
 from .contract import artifact_ref, canonical_bytes, make_envelope
 from .google_binding import GoogleBindingConfig, PubSubLifecyclePublisher
+from .incident_policy import SUCCESSION, validate_incident_receipt
 from .models import AgentStatus, digest
 from .succession_selection import SuccessorCandidate
 
@@ -147,6 +148,7 @@ class RemoteInvestigator:
         _emit(request["run_id"], "vertex-call", {"run_id": request["run_id"],
               "provider": "vertex-ai", "model": "gemini-3.6-flash",
               "service_account": response["actor"],
+              "incident_assessment_digest": request["incident_assessment_receipt"]["receipt_digest"],
               "evidence_event_ids": proposal["evidence_ids"],
               "proposed_actions": proposal["proposed_actions"],
               "selected_candidate_id": proposal["successor_choice"]["selected_candidate_id"],
@@ -164,16 +166,28 @@ class FirestoreAuthority:
     def decide(self, evidence: list[dict[str, Any]]) -> dict[str, Any]:
         signals = set()
         selected_plans = set()
+        incident_receipts = []
         for observation in evidence:
             for event in observation.get("evidence", {}).get("signals", []):
                 signals.add(event.get("event_type"))
             selected = observation.get("evidence", {}).get("selected_plan")
             if selected: selected_plans.add(selected)
-        if (not FirestoreLifecycleEvidence.REQUIRED.issubset(signals) or
-                selected_plans != {"initiate_governed_succession"}):
+            incident = observation.get("evidence", {}).get("incident_assessment")
+            if incident: incident_receipts.append(incident)
+        if len(incident_receipts) != 1:
+            return {"outcome": "HOLD", "decision_id": None}
+        try:
+            assessment = validate_incident_receipt(incident_receipts[0])
+        except Exception:
+            return {"outcome": "HOLD", "decision_id": None}
+        if (not FirestoreLifecycleEvidence.REQUIRED.issubset(signals)
+                or set(assessment.signal_types) != signals
+                or selected_plans != {SUCCESSION}
+                or SUCCESSION not in assessment.allowed_remediations):
             return {"outcome": "HOLD", "decision_id": None}
         digest = sha256(canonical_bytes(evidence)).hexdigest()
-        return {"outcome": "APPROVE_SUCCESSION", "decision_id": f"decision:{digest}"}
+        return {"outcome": "APPROVE_SUCCESSION", "decision_id": f"decision:{digest}",
+                "incident_assessment_digest": assessment.receipt_digest}
     def fence_predecessor(self, request: dict[str, Any]) -> dict[str, Any]:
         from google.cloud import firestore
         ref = self.client.collection("continuity_authority").document(request["tenant_id"])
@@ -373,7 +387,7 @@ class ObservedContractExporter:
         decision = {"artifact_id": f"{base}:decision", "digest": {"alg": "sha-256", "value": sha256(canonical_bytes(run["decision"])).hexdigest()}, "policy_version": "compromise-succession/1", "outcome": "APPROVE_SUCCESSION"}
         obligation = make_envelope("obligation", f"{base}:obligation", self.issuer, at, {"tenant_id": run["tenant_id"], "subject": run["obligation_id"], "revision": 2, "owner": {"principal_id": run["successor"], "authority_domain": f"{base}:authority", "epoch": run["successor_epoch"]}, "description": "Onboard vendor only after independently observed compliance evidence", "deadline": run["deadline"], "completion_criteria": [{"criterion_id": "compliance-verified", "evidence_type": "compliance-provider-observation", "verifier_role": "independent-verifier"}, {"criterion_id": "provider-effect-once", "evidence_type": "provider-observation", "verifier_role": "independent-verifier"}], "allowed_effects": ["vendor.create"], "compensation": {"mode": "HUMAN"}, "status": "DISCHARGED"})
         grant = make_envelope("authority_grant", f"{base}:grant", self.issuer, at, {"tenant_id": run["tenant_id"], "grant_id": f'{run["run_id"]}:grant', "subject_principal": run["successor"], "authority_domain": f"{base}:authority", "epoch": run["successor_epoch"], "obligation_ids": [obligation["artifact_id"]], "capabilities": ["vendor.create"], "memory_scopes": ["vendor.approved"], "purpose": "complete vendor onboarding", "not_before": at, "expires_at": expires, "policy_decision": decision, "status": "ACTIVE"})
-        manifest = make_envelope("succession_manifest", f"{base}:manifest", self.issuer, at, {"succession_id": run["run_id"], "tenant_id": run["tenant_id"], "authority_domain": f"{base}:authority", "predecessor": {"principal_id": run["predecessor"], "epoch": run["predecessor_epoch"]}, "successor": {"principal_id": run["successor"], "epoch": run["successor_epoch"]}, "obligations": [artifact_ref(obligation)], "included_grants": [artifact_ref(grant)], "excluded_context": [{"reference_or_class": item["item_id"], "reason_code": item["reason_code"]} for item in run["context_reconstruction"]["decisions"] if not item["included"]], "in_flight_effects": [], "evidence_refs": [{"observation": item["sequence"], "kind": item["kind"]} for item in observations], "policy_decision": decision, "created_from_registry_revision": run["successor_epoch"], "state": "COMMITTED"}, extensions={"continuum.dev/successor-selection": run["candidate_assessment"], "continuum.dev/context-reconstruction": run["context_reconstruction"]})
+        manifest = make_envelope("succession_manifest", f"{base}:manifest", self.issuer, at, {"succession_id": run["run_id"], "tenant_id": run["tenant_id"], "authority_domain": f"{base}:authority", "predecessor": {"principal_id": run["predecessor"], "epoch": run["predecessor_epoch"]}, "successor": {"principal_id": run["successor"], "epoch": run["successor_epoch"]}, "obligations": [artifact_ref(obligation)], "included_grants": [artifact_ref(grant)], "excluded_context": [{"reference_or_class": item["item_id"], "reason_code": item["reason_code"]} for item in run["context_reconstruction"]["decisions"] if not item["included"]], "in_flight_effects": [], "evidence_refs": [{"observation": item["sequence"], "kind": item["kind"]} for item in observations], "policy_decision": decision, "created_from_registry_revision": run["successor_epoch"], "state": "COMMITTED"}, extensions={"continuum.dev/successor-selection": run["candidate_assessment"], "continuum.dev/context-reconstruction": run["context_reconstruction"], "continuum.dev/incident-evidence": {"subject": run["obligation_id"], "records": run["evidence_records"], "evidence_validation": run["evidence_validation"], "incident_assessment": run["incident_assessment"]}})
         revocation = make_envelope("revocation_proof", f"{base}:revocation", self.issuer, at, {"tenant_id": run["tenant_id"], "authority_domain": f"{base}:authority", "revoked_principal": run["predecessor"], "revoked_through_epoch": run["predecessor_epoch"], "registry_revision": run["successor_epoch"], "effective_at": at, "revoked_grant_ids": [], "enforcement_points": [{"id": "action-gateway", "kind": "ACTION", "observation_ref": "predecessor.denials_observed"}, {"id": "memory-gateway", "kind": "MEMORY", "observation_ref": "predecessor.denials_observed"}], "policy_decision": decision, "status": "ENFORCED"})
         provider = run["provider_observation"]
         compliance_extension = {

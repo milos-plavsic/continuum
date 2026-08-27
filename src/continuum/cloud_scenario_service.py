@@ -15,6 +15,7 @@ from typing import Any, Protocol
 
 from .contract import canonical_bytes
 from .cloud_orchestration import admit_remediation_plan
+from .incident_policy import assess_incident, describe_lifecycle_events
 from .context_reconstruction import ContextItem, reconstruct_context
 from .models import AgentStatus
 from .observability import lifecycle_span
@@ -164,7 +165,8 @@ class DurableCloudScenarioService:
                  scenario: CanonicalCloudScenario = CanonicalCloudScenario(),
                  clock: Any | None = None, deadline_scheduler: DeadlineSchedulerPort | None = None,
                  successor_candidates: tuple[SuccessorCandidate, ...] | None = None,
-                 context_items: tuple[ContextItem, ...] | None = None):
+                 context_items: tuple[ContextItem, ...] | None = None,
+                 expected_contract_profile: str = "reference-google-cloud"):
         self.store = store
         self.evidence = evidence
         self.investigator = investigator
@@ -178,6 +180,7 @@ class DurableCloudScenarioService:
         self.deadline_scheduler = deadline_scheduler
         self.successor_candidates = successor_candidates or canonical_successor_candidates()
         self.context_items = context_items or canonical_context_items()
+        self.expected_contract_profile = expected_contract_profile
 
     def run(self, run_id: str) -> dict[str, Any]:
         """Compatibility helper: start, tick when due, then resume from the event."""
@@ -233,6 +236,8 @@ class DurableCloudScenarioService:
             "contract_bundle_digest": current.get("contract_bundle_digest"),
             "verification": current.get("verification"),
             "selected_successor": current.get("successor"),
+            "incident_assessment": current.get("incident_assessment"),
+            "evidence_validation": current.get("evidence_validation"),
             "candidate_assessment": current.get("candidate_assessment"),
             "context_reconstruction": current.get("context_reconstruction"),
             "supplier_assurance": current.get("compliance"),
@@ -307,6 +312,13 @@ class DurableCloudScenarioService:
             })
             if not isinstance(evidence, list) or any(not isinstance(item, dict) for item in evidence):
                 raise ValueError("LIFECYCLE_EVIDENCE_INVALID")
+            assessed_at = self.clock().astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+            evidence_records = describe_lifecycle_events(
+                evidence, subject=current["obligation_id"], assessed_at=assessed_at)
+            incident_receipt, evidence_receipt = assess_incident(
+                evidence_records,
+                assessed_at=assessed_at, subject=current["obligation_id"],
+            )
             receipt = assess_candidates(self.successor_candidates, SuccessionRequirements(
                 tenant_id=current["tenant_id"],
                 predecessor_principal=current["predecessor"],
@@ -319,6 +331,8 @@ class DurableCloudScenarioService:
                 "run_id": current["run_id"], "correlation_id": current["correlation_id"],
                 "obligation_id": current["obligation_id"], "evidence": evidence,
                 "selection_objective": "maximize verified assurance for EU procurement continuity",
+                "incident_assessment_receipt": incident_receipt.to_dict(),
+                "allowed_remediations": list(incident_receipt.allowed_remediations),
                 "eligible_candidates": model_candidate_view(self.successor_candidates, receipt),
                 "candidate_assessment_receipt": receipt.to_dict(),
             })
@@ -327,7 +341,7 @@ class DurableCloudScenarioService:
                         for item in evidence}
             if not required.issubset(cited):
                 raise ValueError("INVESTIGATION_EVIDENCE_INCOMPLETE")
-            selected_plan = admit_remediation_plan(proposal)
+            selected_plan = admit_remediation_plan(proposal, incident_receipt.to_dict())
             if selected_plan != "initiate_governed_succession":
                 raise ValueError("INVESTIGATION_RECOMMENDS_HOLD")
             try:
@@ -337,9 +351,16 @@ class DurableCloudScenarioService:
             selected_record = next(item for item in self.successor_candidates
                                    if item.principal_id == successor)
             observed = {"signals": evidence, "proposal": proposal, "selected_plan": selected_plan,
+                        "incident_assessment": incident_receipt.to_dict(),
+                        "evidence_validation": evidence_receipt,
+                        "evidence_records": [item.to_dict() for item in evidence_records],
                         "candidate_assessment": receipt.to_dict(), "selected_successor": successor}
             return self._commit(current, "INVESTIGATED", {"investigation": proposal,
-                                "selected_plan": selected_plan, "candidate_assessment": receipt.to_dict(),
+                                "selected_plan": selected_plan,
+                                "incident_assessment": incident_receipt.to_dict(),
+                                "evidence_validation": evidence_receipt,
+                                "evidence_records": [item.to_dict() for item in evidence_records],
+                                "candidate_assessment": receipt.to_dict(),
                                 "successor": successor, "successor_version": selected_record.version,
                                 "successor_service_identity": selected_record.service_identity},
                                 "investigation.observed", observed)
@@ -416,7 +437,8 @@ class DurableCloudScenarioService:
 
         if phase == "EFFECT_OBSERVED":
             bundle = self.exporter.export(current, self.store.observations(current["run_id"]))
-            if bundle.get("profile") != "reference-google-cloud" or not bundle.get("artifacts"):
+            if (bundle.get("profile") != self.expected_contract_profile
+                    or not bundle.get("artifacts")):
                 raise ValueError("CONTRACT_EXPORT_INVALID")
             bundle_digest = sha256(canonical_bytes(bundle)).hexdigest()
             return self._commit(current, "CONTRACT_EXPORTED",

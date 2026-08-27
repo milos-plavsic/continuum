@@ -107,7 +107,7 @@ excluded and there are no `pragma: no cover` shortcuts:
 ./scripts/quality-gate.sh
 ```
 
-The current gate executes 165 tests and reports genuine **100.0% statement and
+The current gate executes 180 tests and reports genuine **100.0% statement and
 branch coverage**.
 
 To generate a verifier-gated multimodal resilience brief in an authorized
@@ -170,11 +170,19 @@ Run the complete non-GCP consumer with no credentials:
 
 ```bash
 uv run python examples/local_sdk_consumer.py
+uv run python examples/incident_remediation_consumer.py
+uv run python scripts/run_stress.py --runs 16 --attempts 8
 ```
 
 Google Cloud is the production reference binding and deployment proof—not an
 adoption prerequisite. HTTP, queue, or other cloud adapters can implement the
 same `ContinuumTransport` boundary and Continuity Contract.
+
+For a complete no-credential lifecycle in a hardened container, follow the
+[local runtime guide](docs/LOCAL_RUNTIME.md). Evidence semantics and their
+epistemic limits are specified in the [evidence profile](docs/EVIDENCE.md);
+container/SBOM/vulnerability gates are documented in the
+[supply-chain policy](docs/SUPPLY_CHAIN.md).
 
 ## Run the incident cockpit
 
@@ -238,6 +246,9 @@ https://continuum-showcase-rdzvxiysbq-ew.a.run.app and pinned to image digest
 - [Google reference binding](docs/GOOGLE_BINDING.md)
 - [Google Cloud deployment runbook](docs/CLOUD_RUNBOOK.md)
 - [Evidence-backed claim matrix](docs/CLAIMS.md)
+- [Evidence and incident admission profile](docs/EVIDENCE.md)
+- [Credential-free local runtime](docs/LOCAL_RUNTIME.md)
+- [Runtime supply-chain policy](docs/SUPPLY_CHAIN.md)
 
 ## License
 

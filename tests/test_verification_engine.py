@@ -11,6 +11,7 @@ from continuum.standard import build_contract_bundle
 from continuum.verification import IndependentVerificationEngine
 from continuum.verification import FirestoreVerificationReader
 from tests.test_cloud_adapters_complete import Firestore
+from tests.incident_fixtures import incident_extension
 
 
 class Reader:
@@ -54,7 +55,8 @@ def pre_bundle():
     reconstruction["receipt_digest"] = digest({key: reconstruction[key] for key in (
         "succession_id", "successor_principal", "purpose", "allowed_scopes", "decisions")})
     manifest["extensions"] = {"continuum.dev/successor-selection": selection,
-                              "continuum.dev/context-reconstruction": reconstruction}
+                              "continuum.dev/context-reconstruction": reconstruction,
+                              "continuum.dev/incident-evidence": incident_extension("obl-1")}
     manifest["digest"] = {"alg": "sha-256", "value": artifact_digest(manifest)}
     return bundle
 
