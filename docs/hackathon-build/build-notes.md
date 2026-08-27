@@ -5,18 +5,20 @@
 - Protected PRs #21 and #22 added the practical Supplier Assurance & Onboarding
   Agent and made its exact-run decision evidence mandatory; GitHub CI and the
   local release gate passed 159 tests at genuine 100.0% statement/branch coverage.
-- Exact source `abb44720631cd54c6837b20d0b9870919f6a6b5b` was deployed across
+- Exact application source `5e579f4cdcb3b85d07f6e80fc6ff825dd85da463` was deployed across
   five private, identity-separated Cloud Run services on image digest
-  `sha256:e3be7452fd1b619de5c0a0632a6f488f02938276e95313d7eea7e1fef6262021`.
-- Fresh run `supplier-golden-20260827T023539Z` completed autonomously: official
+  `sha256:f83ba3d1e9405fdece32f1fbe064a70c0dc9b92cb681475f7f7730d24b7e9328`.
+- Fresh run `supplier-slsa-20260827T142325Z` completed autonomously: official
   GLEIF and EU VIES observations fed an ADK + Gemini 3.6 decision pack,
   deterministic policy admitted it only for `SANDBOX_ONLY`, v18 executed once
   despite two Pub/Sub deliveries, v17 stayed fenced, and the verifier alone
   issued the sixth artifact.
-- Read-only capture produced 14 content-addressed mandatory objects and 118
+- Read-only capture produced 15 content-addressed mandatory objects and 124
   exact-trace spans. The network-free, credential-free verifier returned `PASS`
-  for bundle `urn:uuid:a3f1b86a-7f71-442d-be06-59f5c042d089`; the packet is
-  published as the `cloud-proof-abb4472` GitHub Release.
+  for bundle `urn:uuid:10271531-a3fc-42f3-baa3-87c753ef113b`; the packet is
+  published as the `cloud-proof-5e579f4` GitHub Release. The 15th mandatory
+  object is the Google-signed SLSA v1 build statement bound to all five
+  revision image digests; the manual-upload source-provenance limit is explicit.
 
 ## Golden cloud proof — August 26
 

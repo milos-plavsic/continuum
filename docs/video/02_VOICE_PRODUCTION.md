@@ -83,8 +83,8 @@ The final TTS transcript should favor spoken forms:
 | ADK | A D K |
 | Pub/Sub | Pub Sub |
 | v17 / v18 | version seventeen / version eighteen |
-| 14/14 | all fourteen required evidence objects |
-| 118 spans | one hundred and eighteen correlated spans |
+| 15/15 | all fifteen required evidence objects |
+| 124 spans | one hundred and twenty-four correlated spans |
 | SHA-256 | S H A two fifty-six |
 | C0–C6 | conformance classes C zero through C six |
 

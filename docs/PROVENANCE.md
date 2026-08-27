@@ -26,15 +26,36 @@ each ready revision from the Cloud Run API and captures Artifact Registry's
 `provenance_summary`. Offline verification decodes the SLSA v1 subject and
 requires it to equal the one digest reported by every revision.
 
-Signature authenticity is independently reproducible with the official SLSA
-verifier; it is not implied by the offline semantic check. The repository wraps
-the official command without weakening its source or builder checks:
+Signature authenticity is not implied by the offline semantic check. The
+repository provides two deliberately separate checks. First, the official SLSA
+verifier checks signature, builder and source together and succeeds only when
+its output contains an explicit terminal `PASSED` (not merely process status
+zero):
 
 ```bash
 export CONTINUUM_IMAGE_AT_DIGEST="$IMAGE_AT_DIGEST"
 export CONTINUUM_EXPECTED_SOURCE_URI="$EXPECTED_SOURCE_URI"
 bash scripts/cloud/verify-build-provenance.sh
 ```
+
+Cloud Build jobs started from a connected GitHub trigger carry a GitHub
+`buildConfigSource` and can satisfy that complete check. A manual
+`gcloud builds submit` instead records the exact uploaded Cloud Storage tarball;
+it does **not** cryptographically establish that the tarball came from the named
+GitHub commit. For that path, the following narrower check independently fetches
+Google's pinned Hosted Worker public key, reconstructs the DSSE PAE bytes,
+requires a SLSA v1 statement whose subject is the requested image digest, and
+verifies the signature with OpenSSL:
+
+```bash
+export CONTINUUM_IMAGE_AT_DIGEST="$IMAGE_AT_DIGEST"
+bash scripts/cloud/verify-google-build-signature.sh
+```
+
+That result authenticates Google's builder statement and its immutable image
+subject. It is not relabelled as GitHub-source provenance. A release claiming
+cryptographic GitHub-to-image provenance must be built by the connected trigger
+and pass the first command against `github.com/milos-plavsic/continuum`.
 
 The strongest live demonstration is the conjunction of five independently read
 Cloud Run revision/identity records, one shared immutable image digest, the
