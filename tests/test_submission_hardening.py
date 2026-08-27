@@ -190,11 +190,13 @@ class SubmissionHardeningTests(unittest.TestCase):
             calls.append((request, timeout))
             payload = json.loads(request.data)
             return Response({**payload, "html_url": "https://github.test/o/r/issues/7", "number": 7})
-        queue = GitHubIssueWorkQueue(repository="o/r", issue_number=7, token="secret", opener=opener)
+        queue = GitHubIssueWorkQueue(repository="o/r", issue_number=7,
+                                     token="\n secret\t", opener=opener)
         request = {"run_id":"r", "request_digest":"d", "compliance_evidence_id":"c"}
         first, second = queue.converge(request), queue.converge(request)
         self.assertEqual(first, second)
         self.assertEqual(first["reversible_action"], "close issue")
+        self.assertEqual(calls[0][0].headers["Authorization"], "Bearer secret")
         self.assertEqual(len(calls), 2)
 
     def test_model_armor_validates_configuration_and_input(self):
@@ -258,6 +260,8 @@ class SubmissionHardeningTests(unittest.TestCase):
     def test_external_queue_rejects_bad_configuration_and_provider_drift(self):
         with self.assertRaisesRegex(ValueError, "CONFIG"):
             GitHubIssueWorkQueue(repository="bad", issue_number=0, token="")
+        with self.assertRaisesRegex(ValueError, "CONFIG"):
+            GitHubIssueWorkQueue(repository="o/r", issue_number=7, token="bad token")
         queue = GitHubIssueWorkQueue(repository="o/r", issue_number=7, token="secret",
             opener=lambda req, timeout: Response({"state":"closed", "body":"x", "title":"x"}))
         with self.assertRaisesRegex(ValueError, "RECONCILIATION"):

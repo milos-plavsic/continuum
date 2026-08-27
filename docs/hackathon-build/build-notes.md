@@ -344,3 +344,15 @@
   codes inside the same wall-clock budget, and converts exhaustion to the normal
   pre-model HOLD. Malformed GLEIF/VIES payloads now share the stable external-tool
   taxonomy. Regression tests preserve the observed outage shape.
+- The next exact-commit run `judge-final-9de7d14-20260827T221526Z` completed the
+  governed lifecycle internally but was correctly rated `NOT_ASSESSED` by the
+  offline verifier because the deployment had not enabled the mandatory external
+  GitHub work queue. Sixteen objects were captured; no external-work-item was
+  invented or substituted with the Firestore sandbox projection.
+- After enabling the pre-provisioned reversible GitHub Issue #41, run
+  `judge-final-github-9de7d14-20260827T223000Z` reached verified compliance and
+  fenced/activated v19 but stopped before the effect. A CLI-fed Secret Manager
+  value retained its terminal newline, producing a rejected bearer header and
+  repeated 409 responses. The adapter now normalizes surrounding secret whitespace,
+  rejects embedded whitespace at configuration time, and regression-tests the exact
+  Authorization header before another fresh run is attempted.

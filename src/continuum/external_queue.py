@@ -17,10 +17,16 @@ class GitHubIssueWorkQueue:
     """
     def __init__(self, *, repository: str, issue_number: int, token: str,
                  opener: Callable[..., Any] = urlopen):
-        if repository.count("/") != 1 or issue_number <= 0 or not token:
+        # Secret Manager values are opaque bytes and CLI-fed secrets commonly
+        # retain one terminal newline.  Normalize only surrounding whitespace;
+        # reject any remaining whitespace so an invalid bearer value fails at
+        # configuration time instead of surfacing as a misleading provider 409.
+        normalized_token = token.strip()
+        if (repository.count("/") != 1 or issue_number <= 0 or not normalized_token
+                or any(character.isspace() for character in normalized_token)):
             raise ValueError("EXTERNAL_QUEUE_CONFIG_INVALID")
         self.repository, self.issue_number, self.token, self.opener = (
-            repository, issue_number, token, opener)
+            repository, issue_number, normalized_token, opener)
         self.url = f"https://api.github.com/repos/{repository}/issues/{issue_number}"
 
     def converge(self, request: dict[str, Any]) -> dict[str, Any]:
