@@ -60,6 +60,7 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertIn('  - allUsers', self.judge)
         self.assertIn('--max-instances 1', self.judge)
         self.assertIn('CONTINUUM_JUDGE_MAX_RUNS', self.judge)
+        self.assertIn('devpost26-${CONTINUUM_GIT_SHA:0:8}', self.judge)
         self.assertIn('--set-secrets "CONTINUUM_JUDGE_HMAC_SECRET=', self.judge)
         self.assertIn('roles/secretmanager.secretAccessor', self.judge)
         self.assertIn('roles/datastore.user', self.judge)
