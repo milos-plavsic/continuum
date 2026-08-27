@@ -183,6 +183,19 @@ class IncidentPolicyTests(unittest.TestCase):
             verify_incident_evidence_chain(records=changed["records"],
                 evidence_receipt=changed["evidence_validation"],
                 incident_receipt=changed["incident_assessment"], subject=changed["subject"])
+
+    def test_exported_chain_survives_json_and_firestore_array_normalization(self):
+        extension = incident_extension()
+        durable = json.loads(json.dumps(extension))
+        verify_incident_evidence_chain(
+            records=durable["records"],
+            evidence_receipt=durable["evidence_validation"],
+            incident_receipt=durable["incident_assessment"],
+            subject=durable["subject"],
+        )
+        self.assertIsInstance(
+            durable["evidence_validation"]["assessments"][0]["reason_codes"], list)
+        self.assertIsInstance(durable["incident_assessment"]["signal_types"], list)
         changed = deepcopy(extension); changed["incident_assessment"]["receipt_digest"] = "0" * 64
         with self.assertRaisesRegex(RuntimeError, "INCIDENT_EVIDENCE_CHAIN_MISMATCH"):
             verify_incident_evidence_chain(records=changed["records"],

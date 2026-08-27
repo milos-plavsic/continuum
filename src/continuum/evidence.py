@@ -125,7 +125,16 @@ class EvidenceValidationReceipt:
         return {
             "policy_id": self.policy_id,
             "assessed_at": self.assessed_at,
-            "assessments": [asdict(item) for item in self.assessments],
+            # Emit the JSON data model at the protocol boundary.  Firestore and
+            # JSON both normalize tuples to arrays; returning tuples here made
+            # an otherwise canonical receipt compare unequal after a durable
+            # store round-trip.
+            "assessments": [{
+                "evidence_id": item.evidence_id,
+                "evidence_type": item.evidence_type,
+                "trusted": item.trusted,
+                "reason_codes": list(item.reason_codes),
+            } for item in self.assessments],
             "trusted_ids": list(self.trusted_ids),
             "valid": self.valid,
             "records_digest": self.records_digest,
