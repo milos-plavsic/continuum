@@ -288,3 +288,22 @@
   release-fact source and added a release-gate audit over README, Devpost draft,
   compliance matrix and public showcase. The audit rejects every known superseded
   run/count/revision marker; mutation and repository tests pass.
+
+## Canonical non-video release — August 27
+
+- Application commit `0d8233695eeae0980088f3209f531181852a4a60` was built once
+  as image digest
+  `sha256:c54bfc0b6baa85291fcecfc643641fe59972dc33806d75917dd21ae33fc4a010`
+  and deployed to all five private roles with distinct workload identities.
+- Fresh run `judge-devpost26-0d823369-ce4b14a8e848` completed the full supplier
+  lifecycle. Gemini selected warm successor v19 through an explicit
+  recovery-time versus assurance trade-off; v20 failed the deterministic gate.
+- Google Model Armor stopped the raw injection before model access. Two Pub/Sub
+  deliveries reconciled to one reversible GitHub issue, and the read-only
+  verifier independently observed that provider state before issuing `VERIFIED`.
+- The public `cloud-proof-0d823369` release contains 17 mandatory objects and 43
+  correlated Cloud Trace spans. Its network-free, credential-free verifier
+  returned `PASS`; capture provenance remains explicitly outside that offline
+  verdict.
+- The locked local gate passed 201 tests at genuine 100.0% statement and branch
+  coverage. Video production remains intentionally deferred.

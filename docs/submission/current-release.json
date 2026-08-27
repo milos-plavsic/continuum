@@ -1,20 +1,20 @@
 {
   "schema": "continuum/submission-release/1",
   "application": {
-    "source_commit": "a1e00ac188c5597150fb7c6de142224d086c4995",
-    "image_digest": "sha256:608e941c082a7d675db8ccf0d9bd9807026437958a91affd473abfbdef44c996"
+    "source_commit": "0d8233695eeae0980088f3209f531181852a4a60",
+    "image_digest": "sha256:c54bfc0b6baa85291fcecfc643641fe59972dc33806d75917dd21ae33fc4a010"
   },
   "run": {
-    "id": "standards-a1e00ac-20260827T163808Z",
-    "trace_id": "7f2154874a7a8f4e9ad6b8dea480625c",
-    "required_object_count": 15,
-    "trace_span_count": 89,
+    "id": "judge-devpost26-0d823369-ce4b14a8e848",
+    "trace_id": "232574755dc80097fd74e292b103ce2a",
+    "required_object_count": 17,
+    "trace_span_count": 43,
     "offline_verdict": "PASS"
   },
   "proof": {
-    "release_tag": "cloud-proof-a1e00ac",
-    "archive_sha256": "fd64cafab0c030bf73775c46699276176552dd180f1c898bf5a48f399a8cea8a",
-    "report_digest": "sha256:3e0e01fdf19c10446a8b0a8e69bee8179ad0749dac64a5047b306f75df87f5a8"
+    "release_tag": "cloud-proof-0d823369",
+    "archive_sha256": "699911068eb642fdbae224afd84c2db23e658f396ddf3325f45c08172a157069",
+    "report_digest": "sha256:9cc453ea31a1dced264412be1f1215fc01120d58e418d735113a395868bb3e60"
   },
   "quality": {
     "test_count": 201,
@@ -23,12 +23,16 @@
   },
   "showcase": {
     "url": "https://continuum-showcase-rdzvxiysbq-ew.a.run.app",
-    "source_commit": "4a9af2622fb25c513c06d935be6dbb441cc6193b",
-    "revision": "continuum-showcase-00003-rql",
-    "image_digest": "sha256:0392920060f7ccfc516e8e47e6d3547330a0c56867d5c9f5f359b2630bda8e36"
+    "source_commit": "0d8233695eeae0980088f3209f531181852a4a60",
+    "revision": "continuum-showcase-00004-dcc",
+    "image_digest": "sha256:5f7d04a08e2818cca4a705560c9da95a1ecdd5a46be72a51ac84ab7f4211b11a"
   },
   "superseded_markers": [
     "0ceda49",
+    "a1e00ac",
+    "15 required objects",
+    "15-object",
+    "89 correlated spans",
     "cloud-proof-abb4472",
     "14/14",
     "14 / 14",
