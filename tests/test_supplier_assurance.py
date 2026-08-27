@@ -71,17 +71,17 @@ class SupplierAssuranceTests(unittest.TestCase):
         for lei in ("bad", 1):
             with self.assertRaisesRegex(ValueError, "LEI_INVALID"):
                 lookup_gleif(lei, opener=opener_for({}))
-        with self.assertRaisesRegex(ValueError, "GLEIF_RESPONSE_INVALID"):
+        with self.assertRaisesRegex(ExternalToolError, "GLEIF_RESPONSE_INVALID"):
             lookup_gleif(self.application["lei"], opener=opener_for({"data": {}}))
         substituted = {"data": {"id": "0" * 20, "attributes": {"entity": {
             "legalName": {"name": "x"}, "legalAddress": {"country": "DE"}, "status": "ACTIVE"},
             "registration": {"status": "ISSUED"}}}}
-        with self.assertRaisesRegex(ValueError, "GLEIF_IDENTITY_SUBSTITUTION"):
+        with self.assertRaisesRegex(ExternalToolError, "GLEIF_IDENTITY_SUBSTITUTION"):
             lookup_gleif(self.application["lei"], opener=opener_for(substituted))
         for country, vat in (("D", "1"), ("DE", "!"), (1, "123")):
             with self.assertRaisesRegex(ValueError, "VAT_IDENTIFIER_INVALID"):
                 check_eu_vat(country, vat, opener=opener_for({}))
-        with self.assertRaisesRegex(ValueError, "VIES_RESPONSE_INVALID"):
+        with self.assertRaisesRegex(ExternalToolError, "VIES_RESPONSE_INVALID"):
             check_eu_vat("DE", "123", opener=opener_for({"valid": "yes"}))
         with self.assertRaisesRegex(ExternalToolError, "VIES_RESPONSE_INVALID"):
             check_eu_vat("DE", "123", opener=opener_for([]))
@@ -112,6 +112,28 @@ class SupplierAssuranceTests(unittest.TestCase):
         with self.assertRaisesRegex(ExternalToolError, "GLEIF_RESPONSE_INVALID"):
             lookup_gleif(self.application["lei"],
                          opener=lambda request, timeout: Response({}, raw=b"not-json"))
+
+        semantic = [
+            {"actionSucceed": False, "errorWrappers": [{"error": "MS_UNAVAILABLE"}]},
+            {"actionSucceed": False, "errorWrappers": [{"error": "SERVER_BUSY"}]},
+            {"valid": True},
+        ]
+        calls = []
+        result = check_eu_vat("DE", "123", opener=lambda request, timeout: (
+            calls.append(timeout) or Response(semantic.pop(0))), policy=policy,
+            sleeper=lambda _value: None, clock=lambda: 0.0)
+        self.assertTrue(result["valid"])
+        self.assertEqual(len(calls), 3)
+        with self.assertRaisesRegex(ExternalToolError, "VIES_UPSTREAM_DENIED") as denied:
+            check_eu_vat("DE", "123", opener=opener_for({
+                "actionSucceed": False, "errorWrappers": [{"error": "DENIED"}]}),
+                policy=policy, sleeper=lambda _value: self.fail("must not retry"),
+                clock=lambda: 0.0)
+        self.assertFalse(denied.exception.retryable)
+        with self.assertRaisesRegex(ExternalToolError, "VIES_UPSTREAM_UPSTREAM_REJECTED"):
+            check_eu_vat("DE", "123", opener=opener_for({
+                "actionSucceed": False, "errorWrappers": "bad"}), policy=policy,
+                sleeper=lambda _value: None, clock=lambda: 0.0)
 
     def test_external_budget_and_policy_validation_fail_closed(self):
         invalid = [

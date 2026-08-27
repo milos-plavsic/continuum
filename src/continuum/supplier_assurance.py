@@ -162,7 +162,9 @@ def application_digest(application: dict[str, Any]) -> str:
 def _read_json(request: Request, opener: Callable[..., Any], *, source: str,
                policy: ExternalToolPolicy = ExternalToolPolicy(),
                sleeper: Callable[[float], None] = sleep,
-               clock: Callable[[], float] = monotonic) -> dict[str, Any]:
+               clock: Callable[[], float] = monotonic,
+               response_error: Callable[[dict[str, Any]], ExternalToolError | None]
+               | None = None) -> dict[str, Any]:
     """Fetch JSON with a fixed retry schedule and total wall-clock budget."""
     started = clock()
     attempts = len(policy.backoff_seconds)
@@ -190,7 +192,9 @@ def _read_json(request: Request, opener: Callable[..., Any], *, source: str,
                     if not isinstance(payload, dict):
                         raise ExternalToolError(
                             f"{source}_RESPONSE_INVALID", retryable=False)
-                    return payload
+                    error = response_error(payload) if response_error is not None else None
+                    if error is None:
+                        return payload
         except HTTPError as failure:
             status = int(failure.code)
             error = ExternalToolError(
@@ -236,9 +240,9 @@ def lookup_gleif(lei: str, *, opener: Callable[..., Any] = urlopen,
             "next_renewal_at": str(registration.get("nextRenewalDate") or ""),
         }
     except (KeyError, TypeError) as error:
-        raise ValueError("GLEIF_RESPONSE_INVALID") from error
+        raise ExternalToolError("GLEIF_RESPONSE_INVALID", retryable=False) from error
     if normalized["lei"] != lei:
-        raise ValueError("GLEIF_IDENTITY_SUBSTITUTION")
+        raise ExternalToolError("GLEIF_IDENTITY_SUBSTITUTION", retryable=False)
     return _with_receipt(normalized)
 
 
@@ -255,10 +259,21 @@ def check_eu_vat(country_code: str, vat_number: str, *,
     request = Request(VIES_CHECK_URL, data=body, method="POST", headers={
         "Accept": "application/json", "Content-Type": "application/json",
     })
+    def semantic_error(payload: dict[str, Any]) -> ExternalToolError | None:
+        if payload.get("actionSucceed") is not False:
+            return None
+        wrappers = payload.get("errorWrappers")
+        codes = [item.get("error") for item in wrappers
+                 if isinstance(item, dict)] if isinstance(wrappers, list) else []
+        code = next((item for item in codes if isinstance(item, str) and item),
+                    "UPSTREAM_REJECTED")
+        retryable = code in {"MS_UNAVAILABLE", "TIMEOUT", "SERVER_BUSY"}
+        return ExternalToolError(f"VIES_UPSTREAM_{code}", retryable=retryable)
+
     payload = _read_json(request, opener, source="VIES", policy=policy,
-                         sleeper=sleeper, clock=clock)
+                         sleeper=sleeper, clock=clock, response_error=semantic_error)
     if not isinstance(payload.get("valid"), bool):
-        raise ValueError("VIES_RESPONSE_INVALID")
+        raise ExternalToolError("VIES_RESPONSE_INVALID", retryable=False)
     normalized = {
         "tool": "ec.vies.check-vat-number",
         "source_url": VIES_CHECK_URL,
