@@ -139,6 +139,130 @@ class AssessmentReceipt:
         }
 
 
+@dataclass(frozen=True)
+class SelectionGovernancePolicy:
+    """Policy for model availability, deterministic comparison and human review."""
+
+    policy_id: str = "successor-selection-governance/1"
+    production_review_amount: int = 100_000
+
+    def __post_init__(self) -> None:
+        if not self.policy_id or self.production_review_amount <= 0:
+            raise ValueError("SELECTION_GOVERNANCE_POLICY_INVALID")
+
+
+def govern_successor_selection(*, selected_candidate_id: str | None,
+                               receipt: AssessmentReceipt,
+                               model_available: bool,
+                               decision_scope: str,
+                               value_at_risk: dict[str, Any],
+                               human_approved: bool = False,
+                               policy: SelectionGovernancePolicy = SelectionGovernancePolicy()
+                               ) -> dict[str, Any]:
+    """Bind model choice to a deterministic baseline and explicit review boundary."""
+    eligible = [item for item in receipt.assessments if item.eligible]
+    if not eligible:
+        raise Denied("SELECTION_GOVERNANCE_NO_ELIGIBLE_CANDIDATE")
+    assurance_rank = {"STANDARD": 1, "HIGH": 2, "VERY_HIGH": 3}
+    baseline = sorted(eligible, key=lambda item: (
+        -assurance_rank[item.assurance_level], -item.trust_score,
+        item.recovery_time_seconds, item.candidate_id))[0]
+    amount = value_at_risk.get("amount")
+    if (decision_scope not in {"SANDBOX_ONLY", "PRODUCTION"}
+            or not isinstance(amount, int) or isinstance(amount, bool) or amount < 0):
+        raise ValueError("SELECTION_GOVERNANCE_INPUT_INVALID")
+    if not model_available:
+        if selected_candidate_id is not None:
+            raise Denied("SELECTION_GOVERNANCE_MODEL_STATE_INVALID")
+        outcome, reason = "HOLD", "MODEL_UNAVAILABLE"
+        selected = None
+    else:
+        selected = next((item for item in eligible
+                         if item.candidate_id == selected_candidate_id), None)
+        if selected is None:
+            raise Denied("SELECTION_GOVERNANCE_CHOICE_INVALID")
+        review_required = (decision_scope == "PRODUCTION"
+                           and amount >= policy.production_review_amount)
+        if review_required and not human_approved:
+            outcome, reason = "HOLD", "HUMAN_APPROVAL_REQUIRED"
+        else:
+            outcome = "APPROVED"
+            reason = ("HUMAN_APPROVED" if review_required
+                      else "SANDBOX_AUTONOMY" if decision_scope == "SANDBOX_ONLY"
+                      else "BELOW_REVIEW_THRESHOLD")
+    body = {
+        "policy_id": policy.policy_id,
+        "assessment_receipt_digest": receipt.receipt_digest,
+        "deterministic_baseline_candidate_id": baseline.candidate_id,
+        "selected_candidate_id": selected_candidate_id,
+        "deviates_from_baseline": (selected_candidate_id is not None
+                                    and selected_candidate_id != baseline.candidate_id),
+        "decision_scope": decision_scope,
+        "value_at_risk": value_at_risk,
+        "model_available": model_available,
+        "human_approved": human_approved,
+        "outcome": outcome,
+        "reason_code": reason,
+    }
+    return {**body, "receipt_digest": digest(body)}
+
+
+def validate_selection_governance_receipt(*, governance: Any,
+                                          assessment: Any,
+                                          successor_id: str) -> dict[str, Any]:
+    """Independently recompute a selection-governance receipt.
+
+    This deliberately accepts serialized contract data rather than internal
+    dataclasses so a verifier does not have to trust the selection process that
+    originally created the receipt.
+    """
+    required = {
+        "policy_id", "assessment_receipt_digest",
+        "deterministic_baseline_candidate_id", "selected_candidate_id",
+        "deviates_from_baseline", "decision_scope", "value_at_risk",
+        "model_available", "human_approved", "outcome", "reason_code",
+        "receipt_digest",
+    }
+    if not isinstance(governance, dict) or set(governance) != required:
+        raise Denied("SELECTION_GOVERNANCE_RECEIPT_SCHEMA_INVALID")
+    if (not isinstance(assessment, dict)
+            or governance["assessment_receipt_digest"] != assessment.get("receipt_digest")):
+        raise Denied("SELECTION_GOVERNANCE_ASSESSMENT_MISMATCH")
+    body = {key: governance[key] for key in required - {"receipt_digest"}}
+    if governance["receipt_digest"] != digest(body):
+        raise Denied("SELECTION_GOVERNANCE_RECEIPT_DIGEST_MISMATCH")
+    eligible = [item for item in assessment.get("assessments", [])
+                if isinstance(item, dict) and item.get("eligible") is True]
+    assurance_rank = {"STANDARD": 1, "HIGH": 2, "VERY_HIGH": 3}
+    try:
+        baseline = sorted(eligible, key=lambda item: (
+            -assurance_rank[item["assurance_level"]], -item["trust_score"],
+            item["recovery_time_seconds"], item["candidate_id"]))[0]
+    except (IndexError, KeyError, TypeError) as error:
+        raise Denied("SELECTION_GOVERNANCE_BASELINE_INVALID") from error
+    selected = governance["selected_candidate_id"]
+    if (selected != successor_id
+            or not any(item.get("candidate_id") == selected for item in eligible)):
+        raise Denied("SELECTION_GOVERNANCE_SUCCESSOR_MISMATCH")
+    expected_deviation = selected != baseline["candidate_id"]
+    if (governance["deterministic_baseline_candidate_id"] != baseline["candidate_id"]
+            or governance["deviates_from_baseline"] is not expected_deviation):
+        raise Denied("SELECTION_GOVERNANCE_BASELINE_MISMATCH")
+    if governance["outcome"] != "APPROVED" or governance["model_available"] is not True:
+        raise Denied("SELECTION_GOVERNANCE_NOT_APPROVED")
+    scope = governance["decision_scope"]
+    amount = governance.get("value_at_risk", {}).get("amount")
+    if (scope not in {"SANDBOX_ONLY", "PRODUCTION"}
+            or not isinstance(amount, int) or isinstance(amount, bool) or amount < 0):
+        raise Denied("SELECTION_GOVERNANCE_INPUT_INVALID")
+    if (scope == "SANDBOX_ONLY" and governance["reason_code"] != "SANDBOX_AUTONOMY"):
+        raise Denied("SELECTION_GOVERNANCE_REASON_INVALID")
+    if (scope == "PRODUCTION" and governance["reason_code"] == "HUMAN_APPROVED"
+            and governance["human_approved"] is not True):
+        raise Denied("SELECTION_GOVERNANCE_REASON_INVALID")
+    return governance
+
+
 def assess_candidates(candidates: Iterable[SuccessorCandidate],
                       requirements: SuccessionRequirements) -> AssessmentReceipt:
     """Evaluate every candidate deterministically before any model sees it."""

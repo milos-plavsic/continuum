@@ -11,6 +11,7 @@ from .contract import ContractError, artifact_ref, canonical_bytes, make_envelop
 from .models import digest
 from .incident_policy import verify_incident_evidence_chain
 from .models import Denied
+from .succession_selection import validate_selection_governance_receipt
 
 
 PRE_ATTESTATION_TYPES = {
@@ -136,9 +137,11 @@ class IndependentVerificationEngine:
     def _validate_handoff_extensions(manifest: dict[str, Any]) -> None:
         extensions = manifest.get("extensions", {})
         selection = extensions.get("continuum.dev/successor-selection")
+        selection_governance = extensions.get("continuum.dev/selection-governance")
         reconstruction = extensions.get("continuum.dev/context-reconstruction")
         incident = extensions.get("continuum.dev/incident-evidence")
-        if (not isinstance(selection, dict) or not isinstance(reconstruction, dict)
+        if (not isinstance(selection, dict) or not isinstance(selection_governance, dict)
+                or not isinstance(reconstruction, dict)
                 or not isinstance(incident, dict)):
             raise ContractError("HANDOFF_EVIDENCE_MISSING")
         if set(incident) != {"subject", "records", "evidence_validation", "incident_assessment"}:
@@ -156,6 +159,14 @@ class IndependentVerificationEngine:
         }
         if selection.get("receipt_digest") != digest(selection_body):
             raise ContractError("SUCCESSOR_ASSESSMENT_DIGEST_MISMATCH")
+        try:
+            validate_selection_governance_receipt(
+                governance=selection_governance,
+                assessment=selection,
+                successor_id=manifest["body"]["successor"]["principal_id"],
+            )
+        except Denied as error:
+            raise ContractError(str(error)) from error
         reconstruction_body = {
             "succession_id": reconstruction.get("succession_id"),
             "successor_principal": reconstruction.get("successor_principal"),

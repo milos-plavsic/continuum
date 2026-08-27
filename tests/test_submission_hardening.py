@@ -11,9 +11,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from continuum.external_queue import GitHubIssueWorkQueue
 from continuum.fleet_registry import FleetPublication, FirestoreFleetCatalog, InMemoryFleetCatalog
 from continuum.model_armor import DeterministicInputGuard, GoogleModelArmorGuard, RAW_ATTACK_FIXTURE
-from continuum.models import AgentStatus
+from continuum.models import AgentStatus, digest
 from continuum.succession_selection import (SuccessorCandidate, SuccessionRequirements,
-    SelectionObjective, admit_successor_choice, assess_candidates, canonical_selection_objective)
+    SelectionGovernancePolicy, SelectionObjective, admit_successor_choice,
+    assess_candidates, canonical_selection_objective, govern_successor_selection,
+    validate_selection_governance_receipt)
 
 
 def candidate(principal, recovery, assurance, department):
@@ -34,6 +36,117 @@ class Response:
 
 
 class SubmissionHardeningTests(unittest.TestCase):
+    def test_selection_governance_records_baseline_deviation_and_review_boundary(self):
+        fast = candidate("fast", 12, "HIGH", "finance")
+        assured = candidate("assured", 80, "VERY_HIGH", "security")
+        requirements = SuccessionRequirements("acme", "old", "vendor.create", "vendor.approved",
+                                              "procurement", "EU", "continuity/1")
+        receipt = assess_candidates((fast, assured), requirements)
+        sandbox = govern_successor_selection(
+            selected_candidate_id="fast", receipt=receipt, model_available=True,
+            decision_scope="SANDBOX_ONLY",
+            value_at_risk={"currency": "EUR", "amount": 250000})
+        self.assertEqual(sandbox["outcome"], "APPROVED")
+        self.assertEqual(sandbox["deterministic_baseline_candidate_id"], "assured")
+        self.assertTrue(sandbox["deviates_from_baseline"])
+        self.assertEqual(sandbox["reason_code"], "SANDBOX_AUTONOMY")
+        held = govern_successor_selection(
+            selected_candidate_id="fast", receipt=receipt, model_available=True,
+            decision_scope="PRODUCTION",
+            value_at_risk={"currency": "EUR", "amount": 250000})
+        self.assertEqual((held["outcome"], held["reason_code"]),
+                         ("HOLD", "HUMAN_APPROVAL_REQUIRED"))
+        approved = govern_successor_selection(
+            selected_candidate_id="fast", receipt=receipt, model_available=True,
+            decision_scope="PRODUCTION", human_approved=True,
+            value_at_risk={"currency": "EUR", "amount": 250000})
+        self.assertEqual(approved["reason_code"], "HUMAN_APPROVED")
+        below = govern_successor_selection(
+            selected_candidate_id="assured", receipt=receipt, model_available=True,
+            decision_scope="PRODUCTION",
+            value_at_risk={"currency": "EUR", "amount": 1})
+        self.assertEqual(below["reason_code"], "BELOW_REVIEW_THRESHOLD")
+        unavailable = govern_successor_selection(
+            selected_candidate_id=None, receipt=receipt, model_available=False,
+            decision_scope="SANDBOX_ONLY",
+            value_at_risk={"currency": "EUR", "amount": 250000})
+        self.assertEqual((unavailable["outcome"], unavailable["reason_code"]),
+                         ("HOLD", "MODEL_UNAVAILABLE"))
+
+    def test_selection_governance_rejects_invalid_policy_state_and_inputs(self):
+        with self.assertRaisesRegex(ValueError, "POLICY_INVALID"):
+            SelectionGovernancePolicy(policy_id="", production_review_amount=0)
+        valid = candidate("valid", 12, "HIGH", "x")
+        requirements = SuccessionRequirements("acme", "old", "vendor.create", "vendor.approved",
+                                              "procurement", "EU", "continuity/1")
+        receipt = assess_candidates((valid,), requirements)
+        invalid_inputs = [
+            {"decision_scope": "UNKNOWN", "value_at_risk": {"amount": 1}},
+            {"decision_scope": "PRODUCTION", "value_at_risk": {"amount": True}},
+            {"decision_scope": "PRODUCTION", "value_at_risk": {"amount": -1}},
+        ]
+        for values in invalid_inputs:
+            with self.assertRaisesRegex(ValueError, "INPUT_INVALID"):
+                govern_successor_selection(selected_candidate_id="valid", receipt=receipt,
+                    model_available=True, **values)
+        with self.assertRaisesRegex(Exception, "CHOICE_INVALID"):
+            govern_successor_selection(selected_candidate_id="unknown", receipt=receipt,
+                model_available=True, decision_scope="SANDBOX_ONLY",
+                value_at_risk={"amount": 1})
+        with self.assertRaisesRegex(Exception, "MODEL_STATE_INVALID"):
+            govern_successor_selection(selected_candidate_id="valid", receipt=receipt,
+                model_available=False, decision_scope="SANDBOX_ONLY",
+                value_at_risk={"amount": 1})
+        empty = assess_candidates((replace(valid, health="DOWN"),), requirements)
+        with self.assertRaisesRegex(Exception, "NO_ELIGIBLE"):
+            govern_successor_selection(selected_candidate_id=None, receipt=empty,
+                model_available=False, decision_scope="SANDBOX_ONLY",
+                value_at_risk={"amount": 1})
+
+    def test_independent_selection_governance_recomputation_rejects_every_boundary(self):
+        receipt = assess_candidates((candidate("fast", 12, "HIGH", "x"),
+            candidate("assured", 80, "VERY_HIGH", "x")),
+            SuccessionRequirements("acme", "old", "vendor.create", "vendor.approved",
+                                   "procurement", "EU", "continuity/1"))
+        assessment = receipt.to_dict()
+        valid = govern_successor_selection(selected_candidate_id="fast", receipt=receipt,
+            model_available=True, decision_scope="SANDBOX_ONLY",
+            value_at_risk={"currency": "EUR", "amount": 250000})
+        self.assertEqual(validate_selection_governance_receipt(
+            governance=valid, assessment=assessment, successor_id="fast"), valid)
+
+        def signed(**changes):
+            value = {**valid, **changes}
+            value["receipt_digest"] = digest({key: item for key, item in value.items()
+                                               if key != "receipt_digest"})
+            return value
+
+        cases = [
+            (None, assessment, "fast", "RECEIPT_SCHEMA_INVALID"),
+            ({**valid, "extra": True}, assessment, "fast", "RECEIPT_SCHEMA_INVALID"),
+            (valid, None, "fast", "ASSESSMENT_MISMATCH"),
+            (valid, {**assessment, "receipt_digest": "other"}, "fast", "ASSESSMENT_MISMATCH"),
+            ({**valid, "receipt_digest": "bad"}, assessment, "fast", "RECEIPT_DIGEST_MISMATCH"),
+            (valid, {**assessment, "assessments": []}, "fast", "BASELINE_INVALID"),
+            (valid, {**assessment, "assessments": [{"eligible": True}]}, "fast", "BASELINE_INVALID"),
+            (valid, assessment, "other", "SUCCESSOR_MISMATCH"),
+            (signed(selected_candidate_id="missing"), assessment, "missing", "SUCCESSOR_MISMATCH"),
+            (signed(deterministic_baseline_candidate_id="fast"), assessment, "fast", "BASELINE_MISMATCH"),
+            (signed(deviates_from_baseline=False), assessment, "fast", "BASELINE_MISMATCH"),
+            (signed(outcome="HOLD"), assessment, "fast", "NOT_APPROVED"),
+            (signed(model_available=False), assessment, "fast", "NOT_APPROVED"),
+            (signed(decision_scope="OTHER"), assessment, "fast", "INPUT_INVALID"),
+            (signed(value_at_risk={"amount": True}), assessment, "fast", "INPUT_INVALID"),
+            (signed(value_at_risk={"amount": -1}), assessment, "fast", "INPUT_INVALID"),
+            (signed(reason_code="OTHER"), assessment, "fast", "REASON_INVALID"),
+            (signed(decision_scope="PRODUCTION", reason_code="HUMAN_APPROVED"),
+             assessment, "fast", "REASON_INVALID"),
+        ]
+        for governance, current_assessment, successor, code in cases:
+            with self.subTest(code=code), self.assertRaisesRegex(Exception, code):
+                validate_selection_governance_receipt(
+                    governance=governance, assessment=current_assessment,
+                    successor_id=successor)
     def test_raw_attack_is_blocked_before_model_and_google_response_is_fail_closed(self):
         local = DeterministicInputGuard().sanitize(text=RAW_ATTACK_FIXTURE, run_id="r")
         self.assertFalse(local["allowed_to_model"])

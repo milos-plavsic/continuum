@@ -153,3 +153,29 @@ require separate evidence.
   contract. It is interoperability evidence, not a claim of third-party adoption.
 - The primary architecture asset explains one succession lifecycle; full cloud and
   protocol topology is retained as secondary engineering evidence.
+
+## External-dependency and positioning hardening
+
+- Official registry reads use a bounded retry policy with per-attempt timeout,
+  total wall-clock budget, retryable-status classification and stable public reason
+  codes. A durable cache may supply only a still-fresh, content-addressed prior
+  observation; stale or absent evidence produces an explicit HOLD and no model or
+  action call.
+- Every supplier observation declares `LIVE` or `CACHED_WITHIN_POLICY`, local
+  observation time, policy expiry and provenance. The decision pack and independent
+  verifier bind that availability mode and freshness; a cache is resilience, never
+  silent substitution.
+- Continuum is a governance layer beside a workflow engine, not a scheduler
+  replacement. A first-party engine bridge maps engine task identity, obligation and
+  idempotency into the three-call protocol while leaving retries, timers and task
+  execution with the host engine.
+- Model choice is advisory optimization among already eligible candidates. A
+  deterministic comparison baseline, explicit deviation receipt, production-impact
+  approval threshold and HOLD-on-model-unavailability policy make the legal authority
+  decision independent of model prose.
+- Assurance claims name their trust roots and epistemic ceiling: content and semantic
+  consistency are assessed; capture provenance, infrastructure compromise, upstream
+  factual truth and Byzantine consensus are not inferred.
+- The complete technical architecture remains intact. Primary judge surfaces explain
+  promise, authority, memory and one effect first; named supporting services and
+  multimodal bonus branches remain available as secondary depth.

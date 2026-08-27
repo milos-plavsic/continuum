@@ -17,6 +17,7 @@ from continuum.conformance import run_conformance
 from continuum.release_truth import audit_judge_surfaces, load_release_truth
 from continuum.scenario import run_scenario
 from continuum.standard import build_contract_bundle, verify_bundle
+from continuum.trust_profile import load_trust_profile
 
 
 def evaluate_local(workspace: Path) -> dict:
@@ -24,6 +25,7 @@ def evaluate_local(workspace: Path) -> dict:
     conformance = run_conformance(workspace / "conformance")
     bundle = build_contract_bundle(workspace / "contract")
     verify_bundle(bundle)
+    trust_profile = load_trust_profile(ROOT / "docs/trust-profile.json")
     assertions = {
         "scenario_verified": scenario["outcome"] == "VERIFIED",
         "one_provider_effect": scenario["vendor_count"] == 1,
@@ -32,6 +34,7 @@ def evaluate_local(workspace: Path) -> dict:
         "event_integrity": scenario["events_valid"],
         "local_conformance_c6": conformance["highest_level"] == "C6",
         "six_artifact_contract": len(bundle["artifacts"]) == 6,
+        "trust_ceiling_declared": bool(trust_profile["profile_digest"]),
     }
     return {"status": "PASS" if all(assertions.values()) else "FAIL",
             "assertions": assertions,

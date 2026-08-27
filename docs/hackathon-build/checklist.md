@@ -352,3 +352,55 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   Video remains intentionally unset for the final production step.
   Verify: Green required checks, offline PASS, live judge smoke, public-copy readback,
   architecture asset check and clean `main`.
+
+## External resilience and category-positioning hardening — autonomous
+
+- [x] **60. Make official registry access bounded and fail closed**
+  Spec ref: `spec.md > External-dependency and positioning hardening`
+  What to build: Stable external-tool errors, retryable HTTP/network classification,
+  per-attempt timeout, total budget and nonblocking invocation.
+  Acceptance: Timeout, DNS, 429/5xx, 4xx and malformed JSON never escape as raw errors;
+  only transient failures retry and every terminal path has a stable code.
+  Verify: Deterministic retry/budget/error taxonomy tests at genuine 100% coverage.
+- [x] **61. Add freshness-bound durable registry evidence fallback**
+  Spec ref: `spec.md > External-dependency and positioning hardening`
+  What to build: Cache port, in-memory and Firestore adapters, LIVE/CACHED receipts,
+  explicit stale/unavailable HOLD and persistence of availability provenance.
+  Acceptance: A fresh cached official observation can continue under policy; stale,
+  missing, corrupted or substituted cache state reaches neither Gemini nor execution.
+  Verify: Cache mutation/freshness/outage tests and cloud composition tests.
+- [x] **62. Ship a workflow-engine companion integration**
+  Spec ref: `spec.md > External-dependency and positioning hardening`
+  What to build: Engine-neutral bridge example and responsibility matrix distinguishing
+  task durability from obligation, authority, memory and attestation continuity.
+  Acceptance: Existing engine events map to the three-call contract without Google
+  packages, replacing the engine or claiming external adoption.
+  Verify: Isolated subprocess, duplicate task/idempotency and boundary tests.
+- [x] **63. Formalize model-selection governance and human review**
+  Spec ref: `spec.md > External-dependency and positioning hardening`
+  What to build: Deterministic comparison baseline, deviation receipt, production-impact
+  approval rule and fail-closed model-unavailable decision.
+  Acceptance: Gemini remains causally useful in the sandbox but cannot become the legal
+  authority rationale; production/high-impact deviation requires explicit approval.
+  Verify: Decision truth table, ablation, threshold and lifecycle receipt tests.
+- [x] **64. Publish trust assumptions and precise proof semantics**
+  Spec ref: `spec.md > External-dependency and positioning hardening`
+  What to build: Machine-readable trust profile, verifier output linkage, threat/claim
+  matrix and public language describing exactly what proof does and does not establish.
+  Acceptance: No surface implies upstream truth, uncompromised infrastructure, capture
+  provenance or Byzantine assurance from an internally consistent bundle.
+  Verify: Schema/mutation tests and release-surface claim audit.
+- [x] **65. Simplify the primary story without removing technical depth**
+  Spec ref: `spec.md > External-dependency and positioning hardening`
+  What to build: Workflow-engine comparison, four-question product framing and layered
+  navigation that retains every named service and bonus branch as secondary material.
+  Acceptance: The first judge path needs no internal jargon; complete architecture and
+  evidence remain linked and unchanged in scope.
+  Verify: README/showcase text audit, link check, release gate and clean full quality gate.
+- [ ] **66. Merge, deploy and recapture the resilient release**
+  Spec ref: `prd.md > Acceptance outcomes`
+  What to build: Protected PR, exact-commit deployment, fresh canonical run, proof bundle,
+  showcase and Devpost synchronization; video remains deferred.
+  Acceptance: Application, source, services, external modes, model-governance receipt,
+  run, proof and public copy agree through the single release manifest.
+  Verify: Required CI, live API-outage drill, fresh offline PASS, judge smoke and clean main.

@@ -350,6 +350,29 @@ class RemoteSupplierAssurance:
         if response.get("actor") != expected_identity:
             raise ValueError("SUPPLIER_ASSESSOR_IDENTITY_MISMATCH")
         assurance = response.get("assurance")
+        if (isinstance(assurance, dict) and assurance.get("status") == "HOLD"
+                and assurance.get("workflow") == "SUPPLIER_ASSURANCE_AGENT"
+                and assurance.get("decision_scope") == "SANDBOX_ONLY"
+                and assurance.get("model_invoked") is False
+                and assurance.get("proposed_action") == "none"):
+            reason = assurance.get("reason_code")
+            if not isinstance(reason, str) or not reason:
+                raise ValueError("SUPPLIER_ASSURANCE_HOLD_INVALID")
+            hold = {**assurance, "run_id": request["run_id"],
+                    "tenant_id": request["tenant_id"],
+                    "obligation_id": request["obligation_id"],
+                    "vendor_id": request["vendor_id"]}
+            ref = self.client.collection("continuity_compliance_holds").document(request["run_id"])
+            existing = ref.get()
+            if existing.exists and existing.to_dict() != hold:
+                raise ValueError("SUPPLIER_ASSURANCE_HOLD_CONFLICT")
+            if not existing.exists:
+                ref.create(hold)
+            _emit(request["run_id"], "supplier-assurance-hold", {
+                "run_id": request["run_id"], "reason_code": reason,
+                "model_invoked": False, "proposed_action": "none",
+            })
+            raise ValueError(f"SUPPLIER_ASSURANCE_HOLD:{reason}")
         if (not isinstance(assurance, dict) or assurance.get("status") != "VERIFIED"
                 or assurance.get("workflow") != "SUPPLIER_ASSURANCE_AGENT"
                 or assurance.get("decision_scope") != "SANDBOX_ONLY"
@@ -373,7 +396,11 @@ class RemoteSupplierAssurance:
             "recommendation": assurance.get("recommendation"),
             "decision_pack_digest": assurance.get("decision_pack_digest"),
             "tools": [{"tool": item.get("tool"), "source_url": item.get("source_url"),
-                       "evidence_ref": item.get("evidence_ref")}
+                       "evidence_ref": item.get("evidence_ref"),
+                       "availability_mode": item.get("availability_mode"),
+                       "observed_at": item.get("observed_at"),
+                       "freshness_expires_at": item.get("freshness_expires_at"),
+                       "cached_from_evidence_ref": item.get("cached_from_evidence_ref")}
                       for item in assurance.get("tool_observations", [])],
         })
         return record
@@ -416,7 +443,7 @@ class ObservedContractExporter:
         decision = {"artifact_id": f"{base}:decision", "digest": {"alg": "sha-256", "value": sha256(canonical_bytes(run["decision"])).hexdigest()}, "policy_version": "compromise-succession/1", "outcome": "APPROVE_SUCCESSION"}
         obligation = make_envelope("obligation", f"{base}:obligation", self.issuer, at, {"tenant_id": run["tenant_id"], "subject": run["obligation_id"], "revision": 2, "owner": {"principal_id": run["successor"], "authority_domain": f"{base}:authority", "epoch": run["successor_epoch"]}, "description": "Onboard vendor only after independently observed compliance evidence", "deadline": run["deadline"], "completion_criteria": [{"criterion_id": "compliance-verified", "evidence_type": "compliance-provider-observation", "verifier_role": "independent-verifier"}, {"criterion_id": "provider-effect-once", "evidence_type": "provider-observation", "verifier_role": "independent-verifier"}], "allowed_effects": ["vendor.create"], "compensation": {"mode": "HUMAN"}, "status": "DISCHARGED"})
         grant = make_envelope("authority_grant", f"{base}:grant", self.issuer, at, {"tenant_id": run["tenant_id"], "grant_id": f'{run["run_id"]}:grant', "subject_principal": run["successor"], "authority_domain": f"{base}:authority", "epoch": run["successor_epoch"], "obligation_ids": [obligation["artifact_id"]], "capabilities": ["vendor.create"], "memory_scopes": ["vendor.approved"], "purpose": "complete vendor onboarding", "not_before": at, "expires_at": expires, "policy_decision": decision, "status": "ACTIVE"})
-        manifest = make_envelope("succession_manifest", f"{base}:manifest", self.issuer, at, {"succession_id": run["run_id"], "tenant_id": run["tenant_id"], "authority_domain": f"{base}:authority", "predecessor": {"principal_id": run["predecessor"], "epoch": run["predecessor_epoch"]}, "successor": {"principal_id": run["successor"], "epoch": run["successor_epoch"]}, "obligations": [artifact_ref(obligation)], "included_grants": [artifact_ref(grant)], "excluded_context": [{"reference_or_class": item["item_id"], "reason_code": item["reason_code"]} for item in run["context_reconstruction"]["decisions"] if not item["included"]], "in_flight_effects": [], "evidence_refs": [{"observation": item["sequence"], "kind": item["kind"]} for item in observations], "policy_decision": decision, "created_from_registry_revision": run["successor_epoch"], "state": "COMMITTED"}, extensions={"continuum.dev/successor-selection": run["candidate_assessment"], "continuum.dev/context-reconstruction": run["context_reconstruction"], "continuum.dev/incident-evidence": {"subject": run["obligation_id"], "records": run["evidence_records"], "evidence_validation": run["evidence_validation"], "incident_assessment": run["incident_assessment"]}})
+        manifest = make_envelope("succession_manifest", f"{base}:manifest", self.issuer, at, {"succession_id": run["run_id"], "tenant_id": run["tenant_id"], "authority_domain": f"{base}:authority", "predecessor": {"principal_id": run["predecessor"], "epoch": run["predecessor_epoch"]}, "successor": {"principal_id": run["successor"], "epoch": run["successor_epoch"]}, "obligations": [artifact_ref(obligation)], "included_grants": [artifact_ref(grant)], "excluded_context": [{"reference_or_class": item["item_id"], "reason_code": item["reason_code"]} for item in run["context_reconstruction"]["decisions"] if not item["included"]], "in_flight_effects": [], "evidence_refs": [{"observation": item["sequence"], "kind": item["kind"]} for item in observations], "policy_decision": decision, "created_from_registry_revision": run["successor_epoch"], "state": "COMMITTED"}, extensions={"continuum.dev/successor-selection": run["candidate_assessment"], "continuum.dev/selection-governance": run["selection_governance"], "continuum.dev/context-reconstruction": run["context_reconstruction"], "continuum.dev/incident-evidence": {"subject": run["obligation_id"], "records": run["evidence_records"], "evidence_validation": run["evidence_validation"], "incident_assessment": run["incident_assessment"]}})
         revocation = make_envelope("revocation_proof", f"{base}:revocation", self.issuer, at, {"tenant_id": run["tenant_id"], "authority_domain": f"{base}:authority", "revoked_principal": run["predecessor"], "revoked_through_epoch": run["predecessor_epoch"], "registry_revision": run["successor_epoch"], "effective_at": at, "revoked_grant_ids": [], "enforcement_points": [{"id": "action-gateway", "kind": "ACTION", "observation_ref": "predecessor.denials_observed"}, {"id": "memory-gateway", "kind": "MEMORY", "observation_ref": "predecessor.denials_observed"}], "policy_decision": decision, "status": "ENFORCED"})
         provider = run["provider_observation"]
         compliance_extension = {

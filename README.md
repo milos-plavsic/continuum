@@ -12,6 +12,22 @@ It targets **Fortified Enterprise Fleet**. Governed agent succession is the
 product; obligation tracking, missing-evidence detection, deterministic policy
 and independent verification prove one coherent lifecycle.
 
+## What Continuum adds to a workflow engine
+
+Continuum is not another scheduler, retry loop, DLQ, saga coordinator, or leader
+election system. Keep those. Add Continuum when recovery crosses an **agent trust
+boundary** and four questions must remain independently answerable:
+
+1. What institutional promise is still open?
+2. Which agent is authorized to act now?
+3. Which verified context may cross to it?
+4. Which separate principal verified the external effect?
+
+The host engine continues to own timing, retries, and task state. Continuum owns
+the obligation, epoch-fenced authority, minimum authorized memory, semantic
+idempotency, and independent attestation. See the runnable
+[workflow-engine companion boundary](docs/WORKFLOW_ENGINE_BOUNDARY.md).
+
 ## The 60-second judge path
 
 1. Click once. A practical Supplier Assurance Agent owns a €250,000 sandbox
@@ -20,7 +36,8 @@ and independent verification prove one coherent lifecycle.
 3. A deterministic gate assesses v18, v19 and v20 for health, capability,
    jurisdiction, contract compatibility, scope and trust.
 4. Gemini 3.6 Flash, through Google ADK, cites live evidence and selects only
-   from the eligible set; deterministic policy validates but never delegates authority.
+   from the eligible set. A governance receipt records the deterministic baseline,
+   any model deviation and the human-review boundary; policy never delegates authority.
 5. v17 is fenced. The selected successor receives two purpose-bound verified
    facts while raw injection, a secret, an unsupported inference and revoked memory are excluded.
 6. The successor checks the exact legal entity through GLEIF and EU VAT through

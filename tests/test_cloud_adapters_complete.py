@@ -19,6 +19,7 @@ from continuum.contract import canonical_bytes
 from hashlib import sha256
 from continuum.standard import verify_bundle
 from tests.incident_fixtures import incident_extension
+from tests.selection_fixtures import selection_extensions
 
 
 class Snapshot:
@@ -411,17 +412,34 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         client.actor = "v18@example"; client.result = {"status": "FAILED"}
         with self.assertRaisesRegex(ValueError, "SUPPLIER_ASSURANCE_RESULT_INVALID"):
             adapter.verify({**request_value, "run_id": "other"})
+        client.result = {"workflow": "SUPPLIER_ASSURANCE_AGENT", "status": "HOLD",
+            "decision_scope": "SANDBOX_ONLY", "reason_code": "VIES_UNAVAILABLE",
+            "model_invoked": False, "proposed_action": "none"}
+        with self.assertRaisesRegex(ValueError, "SUPPLIER_ASSURANCE_HOLD:VIES_UNAVAILABLE"):
+            adapter.verify({**request_value, "run_id": "held"})
+        self.assertEqual(db.data["continuity_compliance_holds/held"]["reason_code"],
+                         "VIES_UNAVAILABLE")
+        with self.assertRaisesRegex(ValueError, "SUPPLIER_ASSURANCE_HOLD:VIES_UNAVAILABLE"):
+            adapter.verify({**request_value, "run_id": "held"})
+        client.result = {**client.result, "reason_code": ""}
+        with self.assertRaisesRegex(ValueError, "SUPPLIER_ASSURANCE_HOLD_INVALID"):
+            adapter.verify({**request_value, "run_id": "invalid-hold"})
+        client.result = {**client.result, "reason_code": "VIES_TIMEOUT"}
+        db.data["continuity_compliance_holds/conflict"] = {"different": True}
+        with self.assertRaisesRegex(ValueError, "SUPPLIER_ASSURANCE_HOLD_CONFLICT"):
+            adapter.verify({**request_value, "run_id": "conflict"})
         client.result = assurance
         db.data["continuity_compliance/r"]["status"] = "FAILED"
         with self.assertRaisesRegex(ValueError, "SUPPLIER_ASSURANCE_EVIDENCE_CONFLICT"):
             adapter.verify(request_value)
 
     def test_observed_export_remote_verification_and_google_token(self):
+        selection, governance = selection_extensions("v18")
         run = {**request(), "predecessor": "v17", "predecessor_epoch": 41,
                "successor": "v18", "successor_epoch": 42,
                "deadline": "2026-08-26T10:05:00Z",
-               "candidate_assessment": {"requirements_digest": "req", "candidates_digest": "cand",
-                   "assessments": [], "eligible_ids": ["v18"], "receipt_digest": "selection"},
+               "candidate_assessment": selection,
+               "selection_governance": governance,
                "context_reconstruction": {"succession_id": "r", "successor_principal": "v18",
                    "purpose": "complete vendor onboarding", "allowed_scopes": ["vendor.approved"],
                    "receipt_digest": "context", "decisions": [

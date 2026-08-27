@@ -12,6 +12,7 @@ from continuum.verification import IndependentVerificationEngine
 from continuum.verification import FirestoreVerificationReader
 from tests.test_cloud_adapters_complete import Firestore
 from tests.incident_fixtures import incident_extension
+from tests.selection_fixtures import selection_extensions
 
 
 class Reader:
@@ -42,12 +43,8 @@ def pre_bundle():
     }}
     receipt["digest"] = {"alg": "sha-256", "value": artifact_digest(receipt)}
     manifest = next(item for item in bundle["artifacts"] if item["artifact_type"] == "succession_manifest")
-    selection = {"requirements_digest": "requirements", "candidates_digest": "candidates",
-                 "assessments": [{"candidate_id": manifest["body"]["successor"]["principal_id"],
-                                   "eligible": True}]}
-    selection["receipt_digest"] = digest({"requirements": selection["requirements_digest"],
-                                           "candidates": selection["candidates_digest"],
-                                           "assessments": selection["assessments"]})
+    selection, governance = selection_extensions(
+        manifest["body"]["successor"]["principal_id"])
     reconstruction = {"succession_id": "s", "successor_principal": manifest["body"]["successor"]["principal_id"],
                       "purpose": "p", "allowed_scopes": ["vendor.approved"],
                       "decisions": [{"item_id": "obligation", "included": True},
@@ -55,6 +52,7 @@ def pre_bundle():
     reconstruction["receipt_digest"] = digest({key: reconstruction[key] for key in (
         "succession_id", "successor_principal", "purpose", "allowed_scopes", "decisions")})
     manifest["extensions"] = {"continuum.dev/successor-selection": selection,
+                              "continuum.dev/selection-governance": governance,
                               "continuum.dev/context-reconstruction": reconstruction,
                               "continuum.dev/incident-evidence": incident_extension("obl-1")}
     manifest["digest"] = {"alg": "sha-256", "value": artifact_digest(manifest)}
@@ -165,6 +163,7 @@ class IndependentVerificationEngineTests(unittest.TestCase):
         mutations = []
         missing = deepcopy(valid_manifest); missing["extensions"] = {}; mutations.append((missing, "HANDOFF_EVIDENCE_MISSING"))
         bad_selection = deepcopy(valid_manifest); bad_selection["extensions"]["continuum.dev/successor-selection"]["receipt_digest"] = "bad"; mutations.append((bad_selection, "SUCCESSOR_ASSESSMENT_DIGEST_MISMATCH"))
+        bad_governance = deepcopy(valid_manifest); bad_governance["extensions"]["continuum.dev/selection-governance"]["receipt_digest"] = "bad"; mutations.append((bad_governance, "SELECTION_GOVERNANCE_RECEIPT_DIGEST_MISMATCH"))
         bad_context = deepcopy(valid_manifest); bad_context["extensions"]["continuum.dev/context-reconstruction"]["receipt_digest"] = "bad"; mutations.append((bad_context, "CONTEXT_RECONSTRUCTION_DIGEST_MISMATCH"))
         wrong_successor = deepcopy(valid_manifest)
         context = wrong_successor["extensions"]["continuum.dev/context-reconstruction"]

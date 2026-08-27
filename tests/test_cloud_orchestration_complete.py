@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
@@ -9,13 +10,15 @@ from unittest.mock import patch
 
 from continuum.cloud_orchestration import (
     admit_remediation_plan, canonical_request, independent_contract_verifier, invoke, live_adk_investigator,
-    live_adk_supplier_assessor,
+    live_adk_supplier_assessor, production_supplier_evidence_cache,
     validate_investigation, workload_service_account,
 )
 from continuum.standard import build_contract_bundle
 from continuum.contract import artifact_digest
 from continuum.models import digest
+from continuum.supplier_assurance import ExternalToolError, FirestoreEvidenceCache
 from tests.incident_fixtures import incident_extension
+from tests.selection_fixtures import selection_extensions
 from tests.test_verification_engine import Reader, observations
 
 
@@ -26,6 +29,20 @@ class _Credentials:
 
 
 class CloudOrchestrationCompleteTests(unittest.TestCase):
+    def test_production_supplier_cache_is_lazy_and_project_bound(self):
+        production_supplier_evidence_cache.cache_clear()
+        with patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": ""}):
+            self.assertIsNone(production_supplier_evidence_cache())
+        production_supplier_evidence_cache.cache_clear()
+        client = object()
+        with patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT": "project"}), \
+             patch("google.cloud.firestore.Client", return_value=client) as factory:
+            cache = production_supplier_evidence_cache()
+            self.assertIsInstance(cache, FirestoreEvidenceCache)
+            self.assertIs(production_supplier_evidence_cache(), cache)
+            factory.assert_called_once_with(project="project")
+        production_supplier_evidence_cache.cache_clear()
+
     def test_workload_identity_default_provider_signer_and_fail_closed(self):
         credentials = _Credentials(signer="signer@example.com")
         with patch("google.auth.default", return_value=(credentials, "p")):
@@ -113,8 +130,18 @@ class CloudOrchestrationCompleteTests(unittest.TestCase):
         application = {"lei": "W38RGI023J3WT1HWRP32", "country_code": "DE",
                        "vat_number": "129274202"}
         with patch("continuum.cloud_orchestration.lookup_gleif", side_effect=OSError("offline")):
-            with self.assertRaisesRegex(RuntimeError, "SUPPLIER_TOOL_UNAVAILABLE"):
-                asyncio.run(live_adk_supplier_assessor({"application": application}, "worker@example.com"))
+            held = asyncio.run(live_adk_supplier_assessor(
+                {"application": application}, "worker@example.com", cache=object()))
+            self.assertEqual(held["status"], "HOLD")
+            self.assertEqual(held["reason_code"], "SUPPLIER_TOOL_UNAVAILABLE")
+            self.assertFalse(held["model_invoked"])
+        with patch("continuum.cloud_orchestration.lookup_gleif",
+                   side_effect=ExternalToolError("GLEIF_TIMEOUT", retryable=True)), \
+             patch("continuum.cloud_orchestration.production_supplier_evidence_cache",
+                   return_value=None):
+            held = asyncio.run(live_adk_supplier_assessor(
+                {"application": application}, "worker@example.com", cache=None))
+            self.assertEqual(held["reason_code"], "GLEIF_TIMEOUT")
         valid = json.dumps({"recommendation": "ONBOARD"})
         cases = [
             ([(True, valid, True)], None),
@@ -150,17 +177,15 @@ class CloudOrchestrationCompleteTests(unittest.TestCase):
             "obligation_id": "obl-1", "document_hash": "sha256:compliance-document"}}
         receipt["digest"] = {"alg": "sha-256", "value": artifact_digest(receipt)}
         manifest = next(a for a in bundle["artifacts"] if a["artifact_type"] == "succession_manifest")
-        selection = {"requirements_digest": "req", "candidates_digest": "cand",
-                     "assessments": [{"candidate_id": manifest["body"]["successor"]["principal_id"],
-                                       "eligible": True}]}
-        selection["receipt_digest"] = digest({"requirements": "req", "candidates": "cand",
-                                               "assessments": selection["assessments"]})
+        selection, governance = selection_extensions(
+            manifest["body"]["successor"]["principal_id"])
         reconstruction = {"succession_id": "s",
             "successor_principal": manifest["body"]["successor"]["principal_id"],
             "purpose": "p", "allowed_scopes": ["vendor.approved"],
             "decisions": [{"included": True}, {"included": False}]}
         reconstruction["receipt_digest"] = digest(reconstruction)
         manifest["extensions"] = {"continuum.dev/successor-selection": selection,
+                                  "continuum.dev/selection-governance": governance,
                                   "continuum.dev/context-reconstruction": reconstruction,
                                   "continuum.dev/incident-evidence": incident_extension("obl-1")}
         manifest["digest"] = {"alg": "sha-256", "value": artifact_digest(manifest)}
