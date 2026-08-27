@@ -33,7 +33,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PATH="/app/.venv/bin:$PATH" \
     PORT=8080
 WORKDIR /app
-RUN useradd --create-home --uid 10001 continuum
+RUN apt-get update \
+    && apt-get install --only-upgrade --yes --no-install-recommends \
+       openssl libssl3t64 openssl-provider-legacy \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --uid 10001 continuum
 COPY --chown=continuum:continuum src ./src
 COPY --chown=continuum:continuum app ./app
 USER continuum

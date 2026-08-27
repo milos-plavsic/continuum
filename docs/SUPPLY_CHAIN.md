@@ -4,7 +4,8 @@
 ADK to the reviewed `2.7.x` minor line. CI actions use immutable commit SHAs.
 
 The Dockerfile pins its Python base by SHA-256 and uses separate build and
-runtime stages. The final image contains
+runtime stages. The runtime stage applies available Debian security upgrades
+for its OpenSSL packages before dropping privileges. The final image contains
 the application, its virtual environment, and no `uv`, compiler cache, source
 checkout metadata, credentials, or generated cloud state. It runs as UID 10001
 and carries OCI source, revision, creation, and license labels.
