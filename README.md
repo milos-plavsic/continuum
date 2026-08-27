@@ -86,11 +86,11 @@ for the judge-first product path.
 
 ## Run the reference scenario
 
-Python 3.11 or newer is sufficient; the deterministic core has no runtime
-dependencies.
+Python 3.11 or newer plus `uv` is sufficient. The lockfile pins the one core
+interoperability dependency used for RFC 8785 canonicalization.
 
 ```bash
-PYTHONPATH=src python3 -m continuum --output artifacts/latest
+uv run python -m continuum --output artifacts/latest
 python3 scripts/render_incident.py
 ```
 
@@ -169,7 +169,7 @@ continuum.execute_idempotent(obligation_id="vendor-042", principal_id="agent:v2"
 Run the complete non-GCP consumer with no credentials:
 
 ```bash
-PYTHONPATH=src python3 examples/local_sdk_consumer.py
+uv run python examples/local_sdk_consumer.py
 ```
 
 Google Cloud is the production reference binding and deployment proof—not an

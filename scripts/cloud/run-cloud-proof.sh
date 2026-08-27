@@ -15,7 +15,7 @@ run_id="${CONTINUUM_RUN_ID:-run-$(date -u +%Y%m%dT%H%M%SZ)}"
 [[ "$run_id" =~ ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$ ]] || {
   echo "CONTINUUM_RUN_ID is invalid" >&2; exit 2;
 }
-trace_id="$(PYTHONPATH=src python3 - "$run_id" <<'PY'
+trace_id="$(uv run python - "$run_id" <<'PY'
 import sys
 from continuum.cloud_scenario_service import canonical_run_correlation_id
 print(canonical_run_correlation_id(sys.argv[1]))
