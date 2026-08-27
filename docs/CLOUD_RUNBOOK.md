@@ -57,9 +57,9 @@ packet instead of claiming to execute the historical run.
 
 The currently published judge surface is
 https://continuum-showcase-rdzvxiysbq-ew.a.run.app. Revision
-`continuum-showcase-00004-dcc` runs source commit
-`0d8233695eeae0980088f3209f531181852a4a60` as immutable image digest
-`sha256:5f7d04a08e2818cca4a705560c9da95a1ecdd5a46be72a51ac84ab7f4211b11a`.
+`continuum-showcase-00005-bg9` runs source commit
+`3e41cced560a9a9a05cbee75564dd4c8b5fc1208` as immutable image digest
+`sha256:c038974fa568514e25374e6ac04ebda6565b458a70a23f3d0aa6e445e565cb57`.
 Its service identity is
 `continuum-showcase@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com`;
 the identity has no project-level role. The page points to the exact hardened

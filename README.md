@@ -220,9 +220,9 @@ privately first, and then replaces the service's invoker policy with only the
 intentional `allUsers` binding. The page exposes `/build-info`, but it has no
 credential, datastore role, mutation handler, or connection to the private
 control plane. The current deployment is
-`continuum-showcase-00004-dcc`, available at
+`continuum-showcase-00005-bg9`, available at
 https://continuum-showcase-rdzvxiysbq-ew.a.run.app and pinned to image digest
-`sha256:5f7d04a08e2818cca4a705560c9da95a1ecdd5a46be72a51ac84ab7f4211b11a`.
+`sha256:c038974fa568514e25374e6ac04ebda6565b458a70a23f3d0aa6e445e565cb57`.
 
 ## Documentation
 

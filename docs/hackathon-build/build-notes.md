@@ -307,3 +307,11 @@
   verdict.
 - The locked local gate passed 201 tests at genuine 100.0% statement and branch
   coverage. Video production remains intentionally deferred.
+- PR #49 passed both protected CI workflows and merged as `3e41cce`. The public
+  no-role showcase was rebuilt from that exact source as revision
+  `continuum-showcase-00005-bg9`, and live read-back confirmed the current v19,
+  Model Armor, GitHub queue and proof facts.
+- Devpost project version 6 was updated and read back through the authenticated
+  API. It contains the same application commit, 17-object/43-span proof, 201-test
+  gate, v19 trade-off, Model Armor receipt, GitHub Issue #41 and proof release;
+  the video remains unset and the hackathon submission remains a draft.
