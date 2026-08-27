@@ -75,6 +75,8 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertIn('images:', self.cloudbuild)
         self.assertIn('--show-provenance', self.deploy)
         self.assertIn('provenance_summary', self.deploy)
+        self.assertIn("python3 -c", self.deploy)
+        self.assertNotIn("\npython -c", self.deploy)
         self.assertIn('containeranalysis.googleapis.com', self.bootstrap)
         self.assertIn('slsa-verifier verify-image', self.provenance_check)
         self.assertIn('--source-uri "$CONTINUUM_EXPECTED_SOURCE_URI"', self.provenance_check)

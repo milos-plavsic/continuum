@@ -32,7 +32,7 @@ digest="$(gcloud artifacts docker images describe "$image_tag" --project "$CONTI
 image_ref="${image_tag%:*}@$digest"
 provenance="$(gcloud artifacts docker images describe "$image_ref" \
   --project "$CONTINUUM_PROJECT_ID" --show-provenance --format=json)"
-python -c 'import json,sys; value=json.load(sys.stdin); assert value.get("provenance_summary", {}).get("provenance"), "signed build provenance unavailable"' \
+python3 -c 'import json,sys; value=json.load(sys.stdin); assert value.get("provenance_summary", {}).get("provenance"), "signed build provenance unavailable"' \
   <<<"$provenance"
 deployment_id="$CONTINUUM_GIT_SHA@$digest"
 
