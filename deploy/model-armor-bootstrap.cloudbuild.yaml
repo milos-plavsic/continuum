@@ -1,0 +1,22 @@
+steps:
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        access_token="$$(gcloud auth print-access-token)"
+        endpoint="https://modelarmor.${_LOCATION}.rep.googleapis.com/v1/projects/${PROJECT_ID}/locations/${_LOCATION}/templates/${_TEMPLATE}"
+        status="$$(curl --silent --output /tmp/template.json --write-out '%{http_code}' \
+          -H "Authorization: Bearer $${access_token}" "$${endpoint}")"
+        if [[ "$${status}" == "200" ]]; then exit 0; fi
+        if [[ "$${status}" != "404" ]]; then cat /tmp/template.json >&2; exit 1; fi
+        curl --silent --show-error --fail-with-body -X POST \
+          -H "Authorization: Bearer $${access_token}" \
+          -H "Content-Type: application/json" \
+          -d '{"filterConfig":{"piAndJailbreakFilterSettings":{"filterEnforcement":"ENABLED","confidenceLevel":"MEDIUM_AND_ABOVE"}},"templateMetadata":{"logSanitizeOperations":true}}' \
+          "https://modelarmor.${_LOCATION}.rep.googleapis.com/v1/projects/${PROJECT_ID}/locations/${_LOCATION}/templates?template_id=${_TEMPLATE}"
+options:
+  logging: CLOUD_LOGGING_ONLY
+substitutions:
+  _LOCATION: europe-west1
+  _TEMPLATE: continuum-ingress

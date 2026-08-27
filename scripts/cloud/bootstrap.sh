@@ -19,10 +19,21 @@ gcloud services enable --project "$CONTINUUM_PROJECT_ID" \
 armor_template="${CONTINUUM_MODEL_ARMOR_TEMPLATE:-continuum-ingress}"
 if ! gcloud model-armor templates describe "$armor_template" --project "$CONTINUUM_PROJECT_ID" \
   --location "$CONTINUUM_REGION" >/dev/null 2>&1; then
-  gcloud model-armor templates create "$armor_template" --project "$CONTINUUM_PROJECT_ID" \
-    --location "$CONTINUUM_REGION" --pi-and-jailbreak-filter-settings-enforcement=enabled \
-    --pi-and-jailbreak-filter-settings-confidence-level=medium-and-above \
-    --template-metadata-log-sanitize-operations
+  project_number="$(gcloud projects describe "$CONTINUUM_PROJECT_ID" --format='value(projectNumber)')"
+  build_identity="$project_number-compute@developer.gserviceaccount.com"
+  gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
+    --member "serviceAccount:$build_identity" --role roles/modelarmor.admin \
+    --condition=None >/dev/null
+  set +e
+  gcloud builds submit --no-source --project "$CONTINUUM_PROJECT_ID" \
+    --config deploy/model-armor-bootstrap.cloudbuild.yaml \
+    --substitutions "_LOCATION=$CONTINUUM_REGION,_TEMPLATE=$armor_template" --quiet
+  armor_status=$?
+  set -e
+  gcloud projects remove-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
+    --member "serviceAccount:$build_identity" --role roles/modelarmor.admin \
+    --condition=None --quiet >/dev/null
+  (( armor_status == 0 )) || exit "$armor_status"
 fi
 
 if ! gcloud artifacts repositories describe "$repository" --project "$CONTINUUM_PROJECT_ID" --location "$CONTINUUM_REGION" >/dev/null 2>&1; then
