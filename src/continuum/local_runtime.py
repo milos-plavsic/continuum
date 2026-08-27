@@ -93,15 +93,18 @@ class DeterministicInvestigator:
             raise ValueError("LOCAL_INVESTIGATION_INPUT_INVALID")
         selected_action = SUCCESSION if SUCCESSION in allowed else allowed[0]
         candidate = sorted(candidates,
-                           key=lambda item: (-int(item["trust_score"]), item["candidate_id"]))[0]
+                           key=lambda item: (int(item.get("recovery_time_seconds", 60)),
+                                             -int(item["trust_score"]), item["candidate_id"]))[0]
         evidence_ids = [item.get("event_id", item.get("type")) for item in request["evidence"]]
-        references = list(candidate["evidence_refs"])
-        citations = []
-        for reference in references:
-            if reference.startswith(("build:", "image:")):
-                citations.append({"claim": "BUILD_PROVENANCE", "evidence_refs": [reference]})
-            elif reference.startswith("health:"):
-                citations.append({"claim": "HEALTH_ATTESTED", "evidence_refs": [reference]})
+        references = sorted({reference for item in candidates for reference in item["evidence_refs"]})
+        recovery = next((ref for ref in candidate["evidence_refs"] if ref.startswith("recovery:")),
+                        candidate["evidence_refs"][0])
+        assurance = next((ref for ref in candidate["evidence_refs"] if ref.startswith("assurance:")),
+                         candidate["evidence_refs"][1])
+        citations = [
+            {"claim": "RECOVERY_READINESS", "evidence_refs": [recovery]},
+            {"claim": "ASSURANCE_PROFILE", "evidence_refs": [assurance]},
+        ]
         return {
             "hypotheses": ["predecessor compromised", "upstream evidence delayed"],
             "evidence_ids": evidence_ids,
@@ -113,8 +116,10 @@ class DeterministicInvestigator:
                 "selected_candidate_id": candidate["candidate_id"],
                 "evidence_manifest_refs": references,
                 "supporting_citations": citations,
-                "rationale": "highest trust among deterministically eligible candidates",
-                "objective": request["selection_objective"],
+                "rationale": "fastest evidenced recovery with an admitted assurance profile",
+                "objective": (request["selection_objective"].get("objective_id")
+                              if isinstance(request["selection_objective"], dict)
+                              else request["selection_objective"]),
             },
         }
 

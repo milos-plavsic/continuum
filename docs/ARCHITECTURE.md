@@ -1,5 +1,21 @@
 # Architecture direction
 
+## Judge-level lifecycle
+
+The memorable contract is intentionally smaller than the implementation:
+Continuum transfers one unfinished obligation to an eligible successor while
+revoking the predecessor's authority and excluding unsafe memory. Raw input is
+screened by Google Model Armor before Gemini; a deterministic fleet gate admits
+cross-department candidates; Gemini explains an evidence-cited recovery versus
+assurance trade-off; an idempotent successor converges a pre-provisioned GitHub
+work item; and a separate verifier identity recomputes the outcome. The sparse
+view is `docs/diagrams/judge-architecture.svg`.
+
+The public judge gateway accepts only an expiring, quota-bound capability and a
+server-owned canonical command. It is not a generic proxy to the private control
+plane. Firestore persists both the run and capability quota, so a 21-day dormant
+obligation resumes without process memory.
+
 ## Logical flow
 
 ```text

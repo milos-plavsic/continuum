@@ -13,7 +13,17 @@ gcloud services enable --project "$CONTINUUM_PROJECT_ID" \
   run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com \
   containeranalysis.googleapis.com \
   firestore.googleapis.com pubsub.googleapis.com aiplatform.googleapis.com \
-  cloudtasks.googleapis.com cloudtrace.googleapis.com
+  cloudtasks.googleapis.com cloudtrace.googleapis.com \
+  modelarmor.googleapis.com secretmanager.googleapis.com
+
+armor_template="${CONTINUUM_MODEL_ARMOR_TEMPLATE:-continuum-ingress}"
+if ! gcloud model-armor templates describe "$armor_template" --project "$CONTINUUM_PROJECT_ID" \
+  --location "$CONTINUUM_REGION" >/dev/null 2>&1; then
+  gcloud model-armor templates create "$armor_template" --project "$CONTINUUM_PROJECT_ID" \
+    --location "$CONTINUUM_REGION" --pi-and-jailbreak-filter-settings-enforcement=enabled \
+    --pi-and-jailbreak-filter-settings-confidence-level=medium-and-above \
+    --template-metadata-log-sanitize-operations
+fi
 
 if ! gcloud artifacts repositories describe "$repository" --project "$CONTINUUM_PROJECT_ID" --location "$CONTINUUM_REGION" >/dev/null 2>&1; then
   gcloud artifacts repositories create "$repository" --project "$CONTINUUM_PROJECT_ID" \
@@ -30,6 +40,8 @@ for account in continuum-control continuum-v17 continuum-v18 continuum-v19 conti
     gcloud iam service-accounts create "$account" --project "$CONTINUUM_PROJECT_ID" --display-name "$account"
   fi
 done
+gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
+  --member "serviceAccount:$control" --role roles/modelarmor.user --condition=None >/dev/null
 
 control="continuum-control@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
 verifier="continuum-verifier@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"

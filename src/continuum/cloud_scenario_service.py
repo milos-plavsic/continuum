@@ -18,10 +18,12 @@ from .cloud_orchestration import admit_remediation_plan
 from .incident_policy import assess_incident, describe_lifecycle_events
 from .context_reconstruction import ContextItem, reconstruct_context
 from .models import AgentStatus
+from .model_armor import DeterministicInputGuard, InputGuard, RAW_ATTACK_FIXTURE
+from .fleet_registry import FleetCatalog, FleetPublication, InMemoryFleetCatalog
 from .observability import lifecycle_span
 from .succession_selection import (
     SuccessorCandidate, SuccessionRequirements, admit_successor_choice,
-    assess_candidates, model_candidate_view,
+    assess_candidates, canonical_selection_objective, model_candidate_view,
 )
 from .supplier_assurance import application_digest, canonical_supplier_application
 
@@ -106,10 +108,14 @@ def canonical_successor_candidates() -> tuple[SuccessorCandidate, ...]:
     return (
         SuccessorCandidate("v18", "v18", artifact_digest="sha256:v18-release",
             service_identity="continuum-agent-v18", jurisdictions=("EU",), health="HEALTHY",
-            trust_score=96, evidence_refs=("build:v18", "health:v18"), **common),
+            trust_score=94, recovery_time_seconds=75, assurance_level="VERY_HIGH",
+            warm_state="COLD", evidence_refs=("build:v18", "health:v18", "recovery:v18:75s",
+            "assurance:v18:very-high", "warm-state:v18:cold"), **common),
         SuccessorCandidate("v19", "v19", artifact_digest="sha256:v19-release",
             service_identity="continuum-agent-v19", jurisdictions=("EU",), health="HEALTHY",
-            trust_score=89, evidence_refs=("build:v19", "health:v19"), **common),
+            trust_score=91, recovery_time_seconds=18, assurance_level="HIGH",
+            warm_state="WARM", evidence_refs=("build:v19", "health:v19", "recovery:v19:18s",
+            "assurance:v19:high", "warm-state:v19:warm"), **common),
         SuccessorCandidate("v20", "v20", artifact_digest="sha256:v20-release",
             service_identity="continuum-agent-v20", jurisdictions=("US",), health="DEGRADED",
             trust_score=98, evidence_refs=("build:v20", "health:v20"), **common),
@@ -166,6 +172,8 @@ class DurableCloudScenarioService:
                  clock: Any | None = None, deadline_scheduler: DeadlineSchedulerPort | None = None,
                  successor_candidates: tuple[SuccessorCandidate, ...] | None = None,
                  context_items: tuple[ContextItem, ...] | None = None,
+                 input_guard: InputGuard | None = None,
+                 fleet_catalog: FleetCatalog | None = None,
                  expected_contract_profile: str = "reference-google-cloud"):
         self.store = store
         self.evidence = evidence
@@ -179,7 +187,9 @@ class DurableCloudScenarioService:
         self.clock = clock or (lambda: datetime.now(timezone.utc))
         self.deadline_scheduler = deadline_scheduler
         self.successor_candidates = successor_candidates or canonical_successor_candidates()
+        self.fleet_catalog = fleet_catalog
         self.context_items = context_items or canonical_context_items()
+        self.input_guard = input_guard or DeterministicInputGuard()
         self.expected_contract_profile = expected_contract_profile
 
     def run(self, run_id: str) -> dict[str, Any]:
@@ -239,12 +249,16 @@ class DurableCloudScenarioService:
             "incident_assessment": current.get("incident_assessment"),
             "evidence_validation": current.get("evidence_validation"),
             "candidate_assessment": current.get("candidate_assessment"),
+            "input_security": current.get("input_security"),
             "context_reconstruction": current.get("context_reconstruction"),
             "supplier_assurance": current.get("compliance"),
             "business_impact": {"currency": "EUR", "value_at_risk": 250000,
                                 "obligation": "Autonomous supplier assurance and onboarding",
                                 "effect_scope": "SANDBOX_ONLY"},
             "deadline": current.get("deadline"),
+            "durability": {"created_at": current.get("created_at"),
+                           "resumed_after_seconds": max(0, int((self.clock() - datetime.fromisoformat(
+                               current["created_at"].replace("Z", "+00:00"))).total_seconds()))},
             "observation_count": len(self.store.observations(run_id)),
             "observations": self.store.observations(run_id),
         }
@@ -255,6 +269,7 @@ class DurableCloudScenarioService:
         deadline = self.clock() + timedelta(seconds=self.scenario.deadline_delay_seconds)
         return {**command, "command_digest": digest,
                 "correlation_id": canonical_run_correlation_id(run_id, self.scenario),
+                "created_at": self.clock().isoformat().replace("+00:00", "Z"),
                 "supplier_application": canonical_supplier_application(),
                 "deadline": deadline.isoformat().replace("+00:00", "Z"),
                 "phase": "CREATED", "revision": 0}
@@ -281,18 +296,26 @@ class DurableCloudScenarioService:
     def _advance_observed(self, current: dict[str, Any]) -> dict[str, Any]:
         phase = current["phase"]
         if phase == "CREATED":
+            security = self.input_guard.sanitize(text=RAW_ATTACK_FIXTURE,
+                                                 run_id=current["run_id"])
+            if security.get("allowed_to_model") is not False or security.get(
+                    "match_state") != "MATCH_FOUND":
+                raise ValueError("RAW_PROMPT_INJECTION_NOT_BLOCKED")
             evidence = self.evidence.record_initial({
                 "run_id": current["run_id"], "correlation_id": current["correlation_id"],
                 "obligation_id": current["obligation_id"], "deadline": current["deadline"],
+                "input_security_receipt": security,
             })
             schedule = (self.deadline_scheduler.schedule(
                 run_id=current["run_id"], deadline=current["deadline"])
                 if self.deadline_scheduler is not None else {"mode": "manual-tick"})
             return self._commit(current, "WAITING_FOR_DEADLINE", {"initial_evidence": evidence,
+                                "input_security": security,
                                 "deadline_schedule": schedule},
                                 "expectation.persisted", {"deadline": current["deadline"],
                                 "required_evidence": "compliance.evidence_verified",
-                                "deadline_schedule": schedule})
+                                "deadline_schedule": schedule,
+                                "input_security_receipt": security})
 
         if phase == "WAITING_FOR_DEADLINE":
             missing = self.evidence.detect_missing({
@@ -319,21 +342,33 @@ class DurableCloudScenarioService:
                 evidence_records,
                 assessed_at=assessed_at, subject=current["obligation_id"],
             )
-            receipt = assess_candidates(self.successor_candidates, SuccessionRequirements(
+            requirements = SuccessionRequirements(
                 tenant_id=current["tenant_id"],
                 predecessor_principal=current["predecessor"],
                 capability="vendor.create", memory_scope="vendor.approved",
                 authority_domain="procurement", jurisdiction="EU",
-                contract_profile="continuity/1", minimum_trust_score=80))
+                contract_profile="continuity/1", minimum_trust_score=80)
+            if self.fleet_catalog is None:
+                departments = ("procurement", "finance", "security")
+                catalog = InMemoryFleetCatalog(FleetPublication(
+                    department=departments[index % len(departments)],
+                    owner=f"{departments[index % len(departments)]}-platform",
+                    published_at="2026-08-27T00:00:00Z", candidate=candidate)
+                    for index, candidate in enumerate(self.successor_candidates))
+            else:
+                catalog = self.fleet_catalog
+            discovered_candidates = catalog.discover(requirements)
+            receipt = assess_candidates(discovered_candidates, requirements)
             if not receipt.eligible_ids:
                 raise ValueError("NO_ELIGIBLE_SUCCESSOR")
+            objective = canonical_selection_objective()
             proposal = self.investigator.investigate({
                 "run_id": current["run_id"], "correlation_id": current["correlation_id"],
                 "obligation_id": current["obligation_id"], "evidence": evidence,
-                "selection_objective": "maximize verified assurance for EU procurement continuity",
+                "selection_objective": objective.to_dict(),
                 "incident_assessment_receipt": incident_receipt.to_dict(),
                 "allowed_remediations": list(incident_receipt.allowed_remediations),
-                "eligible_candidates": model_candidate_view(self.successor_candidates, receipt),
+                "eligible_candidates": model_candidate_view(discovered_candidates, receipt),
                 "candidate_assessment_receipt": receipt.to_dict(),
             })
             cited = set(proposal.get("evidence_ids", proposal.get("evidence_types", [])))
@@ -345,22 +380,25 @@ class DurableCloudScenarioService:
             if selected_plan != "initiate_governed_succession":
                 raise ValueError("INVESTIGATION_RECOMMENDS_HOLD")
             try:
-                successor = admit_successor_choice(proposal.get("successor_choice", {}), receipt)
+                successor = admit_successor_choice(
+                    proposal.get("successor_choice", {}), receipt, objective)
             except Exception as error:
                 raise ValueError(str(error)) from error
-            selected_record = next(item for item in self.successor_candidates
+            selected_record = next(item for item in discovered_candidates
                                    if item.principal_id == successor)
             observed = {"signals": evidence, "proposal": proposal, "selected_plan": selected_plan,
                         "incident_assessment": incident_receipt.to_dict(),
                         "evidence_validation": evidence_receipt,
                         "evidence_records": [item.to_dict() for item in evidence_records],
                         "candidate_assessment": receipt.to_dict(), "selected_successor": successor}
+            observed["selection_objective"] = objective.to_dict()
             return self._commit(current, "INVESTIGATED", {"investigation": proposal,
                                 "selected_plan": selected_plan,
                                 "incident_assessment": incident_receipt.to_dict(),
                                 "evidence_validation": evidence_receipt,
                                 "evidence_records": [item.to_dict() for item in evidence_records],
                                 "candidate_assessment": receipt.to_dict(),
+                                "selection_objective": objective.to_dict(),
                                 "successor": successor, "successor_version": selected_record.version,
                                 "successor_service_identity": selected_record.service_identity},
                                 "investigation.observed", observed)

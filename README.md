@@ -55,7 +55,8 @@ minimum-context receipt, official GLEIF and EU VIES observations, the admitted
 supplier decision-pack binding, and one provider effect despite redelivery. Exact release
 identifiers and the validity boundary are recorded in
 [the cloud proof](docs/CLOUD_PROOF.md). The complete evidence packet is a public,
-checksum-pinned GitHub Release asset, so judges can run its semantic verifier
+checksum-pinned [`cloud-proof-a1e00ac`](https://github.com/milos-plavsic/continuum/releases/tag/cloud-proof-a1e00ac)
+GitHub Release asset, so judges can run its semantic verifier
 without Google credentials. That verdict proves archive integrity and semantic
 consistency, not capture provenance. New deployments also bind every Cloud Run
 revision to a Google-signed SLSA v1 image subject; the assurance boundary and
@@ -107,7 +108,7 @@ excluded and there are no `pragma: no cover` shortcuts:
 ./scripts/quality-gate.sh
 ```
 
-The current gate executes 180 tests and reports genuine **100.0% statement and
+The current gate executes 201 tests and reports genuine **100.0% statement and
 branch coverage**.
 
 To generate a verifier-gated multimodal resilience brief in an authorized
@@ -218,9 +219,9 @@ privately first, and then replaces the service's invoker policy with only the
 intentional `allUsers` binding. The page exposes `/build-info`, but it has no
 credential, datastore role, mutation handler, or connection to the private
 control plane. The current deployment is
-`continuum-showcase-00001-z9j`, available at
+`continuum-showcase-00003-rql`, available at
 https://continuum-showcase-rdzvxiysbq-ew.a.run.app and pinned to image digest
-`sha256:3ba085bd39f147bef5d9e7bbdea9ea7513913e14e9ad401f26c19cbbab0bb0bb`.
+`sha256:0392920060f7ccfc516e8e47e6d3547330a0c56867d5c9f5f359b2630bda8e36`.
 
 ## Documentation
 
@@ -237,7 +238,8 @@ https://continuum-showcase-rdzvxiysbq-ew.a.run.app and pinned to image digest
 - [Hackathon compliance matrix](docs/HACKATHON_COMPLIANCE.md)
 - [Public technical write-up](https://dev.to/milos-plavsic/the-agent-failed-the-promise-did-not-building-verifiable-agent-succession-oe4)
 - [Public LinkedIn build post](https://www.linkedin.com/feed/update/urn:li:share:7498513309642616832/)
-- [Architecture diagram](docs/diagrams/architecture.svg) ·
+- [Judge architecture — one memorable lifecycle](docs/diagrams/judge-architecture.svg) ·
+  [full engineering architecture](docs/diagrams/architecture.svg) ·
   [editable Mermaid source](docs/diagrams/architecture.mmd) ·
   [demo-ready PNG](docs/diagrams/architecture.png)
 - [Continuity Contract](docs/CONTINUITY_CONTRACT.md)

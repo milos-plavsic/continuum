@@ -93,12 +93,32 @@ for binding in \
 done
 
 full_subscription="projects/$CONTINUUM_PROJECT_ID/subscriptions/$subscription"
-common_env="GOOGLE_CLOUD_PROJECT=$CONTINUUM_PROJECT_ID,CONTINUUM_REGION=$CONTINUUM_REGION,CONTINUUM_CONTROL_URL=$control_url,CONTINUUM_CONTROL_AUDIENCE=$control_url,CONTINUUM_DEADLINE_QUEUE=${CONTINUUM_DEADLINE_QUEUE:-continuum-deadlines},CONTINUUM_PUBSUB_PUSH_IDENTITY=$push_identity,CONTINUUM_PUSH_SUBSCRIPTION=$full_subscription,CONTINUUM_FORCE_REDELIVERY=1,CONTINUUM_V17_URL=$v17_url,CONTINUUM_V18_URL=$v18_url,CONTINUUM_V19_URL=$v19_url,CONTINUUM_VERIFIER_URL=$verifier_url,CONTINUUM_CONTROL_IDENTITY=$control_identity,CONTINUUM_V17_IDENTITY=$v17_identity,CONTINUUM_V18_IDENTITY=$v18_identity,CONTINUUM_V19_IDENTITY=$v19_identity,CONTINUUM_VERIFIER_IDENTITY=$verifier_identity"
+common_env="GOOGLE_CLOUD_PROJECT=$CONTINUUM_PROJECT_ID,CONTINUUM_REGION=$CONTINUUM_REGION,CONTINUUM_MODEL_ARMOR_TEMPLATE=${CONTINUUM_MODEL_ARMOR_TEMPLATE:-continuum-ingress},CONTINUUM_CONTROL_URL=$control_url,CONTINUUM_CONTROL_AUDIENCE=$control_url,CONTINUUM_DEADLINE_QUEUE=${CONTINUUM_DEADLINE_QUEUE:-continuum-deadlines},CONTINUUM_PUBSUB_PUSH_IDENTITY=$push_identity,CONTINUUM_PUSH_SUBSCRIPTION=$full_subscription,CONTINUUM_FORCE_REDELIVERY=1,CONTINUUM_V17_URL=$v17_url,CONTINUUM_V18_URL=$v18_url,CONTINUUM_V19_URL=$v19_url,CONTINUUM_VERIFIER_URL=$verifier_url,CONTINUUM_CONTROL_IDENTITY=$control_identity,CONTINUUM_V17_IDENTITY=$v17_identity,CONTINUUM_V18_IDENTITY=$v18_identity,CONTINUUM_V19_IDENTITY=$v19_identity,CONTINUUM_VERIFIER_IDENTITY=$verifier_identity"
 gcloud run services update "$control_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" --update-env-vars "$common_env" >/dev/null
 gcloud run services update "$v18_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" \
   --update-env-vars "CONTINUUM_V18_IDENTITY=$v18_identity" >/dev/null
 gcloud run services update "$v19_service" --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" \
   --update-env-vars "CONTINUUM_V19_IDENTITY=$v19_identity" >/dev/null
+
+# Optional real sandbox queue. The token is mounted from Secret Manager and is
+# never passed as a command-line environment value or written to deployment logs.
+if [[ -n "${CONTINUUM_GITHUB_PROVIDER_SECRET:-}" ]]; then
+  : "${CONTINUUM_GITHUB_REPOSITORY:?set repository when external queue is enabled}"
+  : "${CONTINUUM_GITHUB_ISSUE_NUMBER:?set pre-provisioned sandbox issue number}"
+  [[ "$CONTINUUM_GITHUB_ISSUE_NUMBER" =~ ^[1-9][0-9]*$ ]] || {
+    echo "CONTINUUM_GITHUB_ISSUE_NUMBER must be positive" >&2; exit 2; }
+  for identity in "$v18_identity" "$v19_identity"; do
+    gcloud secrets add-iam-policy-binding "$CONTINUUM_GITHUB_PROVIDER_SECRET" \
+      --project "$CONTINUUM_PROJECT_ID" --member "serviceAccount:$identity" \
+      --role roles/secretmanager.secretAccessor >/dev/null
+  done
+  for service in "$v18_service" "$v19_service"; do
+    gcloud run services update "$service" --project "$CONTINUUM_PROJECT_ID" \
+      --region "$CONTINUUM_REGION" \
+      --update-env-vars "CONTINUUM_GITHUB_REPOSITORY=$CONTINUUM_GITHUB_REPOSITORY,CONTINUUM_GITHUB_ISSUE_NUMBER=$CONTINUUM_GITHUB_ISSUE_NUMBER" \
+      --update-secrets "CONTINUUM_GITHUB_PROVIDER_TOKEN=$CONTINUUM_GITHUB_PROVIDER_SECRET:latest" >/dev/null
+  done
+fi
 
 if gcloud pubsub subscriptions describe "$subscription" --project "$CONTINUUM_PROJECT_ID" >/dev/null 2>&1; then
   gcloud pubsub subscriptions update "$subscription" --project "$CONTINUUM_PROJECT_ID" \

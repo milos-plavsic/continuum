@@ -77,7 +77,8 @@ def create_cloud_app(*, store: Any | None = None,
                      supplier_assessor: SupplierAssessor | None = live_adk_supplier_assessor,
                      verifier: Verifier | None = independent_contract_verifier,
                      scenario_service: Any | None = None,
-                     action_gateway: Any | None = None) -> FastAPI:
+                     action_gateway: Any | None = None,
+                     judge_controller: Any | None = None) -> FastAPI:
     active_role = role or os.getenv("CONTINUUM_ROLE", "control")
     project = os.getenv("GOOGLE_CLOUD_PROJECT", "")
     audience = os.getenv("CONTINUUM_CONTROL_AUDIENCE", "")
@@ -87,6 +88,9 @@ def create_cloud_app(*, store: Any | None = None,
     if active_role == "control" and scenario_service is None:
         from .cloud_scenario_adapters import build_production_scenario_service
         scenario_service = build_production_scenario_service()
+    if active_role == "judge" and judge_controller is None:
+        from .cloud_scenario_adapters import build_production_judge_controller
+        judge_controller = build_production_judge_controller()
 
     def repository() -> Any:
         nonlocal store
@@ -97,17 +101,21 @@ def create_cloud_app(*, store: Any | None = None,
         return store
 
     is_showcase = active_role == "showcase"
+    is_judge = active_role == "judge"
+    is_public_surface = is_showcase or is_judge
     app = FastAPI(
         title=f"Continuum Cloud Role: {active_role}", version="0.1.0",
-        docs_url=None if is_showcase else "/docs",
-        redoc_url=None if is_showcase else "/redoc",
-        openapi_url=None if is_showcase else "/openapi.json",
+        docs_url=None if is_public_surface else "/docs",
+        redoc_url=None if is_public_surface else "/redoc",
+        openapi_url=None if is_public_surface else "/openapi.json",
     )
 
     @app.get("/", include_in_schema=False)
     def cloud_cockpit() -> Any:
         if is_showcase:
             return FileResponse(Path(__file__).parent / "static" / "public_showcase.html")
+        if is_judge:
+            return FileResponse(Path(__file__).parent / "static" / "judge_gateway.html")
         if active_role != "control":
             raise HTTPException(status_code=404, detail={"code": "NOT_FOUND"})
         return FileResponse(Path(__file__).parent / "static" / "cloud_cockpit.html")
@@ -123,10 +131,11 @@ def create_cloud_app(*, store: Any | None = None,
             return JSONResponse(status_code=400, content={"detail": {"code": "INVALID_TRACEPARENT"}})
         trace_id = match.group(1) if match else ""
         response = await call_next(request)
-        if is_showcase:
+        if is_public_surface:
             response.headers["Content-Security-Policy"] = (
                 "default-src 'none'; style-src 'unsafe-inline'; "
-                "img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+                + ("script-src 'unsafe-inline'; connect-src 'self'; " if is_judge else "")
+                + "img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
             )
             response.headers["Referrer-Policy"] = "no-referrer"
             response.headers["X-Content-Type-Options"] = "nosniff"
@@ -170,6 +179,8 @@ def create_cloud_app(*, store: Any | None = None,
             invalid.append("push_configuration")
         if active_role == "control" and scenario_service is None:
             invalid.append("scenario_service")
+        if active_role == "judge" and judge_controller is None:
+            invalid.append("judge_controller")
         if invalid:
             raise HTTPException(status_code=503, detail={"code": "DEPLOYMENT_NOT_READY",
                                                          "invalid": sorted(set(invalid))})
@@ -187,6 +198,48 @@ def create_cloud_app(*, store: Any | None = None,
     # application with authorization checks bolted on. No mutation or internal
     # route is registered in this role.
     if is_showcase:
+        return app
+
+    if is_judge:
+        from .judge_access import JudgeAccessDenied
+
+        def capability(authorization: str | None) -> str:
+            if not authorization or not authorization.startswith("Bearer "):
+                raise HTTPException(status_code=401, detail={"code": "JUDGE_CAPABILITY_REQUIRED"})
+            return authorization.removeprefix("Bearer ")
+
+        @app.post("/judge/runs")
+        async def start_judge_run(request: Request,
+                                  authorization: str | None = Header(default=None)) -> dict[str, Any]:
+            if judge_controller is None:
+                raise HTTPException(status_code=503, detail={"code": "JUDGE_GATEWAY_NOT_CONFIGURED"})
+            try:
+                payload = await request.json()
+            except (json.JSONDecodeError, UnicodeDecodeError) as error:
+                raise HTTPException(status_code=400, detail={"code": "JUDGE_COMMAND_INVALID"}) from error
+            if payload != {}:
+                raise HTTPException(status_code=400, detail={"code": "JUDGE_COMMAND_INVALID"})
+            try:
+                return judge_controller.start(capability(authorization))
+            except JudgeAccessDenied as error:
+                code = str(error)
+                status = 429 if code == "JUDGE_QUOTA_EXHAUSTED" else 403
+                raise HTTPException(status_code=status, detail={"code": code}) from error
+            except (ValueError, RuntimeError) as error:
+                raise HTTPException(status_code=502, detail={"code": "CONTROL_PLANE_UNAVAILABLE"}) from error
+
+        @app.get("/judge/runs/{run_id}")
+        def judge_run_status(run_id: str,
+                             authorization: str | None = Header(default=None)) -> dict[str, Any]:
+            if judge_controller is None:
+                raise HTTPException(status_code=503, detail={"code": "JUDGE_GATEWAY_NOT_CONFIGURED"})
+            try:
+                return judge_controller.status(capability(authorization), run_id)
+            except JudgeAccessDenied as error:
+                raise HTTPException(status_code=403, detail={"code": str(error)}) from error
+            except (ValueError, RuntimeError) as error:
+                raise HTTPException(status_code=502, detail={"code": "CONTROL_PLANE_UNAVAILABLE"}) from error
+
         return app
 
     @app.post("/cloud-smoke/start")
@@ -291,11 +344,21 @@ def create_cloud_app(*, store: Any | None = None,
             if action_gateway is None and project:
                 from google.cloud import firestore
                 from .cloud_gateway import FirestoreActionGateway
+                external_queue = None
+                if (os.getenv("CONTINUUM_GITHUB_REPOSITORY") and
+                        os.getenv("CONTINUUM_GITHUB_ISSUE_NUMBER") and
+                        os.getenv("CONTINUUM_GITHUB_PROVIDER_TOKEN")):
+                    from .external_queue import GitHubIssueWorkQueue
+                    external_queue = GitHubIssueWorkQueue(
+                        repository=os.environ["CONTINUUM_GITHUB_REPOSITORY"],
+                        issue_number=int(os.environ["CONTINUUM_GITHUB_ISSUE_NUMBER"]),
+                        token=os.environ["CONTINUUM_GITHUB_PROVIDER_TOKEN"])
                 action_gateway = FirestoreActionGateway(
                     firestore.Client(project=project),
                     expected_actor=os.getenv(
                         "CONTINUUM_V18_IDENTITY" if active_role == "agent-v18"
-                        else "CONTINUUM_V19_IDENTITY") or None)
+                        else "CONTINUUM_V19_IDENTITY") or None,
+                    external_queue=external_queue)
             if action_gateway is None:
                 raise HTTPException(status_code=503, detail={"code": "ACTION_GATEWAY_NOT_CONFIGURED"})
             try:

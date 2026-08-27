@@ -19,6 +19,7 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         cls.bootstrap = (ROOT / "scripts/cloud/bootstrap.sh").read_text()
         cls.deploy = (ROOT / "scripts/cloud/build-deploy.sh").read_text()
         cls.showcase = (ROOT / "scripts/cloud/deploy-showcase.sh").read_text()
+        cls.judge = (ROOT / "scripts/cloud/deploy-judge.sh").read_text()
         cls.cloudbuild = (ROOT / "deploy/cloudbuild.yaml").read_text()
         cls.provenance_check = (ROOT / "scripts/cloud/verify-build-provenance.sh").read_text()
         cls.google_signature_check = (
@@ -51,6 +52,21 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertNotIn('CONTINUUM_CONTROL_URL', self.showcase)
         self.assertNotIn('GOOGLE_APPLICATION_CREDENTIALS', self.showcase)
         self.assertIn('CONTINUUM_OBSERVABILITY_ENABLED=false', self.showcase)
+
+    def test_judge_gateway_is_public_but_capability_scoped_and_cost_bounded(self):
+        self.assertIn('CONTINUUM_ROLE=judge', self.judge)
+        self.assertIn('--no-allow-unauthenticated', self.judge)
+        self.assertIn('gcloud run services set-iam-policy', self.judge)
+        self.assertIn('  - allUsers', self.judge)
+        self.assertIn('--max-instances 1', self.judge)
+        self.assertIn('CONTINUUM_JUDGE_MAX_RUNS', self.judge)
+        self.assertIn('--set-secrets "CONTINUUM_JUDGE_HMAC_SECRET=', self.judge)
+        self.assertIn('roles/secretmanager.secretAccessor', self.judge)
+        self.assertIn('roles/datastore.user', self.judge)
+        self.assertNotIn('roles/aiplatform.user', self.judge)
+        self.assertNotIn('GOOGLE_APPLICATION_CREDENTIALS', self.judge)
+        self.assertIn('serviceAccount:$account_email', self.judge)
+        self.assertIn('gcloud run services set-iam-policy "${CONTINUUM_CONTROL_SERVICE:-continuum-control}"', self.judge)
 
     def test_invocation_graph_is_push_to_control_and_control_to_workers(self):
         self.assertIn('write_invoker_policy "$policy_dir/control.yaml" "serviceAccount:$push_identity" "$CONTINUUM_OPERATOR_MEMBER"', self.deploy)

@@ -9,6 +9,7 @@ from continuum.cloud_scenario_adapters import (
     AuthenticatedJsonClient, CloudTasksDeadlineScheduler, FirestoreAuthority, FirestoreLifecycleEvidence,
     FirestoreCompliance, FirestoreSandboxEffects, ObservedContractExporter, RemoteInvestigator,
     RemoteSupplierAssurance, RemoteVerifier, RoutedFirestoreSandboxEffects,
+    RemoteCanonicalControlPlane, build_production_judge_controller,
     build_production_scenario_service, google_id_token,
 )
 from continuum.cloud_gateway import FirestoreActionGateway
@@ -104,6 +105,32 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "WORKER_RESPONSE_INVALID"):
             client.post("https://worker.run.app/path", {"correlation_id": "not-trace"}, run_id="r")
         self.assertIsNone(observed["request"].get_header("Traceparent"))
+        with self.assertRaisesRegex(ValueError, "WORKER_RESPONSE_INVALID"):
+            client.get("https://worker.run.app/path", run_id="r")
+        self.assertEqual(observed["request"].method, "GET")
+        class Good(Response):
+            def read(self): return b'{"status":"ok"}'
+        client.opener = lambda req, timeout: Good()
+        self.assertEqual(client.get("https://worker.run.app/path", run_id="r"), {"status":"ok"})
+
+    def test_remote_canonical_control_and_judge_factory_are_fail_closed(self):
+        class Client:
+            def post(self, url, payload, *, run_id):
+                return {"run_id": run_id, "url": url, "payload": payload}
+            def get(self, url, *, run_id): return {"run_id": run_id, "url": url}
+        remote = RemoteCanonicalControlPlane(Client(), "https://control/")
+        self.assertEqual(remote.start("r")["payload"], {"run_id": "r"})
+        self.assertTrue(remote.status("r")["url"].endswith("/cloud-smoke/r"))
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertIsNone(build_production_judge_controller())
+        environment = {"GOOGLE_CLOUD_PROJECT": "p", "CONTINUUM_CONTROL_URL": "https://control",
+                       "CONTINUUM_JUDGE_HMAC_SECRET": "x" * 32}
+        db = Firestore()
+        with patch.dict(os.environ, environment, clear=True), \
+             patch("google.cloud.firestore.Client", return_value=db):
+            controller = build_production_judge_controller()
+        self.assertIsNotNone(controller)
+        self.assertIs(controller.quota.client, db)
 
     def test_lifecycle_evidence_create_reuse_emission_and_content_conflict(self):
         db, publisher = Firestore(), Publisher(); adapter = FirestoreLifecycleEvidence(db, publisher)
@@ -308,6 +335,14 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         provider_path = next(key for key in db.data if key.startswith("continuity_sandbox_vendors/"))
         self.assertEqual("sha256:context", db.data[provider_path]["context_receipt_digest"])
         self.assertEqual(gateway.execute_vendor_create(req, actor="v18@example")["state"], "DEDUPLICATED")
+        external = type("Queue", (), {"converge": lambda self, request: {
+            "provider":"github-issues", "provider_ref":"https://github.test/o/r/issues/7",
+            "resource_id":"7", "state":"OPEN"}})()
+        external_result = FirestoreActionGateway(
+            db, expected_actor="v18@example", external_queue=external).execute_vendor_create(
+                req, actor="v18@example")
+        self.assertEqual(external_result["provider"], "github-issues")
+        self.assertEqual(db.data[provider_path]["external_effect"]["resource_id"], "7")
         with self.assertRaisesRegex(ValueError, "ACTION_REQUEST_INVALID"):
             gateway.execute_vendor_create({"run_id": "r"}, actor="v18@example")
         with self.assertRaisesRegex(ValueError, "ACTION_REQUEST_DIGEST_MISMATCH"):
@@ -433,7 +468,8 @@ class CloudAdapterCompleteTests(unittest.TestCase):
                     "CONTINUUM_VERIFIER_IDENTITY": "verifier@example",
                     "CONTINUUM_CONTROL_URL": "https://control", "CONTINUUM_DEADLINE_QUEUE": "q",
                     "CONTINUUM_PUBSUB_PUSH_IDENTITY": "push@example", "CONTINUUM_REGION": "r",
-                    "CONTINUUM_IMAGE_DIGEST": "sha256:" + "1" * 64}
+                    "CONTINUUM_IMAGE_DIGEST": "sha256:" + "1" * 64,
+                    "CONTINUUM_MODEL_ARMOR_TEMPLATE": "continuum-ingress"}
         db = Firestore()
         with patch.dict(os.environ, required, clear=True), \
              patch("google.cloud.firestore.Client", return_value=db), \
@@ -445,6 +481,24 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         self.assertEqual("sha256:" + "1" * 64, service.successor_candidates[1].artifact_digest)
         self.assertIn("https://v19", service.successor_candidates[1].evidence_refs[1])
         self.assertIsInstance(service.compliance, RemoteSupplierAssurance)
+        class Credentials:
+            token = "access"
+            def refresh(self, request): self.refreshed = request
+        class Response:
+            def __enter__(self): return self
+            def __exit__(self, *args): return None
+            def read(self): return b'{"sanitizationResult":{"filterMatchState":"MATCH_FOUND","filterResults":{"piAndJailbreakFilterResult":{"executionState":"EXECUTION_SUCCESS"}}}}'
+        credentials = Credentials()
+        with patch("google.auth.default", return_value=(credentials, "p")), \
+             patch("continuum.cloud_scenario_adapters.urlopen", return_value=Response()):
+            receipt = service.input_guard.sanitize(text="attack", run_id="r")
+        self.assertEqual(receipt["match_state"], "MATCH_FOUND")
+        with patch("google.auth.default", return_value=(credentials, "p")), \
+             patch("continuum.cloud_scenario_adapters.urlopen", return_value=type(
+                 "Bad", (), {"__enter__":lambda s:s, "__exit__":lambda s,*a:None,
+                              "read":lambda s:b'[]'})()):
+            with self.assertRaisesRegex(ValueError, "MODEL_ARMOR_RESPONSE_INVALID"):
+                service.input_guard.sanitize(text="attack", run_id="r")
 
 
 if __name__ == "__main__": unittest.main()

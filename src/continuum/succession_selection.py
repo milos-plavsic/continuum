@@ -12,7 +12,43 @@ SUPPORT_CLAIMS: dict[str, tuple[str, ...]] = {
     "HEALTH_ATTESTED": ("health:",),
     "RUNTIME_IDENTITY": ("identity:",),
     "SERVICE_REVISION": ("cloud-run:",),
+    "RECOVERY_READINESS": ("recovery:",),
+    "ASSURANCE_PROFILE": ("assurance:",),
+    "WARM_STATE": ("warm-state:",),
 }
+
+
+@dataclass(frozen=True)
+class SelectionObjective:
+    objective_id: str
+    statement: str
+    tradeoff_dimensions: tuple[str, ...]
+    required_support_claims: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if (not self.objective_id or not self.statement or len(self.tradeoff_dimensions) < 2 or
+                len(set(self.tradeoff_dimensions)) != len(self.tradeoff_dimensions) or
+                not self.required_support_claims or any(
+                    claim not in SUPPORT_CLAIMS for claim in self.required_support_claims)):
+            raise ValueError("SELECTION_OBJECTIVE_INVALID")
+
+    def to_dict(self) -> dict[str, Any]:
+        body = asdict(self)
+        return {**body, "tradeoff_dimensions": list(self.tradeoff_dimensions),
+                "required_support_claims": list(self.required_support_claims),
+                "objective_digest": digest(body)}
+
+
+def canonical_selection_objective() -> SelectionObjective:
+    return SelectionObjective(
+        objective_id="eu-supplier-continuity-balanced/1",
+        statement=("Choose the eligible successor that best balances rapid recovery of the "
+                   "EUR 250,000 obligation with independently evidenced assurance; do not "
+                   "reduce the decision to a single trust score."),
+        tradeoff_dimensions=("recovery_time_seconds", "assurance_level", "warm_state",
+                             "trust_score"),
+        required_support_claims=("RECOVERY_READINESS", "ASSURANCE_PROFILE"),
+    )
 
 
 @dataclass(frozen=True)
@@ -31,6 +67,9 @@ class SuccessorCandidate:
     health: str
     trust_score: int
     evidence_refs: tuple[str, ...]
+    recovery_time_seconds: int = 60
+    assurance_level: str = "STANDARD"
+    warm_state: str = "COLD"
 
     def __post_init__(self) -> None:
         if not self.principal_id or not self.version or not self.artifact_digest:
@@ -39,6 +78,9 @@ class SuccessorCandidate:
             raise ValueError("CANDIDATE_TRUST_SCORE_INVALID")
         if not self.evidence_refs:
             raise ValueError("CANDIDATE_EVIDENCE_REQUIRED")
+        if (self.recovery_time_seconds <= 0 or self.assurance_level not in {
+                "STANDARD", "HIGH", "VERY_HIGH"} or self.warm_state not in {"COLD", "WARM"}):
+            raise ValueError("CANDIDATE_TRADEOFF_PROFILE_INVALID")
 
 
 @dataclass(frozen=True)
@@ -61,6 +103,9 @@ class CandidateAssessment:
     reason_codes: tuple[str, ...]
     evidence_refs: tuple[str, ...]
     trust_score: int
+    recovery_time_seconds: int
+    assurance_level: str
+    warm_state: str
 
 
 @dataclass(frozen=True)
@@ -85,6 +130,9 @@ class AssessmentReceipt:
                 "reason_codes": list(item.reason_codes),
                 "evidence_refs": list(item.evidence_refs),
                 "trust_score": item.trust_score,
+                "recovery_time_seconds": item.recovery_time_seconds,
+                "assurance_level": item.assurance_level,
+                "warm_state": item.warm_state,
             } for item in self.assessments],
             "eligible_ids": list(self.eligible_ids),
             "receipt_digest": self.receipt_digest,
@@ -122,6 +170,9 @@ def assess_candidates(candidates: Iterable[SuccessorCandidate],
             reason_codes=tuple(reasons) if reasons else ("ELIGIBLE",),
             evidence_refs=tuple(sorted(candidate.evidence_refs)),
             trust_score=candidate.trust_score,
+            recovery_time_seconds=candidate.recovery_time_seconds,
+            assurance_level=candidate.assurance_level,
+            warm_state=candidate.warm_state,
         ))
     requirement_body = asdict(requirements)
     candidate_body = [asdict(item) for item in ordered]
@@ -147,6 +198,9 @@ def model_candidate_view(candidates: Iterable[SuccessorCandidate],
             "candidate_id": item.principal_id,
             "version": item.version,
             "trust_score": item.trust_score,
+            "recovery_time_seconds": item.recovery_time_seconds,
+            "assurance_level": item.assurance_level,
+            "warm_state": item.warm_state,
             "capabilities": list(item.capabilities),
             "jurisdictions": list(item.jurisdictions),
             "evidence_refs": list(sorted(item.evidence_refs)),
@@ -156,7 +210,8 @@ def model_candidate_view(candidates: Iterable[SuccessorCandidate],
     ]
 
 
-def admit_successor_choice(choice: dict[str, Any], receipt: AssessmentReceipt) -> str:
+def admit_successor_choice(choice: dict[str, Any], receipt: AssessmentReceipt,
+                           objective: SelectionObjective | None = None) -> str:
     """Validate complete consideration separately from selective support.
 
     ``evidence_manifest_refs`` proves which bounded evidence entered the model
@@ -183,7 +238,9 @@ def admit_successor_choice(choice: dict[str, Any], receipt: AssessmentReceipt) -
     if (any(not isinstance(item, str) or not item for item in manifest)
             or len(manifest) != len(set(manifest))):
         raise Denied("SUCCESSOR_CHOICE_MANIFEST_INVALID")
-    if set(manifest) != set(assessment.evidence_refs):
+    eligible_manifest = {reference for item in receipt.assessments if item.eligible
+                         for reference in item.evidence_refs}
+    if set(manifest) != eligible_manifest:
         raise Denied("SUCCESSOR_CHOICE_EVIDENCE_INCOMPLETE")
     cited_refs: list[str] = []
     claims: list[str] = []
@@ -204,4 +261,12 @@ def admit_successor_choice(choice: dict[str, Any], receipt: AssessmentReceipt) -
         cited_refs.extend(refs)
     if len(claims) != len(set(claims)) or len(cited_refs) != len(set(cited_refs)):
         raise Denied("SUCCESSOR_CHOICE_CITATION_DUPLICATE")
+    if objective is not None:
+        if choice["objective"] != objective.objective_id:
+            raise Denied("SUCCESSOR_CHOICE_OBJECTIVE_MISMATCH")
+        if not set(objective.required_support_claims).issubset(claims):
+            raise Denied("SUCCESSOR_CHOICE_TRADEOFF_UNSUPPORTED")
+        selected_refs = set(assessment.evidence_refs)
+        if not selected_refs.intersection(cited_refs):
+            raise Denied("SUCCESSOR_CHOICE_SELECTED_SUPPORT_MISSING")
     return selected

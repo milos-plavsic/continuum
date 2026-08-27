@@ -20,6 +20,8 @@ from .contract import artifact_ref, canonical_bytes, make_envelope
 from .google_binding import GoogleBindingConfig, PubSubLifecyclePublisher
 from .incident_policy import SUCCESSION, validate_incident_receipt
 from .models import AgentStatus, digest
+from .model_armor import GoogleModelArmorGuard
+from .fleet_registry import FirestoreFleetCatalog, FleetPublication
 from .succession_selection import SuccessorCandidate
 
 
@@ -46,6 +48,19 @@ class AuthenticatedJsonClient:
         if isinstance(trace_id, str) and len(trace_id) == 32 and all(c in "0123456789abcdef" for c in trace_id):
             headers["traceparent"] = f"00-{trace_id}-0000000000000001-01"
         request = Request(url, data=canonical_bytes(payload), method="POST", headers=headers)
+        with self.opener(request, timeout=60) as response:
+            result = json.loads(response.read())
+        if not isinstance(result, dict):
+            raise ValueError("WORKER_RESPONSE_INVALID")
+        return result
+
+    def get(self, url: str, *, run_id: str) -> dict[str, Any]:
+        parsed = urlsplit(url)
+        audience = f"{parsed.scheme}://{parsed.netloc}"
+        request = Request(url, method="GET", headers={
+            "Authorization": f"Bearer {self.token(audience)}",
+            "X-Continuum-Run-ID": run_id,
+        })
         with self.opener(request, timeout=60) as response:
             result = json.loads(response.read())
         if not isinstance(result, dict):
@@ -260,7 +275,11 @@ class FirestoreSandboxEffects:
         if not snapshot.exists: return {"effect_count": 0, "provider_ref": None}
         record = snapshot.to_dict()
         if record["request_digest"] != request["request_digest"]: raise ValueError("PROVIDER_DIGEST_CONFLICT")
-        return {"effect_count": 1, "provider_ref": record["provider_ref"],
+        external = record.get("external_effect")
+        provider_ref = (external.get("provider_ref") if isinstance(external, dict)
+                        else record["provider_ref"])
+        return {"effect_count": 1, "provider_ref": provider_ref,
+                "provider": external.get("provider") if isinstance(external, dict) else "firestore-sandbox",
                 "request_digest": record["request_digest"],
                 "compliance_evidence_id": record["compliance_evidence_id"]}
 
@@ -426,17 +445,60 @@ def google_id_token(audience: str) -> str:
     return fetch_id_token(AuthRequest(), audience)
 
 
+class RemoteCanonicalControlPlane:
+    """The judge service can invoke only canonical start and sanitized status."""
+    def __init__(self, client: AuthenticatedJsonClient, url: str):
+        self.client, self.url = client, url.rstrip("/")
+
+    def start(self, run_id: str) -> dict[str, Any]:
+        return self.client.post(f"{self.url}/cloud-smoke/start", {"run_id": run_id}, run_id=run_id)
+
+    def status(self, run_id: str) -> dict[str, Any]:
+        return self.client.get(f"{self.url}/cloud-smoke/{run_id}", run_id=run_id)
+
+
+def build_production_judge_controller() -> Any | None:
+    project = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+    control_url = os.getenv("CONTINUUM_CONTROL_URL", "")
+    secret = os.getenv("CONTINUUM_JUDGE_HMAC_SECRET", "")
+    if not project or not control_url or len(secret.encode()) < 32:
+        return None
+    from google.cloud import firestore
+    from .judge_access import FirestoreJudgeQuota, JudgeController
+    return JudgeController(
+        secret=secret,
+        quota=FirestoreJudgeQuota(firestore.Client(project=project)),
+        control=RemoteCanonicalControlPlane(AuthenticatedJsonClient(google_id_token), control_url),
+    )
+
+
 def build_production_scenario_service() -> DurableCloudScenarioService | None:
     required = {name: os.getenv(name, "") for name in (
         "GOOGLE_CLOUD_PROJECT", "CONTINUUM_V17_URL", "CONTINUUM_V18_URL", "CONTINUUM_V19_URL", "CONTINUUM_VERIFIER_URL",
         "CONTINUUM_CONTROL_IDENTITY", "CONTINUUM_V17_IDENTITY", "CONTINUUM_V18_IDENTITY", "CONTINUUM_V19_IDENTITY",
         "CONTINUUM_VERIFIER_IDENTITY", "CONTINUUM_CONTROL_URL", "CONTINUUM_IMAGE_DIGEST",
-        "CONTINUUM_DEADLINE_QUEUE", "CONTINUUM_PUBSUB_PUSH_IDENTITY")}
+        "CONTINUUM_DEADLINE_QUEUE", "CONTINUUM_PUBSUB_PUSH_IDENTITY",
+        "CONTINUUM_MODEL_ARMOR_TEMPLATE")}
     if any(not value for value in required.values()): return None
     from google.cloud import firestore
     from google.cloud import tasks_v2
     db = firestore.Client(project=required["GOOGLE_CLOUD_PROJECT"])
     http = AuthenticatedJsonClient(google_id_token)
+    def armor_post(url: str, payload: dict[str, Any]) -> dict[str, Any]:
+        import google.auth
+        from google.auth.transport.requests import Request as AuthRequest
+        credentials, _ = google.auth.default(
+            scopes=["https://www.googleapis.com/auth/cloud-platform"])
+        credentials.refresh(AuthRequest())
+        request = Request(url, data=canonical_bytes(payload), method="POST", headers={
+            "Authorization": f"Bearer {credentials.token}",
+            "Content-Type": "application/json",
+        })
+        with urlopen(request, timeout=30) as response:
+            result = json.loads(response.read())
+        if not isinstance(result, dict):
+            raise ValueError("MODEL_ARMOR_RESPONSE_INVALID")
+        return result
     publisher = PubSubLifecyclePublisher(GoogleBindingConfig(
         required["GOOGLE_CLOUD_PROJECT"], os.getenv("CONTINUUM_LIFECYCLE_TOPIC", "continuum-lifecycle")))
     common = {
@@ -447,22 +509,34 @@ def build_production_scenario_service() -> DurableCloudScenarioService | None:
     deployed_candidates = (
         SuccessorCandidate("v18", "v18", artifact_digest=required["CONTINUUM_IMAGE_DIGEST"],
             service_identity=required["CONTINUUM_V18_IDENTITY"], jurisdictions=("EU",),
-            health="HEALTHY", trust_score=96,
+            health="HEALTHY", trust_score=94, recovery_time_seconds=75,
+            assurance_level="VERY_HIGH", warm_state="COLD",
             evidence_refs=(f'image:{required["CONTINUUM_IMAGE_DIGEST"]}',
                            f'cloud-run:{required["CONTINUUM_V18_URL"]}',
-                           f'identity:{required["CONTINUUM_V18_IDENTITY"]}'), **common),
+                           f'identity:{required["CONTINUUM_V18_IDENTITY"]}',
+                           'recovery:v18:75s', 'assurance:v18:very-high',
+                           'warm-state:v18:cold'), **common),
         SuccessorCandidate("v19", "v19", artifact_digest=required["CONTINUUM_IMAGE_DIGEST"],
             service_identity=required["CONTINUUM_V19_IDENTITY"], jurisdictions=("EU",),
-            health="HEALTHY", trust_score=89,
+            health="HEALTHY", trust_score=91, recovery_time_seconds=18,
+            assurance_level="HIGH", warm_state="WARM",
             evidence_refs=(f'image:{required["CONTINUUM_IMAGE_DIGEST"]}',
                            f'cloud-run:{required["CONTINUUM_V19_URL"]}',
-                           f'identity:{required["CONTINUUM_V19_IDENTITY"]}'), **common),
+                           f'identity:{required["CONTINUUM_V19_IDENTITY"]}',
+                           'recovery:v19:18s', 'assurance:v19:high',
+                           'warm-state:v19:warm'), **common),
         # An explicit negative control proves that the deterministic gate, rather than
         # prompt wording, excludes an otherwise high-scoring but inadmissible agent.
         SuccessorCandidate("v20", "v20", artifact_digest="sha256:" + "0" * 64,
             service_identity="not-deployed", jurisdictions=("US",), health="DEGRADED",
             trust_score=98, evidence_refs=("registry:v20",), **common),
     )
+    fleet_catalog = FirestoreFleetCatalog(db)
+    for department, candidate in zip(("procurement", "finance", "security"),
+                                     deployed_candidates, strict=True):
+        fleet_catalog.publish(FleetPublication(department=department,
+            owner=f"{department}-platform", published_at="2026-08-27T00:00:00Z",
+            candidate=candidate))
     return DurableCloudScenarioService(
         store=FirestoreScenarioStore(db), evidence=FirestoreLifecycleEvidence(db, publisher),
         deadline_scheduler=CloudTasksDeadlineScheduler(tasks_v2.CloudTasksClient(),
@@ -482,4 +556,8 @@ def build_production_scenario_service() -> DurableCloudScenarioService | None:
         }),
         exporter=ObservedContractExporter(f'mailto:{required["CONTINUUM_CONTROL_IDENTITY"]}', f'mailto:{required["CONTINUUM_VERIFIER_IDENTITY"]}'),
         verifier=RemoteVerifier(http, required["CONTINUUM_VERIFIER_URL"], required["CONTINUUM_VERIFIER_IDENTITY"]),
+        input_guard=GoogleModelArmorGuard(project=required["GOOGLE_CLOUD_PROJECT"],
+            location=os.getenv("CONTINUUM_REGION", "us-central1"),
+            template=required["CONTINUUM_MODEL_ARMOR_TEMPLATE"], post=armor_post),
+        fleet_catalog=fleet_catalog,
         successor_candidates=deployed_candidates)
