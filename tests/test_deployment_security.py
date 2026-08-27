@@ -125,6 +125,8 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertIn("apt-get install --only-upgrade", self.dockerfile)
         self.assertIn("openssl libssl3t64 openssl-provider-legacy", self.dockerfile)
         self.assertIn("AS local-runtime", self.dockerfile)
+        self.assertTrue(self.dockerfile.rstrip().endswith("FROM cloud-runtime AS final"))
+        self.assertIn("grep -F 'continuum.cloud_app:app'", self.ci)
         self.assertIn("anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610", self.ci)
         self.assertIn("aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8", self.ci)
         self.assertIn("severity: HIGH,CRITICAL", self.ci)

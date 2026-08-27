@@ -59,6 +59,8 @@ jobs:
           docker run --rm --entrypoint python continuum:${{ github.sha }} -c \
             "import continuum.cloud_app; import continuum.verification; import continuum.cloud_gateway"
           test -z "$(docker run --rm --entrypoint sh continuum:${{ github.sha }} -c 'command -v uv || true')"
+          docker image inspect continuum:${{ github.sha }} --format '{{json .Config.Cmd}}' | \
+            grep -F 'continuum.cloud_app:app'
       - name: Build and smoke-test credential-free local profile
         run: |
           docker build --target local-runtime --tag continuum-local:${{ github.sha }} .
