@@ -303,4 +303,7 @@ class FirestoreVerificationReader:
         if not values:
             return None
         first = values[0]
-        return {**first, "effect_count": len(values)}
+        external = first.get("external_effect")
+        observed = ({**first, **external}
+                    if isinstance(external, dict) else first)
+        return {**observed, "effect_count": len(values)}

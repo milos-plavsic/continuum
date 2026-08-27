@@ -59,9 +59,11 @@ gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
 for role in roles/datastore.user roles/pubsub.publisher roles/cloudtasks.enqueuer roles/cloudtrace.agent; do
   gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" --member "serviceAccount:$control" --role "$role" --condition=None >/dev/null
 done
-gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
-  --member "serviceAccount:continuum-v18@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" \
-  --role roles/aiplatform.user --condition=None >/dev/null
+for model_agent in continuum-v18 continuum-v19; do
+  gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
+    --member "serviceAccount:$model_agent@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" \
+    --role roles/aiplatform.user --condition=None >/dev/null
+done
 gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
   --member "serviceAccount:continuum-v18@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" \
   --role roles/datastore.user --condition=None >/dev/null

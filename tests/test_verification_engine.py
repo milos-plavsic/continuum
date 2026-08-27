@@ -211,6 +211,11 @@ class IndependentVerificationEngineTests(unittest.TestCase):
         self.assertEqual(reader.read_compliance("r")["status"], "VERIFIED")
         db.data["continuity_sandbox_vendors/a"] = {"run_id": "r", "provider_ref": "p"}
         self.assertEqual(reader.read_provider("r")["effect_count"], 1)
+        db.data["continuity_sandbox_vendors/a"]["external_effect"] = {
+            "provider": "github-issues", "provider_ref": "https://github.com/o/r/issues/41",
+            "state": "OPEN"}
+        self.assertEqual(reader.read_provider("r")["provider_ref"],
+                         "https://github.com/o/r/issues/41")
         db.data["continuity_sandbox_vendors/b"] = {"run_id": "r", "provider_ref": "q"}
         self.assertEqual(reader.read_provider("r")["effect_count"], 2)
 
