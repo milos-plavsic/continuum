@@ -2,34 +2,34 @@
 
 ## Current verified release
 
-A fresh autonomous reference run completed on August 26, 2026 and passed both
+A fresh autonomous reference run completed on August 27, 2026 and passed both
 the separately deployed verifier and the credential-free, network-free offline
 semantic verifier.
 
 - Project `project-0775d12a-00a3-48d2-b13`, region `europe-west1`.
-- Run `golden-0ceda49-20260826-182725`; canonical trace
-  `caa315c2c9181abd25091a46f59eceb6`.
+- Run `supplier-golden-20260827T023539Z`; canonical trace
+  `86ef84df3fe1ddf17761b558cb08c678`.
 - Deployed source commit
-  `0ceda492a439466bef4536f695f86d2a7b8f01e4`.
+  `abb44720631cd54c6837b20d0b9870919f6a6b5b`.
 - Immutable image digest
-  `sha256:ddc57999674ec755ffc92a9c004d7265ada06ff56424f9ee46121c7b511a7b96`.
-- Bundle `urn:uuid:be58870d-6398-4bf5-a1a2-90dc3eca3e86`; bundle digest
-  `sha256:5402436105058196b2665c1e8242b6edf46178775bbee7fbba3d6ecd7f511be9`.
+  `sha256:e3be7452fd1b619de5c0a0632a6f488f02938276e95313d7eea7e1fef6262021`.
+- Bundle `urn:uuid:a3f1b86a-7f71-442d-be06-59f5c042d089`; bundle digest
+  `sha256:b7b7901ae9f5ac64ddc7b76c9a9b9444e28422a4918e3dbffd628471ea260a1e`.
 - Offline result `PASS`; report digest
-  `sha256:683f27d5c4fe265a961f153dc069be23ae14e5160a9a34ba6898b4a47ae7261d`.
+  `sha256:989d258c8f42b164ceed0f180140f48ea87f709ae26d7997a1265af6ad8d08f6`.
 
 The five ready services were independently read from the Cloud Run API:
 
 | Role | Ready revision | User-managed service identity |
 |---|---|---|
-| Control | `continuum-control-00024-5d7` | `continuum-control@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
-| Predecessor v17 | `continuum-agent-v17-00012-x6r` | `continuum-v17@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
-| Successor v18 | `continuum-agent-v18-00019-cjw` | `continuum-v18@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
-| Warm successor v19 | `continuum-agent-v19-00010-8sj` | `continuum-v19@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
-| Independent verifier | `continuum-verifier-00012-njg` | `continuum-verifier@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
+| Control | `continuum-control-00030-f96` | `continuum-control@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
+| Predecessor v17 | `continuum-agent-v17-00015-wdn` | `continuum-v17@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
+| Successor v18 | `continuum-agent-v18-00025-xzd` | `continuum-v18@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
+| Warm successor v19 | `continuum-agent-v19-00016-w28` | `continuum-v19@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
+| Independent verifier | `continuum-verifier-00015-w5r` | `continuum-verifier@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
 
 All five revisions reported the same source commit, protocol and immutable
-image digest. The 13 content-addressed mandatory objects prove:
+image digest. The 14 content-addressed mandatory objects prove:
 
 - a real Google ADK call to `gemini-3.6-flash` from the v18 identity, citing all
   exact incident evidence, proposing only `initiate_governed_succession`, and
@@ -37,23 +37,27 @@ image digest. The 13 content-addressed mandatory objects prove:
   citations; v20 was rejected for health and jurisdiction before model access;
 - a verifier-recomputed minimum-context receipt: two verified facts included and
   raw untrusted input, a secret, model inference and revoked memory excluded;
+- a practical successor-agent workflow that queried the official GLEIF and EU
+  VIES endpoints, used ADK + `gemini-3.6-flash` for a cited decision pack, and
+  passed deterministic admission only under `SANDBOX_ONLY`; its content digest
+  and selected workload identity are bound to the execution receipt;
 - an owning-API Firestore event, matching projection, and published outbox;
-- two deliveries of Pub/Sub message `21350299420507528`;
+- two deliveries of Pub/Sub message `21359656145852778`;
 - one reconciled provider effect despite redelivery;
 - v17 action denial with `STALE_EPOCH` and revoked-memory denial;
 - five control-authored pre-attestation artifacts followed by the verifier-only
   sixth artifact after direct authority, compliance, and provider reads;
-- 104 spans read directly from the Cloud Trace API, including
+- 118 spans read directly from the Cloud Trace API, including
   `generate_content gemini-3.6-flash`, all succession lifecycle spans, action
   gateway calls, and the separate verifier call.
 
 The raw capture is retained locally at
-`artifacts/cloud/golden-0ceda49-20260826-182725` and
+`artifacts/cloud/supplier-golden-20260827T023539Z` and
 is intentionally gitignored: repository policy forbids committing generated
 cloud state. The complete security-audited, content-addressed packet is published
-as a [GitHub Release asset](https://github.com/milos-plavsic/continuum/releases/download/cloud-proof-0ceda49/continuum-cloud-proof-0ceda49.tar.gz),
+as a [GitHub Release asset](https://github.com/milos-plavsic/continuum/releases/download/cloud-proof-abb4472/continuum-cloud-proof-abb4472.tar.gz),
 with archive SHA-256
-`8a466cf1ef015f866e63e4fb08cb40458a09fe90ba2713ba1d638c39feb86be5`.
+`5f7b34322c0122349a73d9fea43f89cd4ef053ea5179d42603ae0c799536f697`.
 Judges can therefore reproduce the offline verdict without Google credentials.
 
 ## Reproduction and validity boundary

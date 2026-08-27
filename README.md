@@ -46,20 +46,21 @@ standard and not yet a third-party interoperability claim.
 The repository contains a deterministic reference and a production-composed
 Google Cloud slice using private Cloud Run identities, Firestore transactions,
 Cloud Tasks, Pub/Sub redelivery, Google ADK with Gemini 3.6 Flash, and a
-read-only verifier. Release `0ceda49` has a fresh 13-object Google Cloud evidence
-bundle with an offline semantic `PASS`; Cloud Trace contains 104 real
+read-only verifier. Release `abb4472` has a fresh 14-object Google Cloud evidence
+bundle with an offline semantic `PASS`; Cloud Trace contains 118 real
 OpenTelemetry spans read through the owning API. The capture includes distinct
 v18 and v19 warm-successor identities, Gemini's evidence-cited selection, the
-minimum-context receipt and one provider effect despite redelivery. Exact release
+minimum-context receipt, official GLEIF and EU VIES observations, the admitted
+supplier decision-pack binding, and one provider effect despite redelivery. Exact release
 identifiers and the validity boundary are recorded in
 [the cloud proof](docs/CLOUD_PROOF.md). The complete evidence packet is a public,
 checksum-pinned GitHub Release asset, so judges can run its semantic verifier
 without Google credentials. Local success is never relabelled as cloud proof.
 
-The practical Supplier Assurance extension is implemented and fully tested but
-does not inherit release `0ceda49`'s cloud proof. Its new GLEIF/VIES/Gemini
-decision-pack claim remains pending until a newer exact commit is deployed and
-a fresh canonical evidence bundle passes the same offline verifier.
+The practical Supplier Assurance extension is included in release `abb4472`'s
+exact-commit cloud proof. The offline verifier requires its successor identity,
+Gemini 3.6 model, official GLEIF/VIES receipt digests, `SANDBOX_ONLY` scope,
+`ONBOARD` admission and decision-pack digest to agree with the execution receipt.
 
 The optional multimodal learning branch has also completed a genuine managed
 Google Cloud run. It used `google/gemma-4-26b-a4b-it-maas`,
@@ -101,7 +102,7 @@ excluded and there are no `pragma: no cover` shortcuts:
 ./scripts/quality-gate.sh
 ```
 
-The current gate executes 158 tests and reports genuine **100.0% statement and
+The current gate executes 159 tests and reports genuine **100.0% statement and
 branch coverage**.
 
 To generate a verifier-gated multimodal resilience brief in an authorized
