@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+import subprocess
+import tempfile
 from unittest.mock import patch
 import unittest
 
@@ -19,6 +21,9 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         cls.showcase = (ROOT / "scripts/cloud/deploy-showcase.sh").read_text()
         cls.cloudbuild = (ROOT / "deploy/cloudbuild.yaml").read_text()
         cls.provenance_check = (ROOT / "scripts/cloud/verify-build-provenance.sh").read_text()
+        cls.google_signature_check = (
+            ROOT / "scripts/cloud/verify-google-build-signature.sh"
+        ).read_text()
         cls.cloud_proof = (ROOT / "scripts/cloud/run-cloud-proof.sh").read_text()
         cls.cloud_smoke = (ROOT / "scripts/cloud/run-smoke.sh").read_text()
 
@@ -84,10 +89,54 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertIn('--source-uri "$CONTINUUM_EXPECTED_SOURCE_URI"', self.provenance_check)
         self.assertIn('--builder-id https://cloudbuild.googleapis.com/GoogleHostedWorker',
                       self.provenance_check)
+        self.assertIn("PASSED: Verified SLSA provenance", self.provenance_check)
+        self.assertIn("verifier_status", self.provenance_check)
+        self.assertIn("google-hosted-worker/cryptoKeyVersions/1",
+                      self.google_signature_check)
+        self.assertIn("https://slsa.dev/provenance/v1", self.google_signature_check)
+        self.assertIn("expected_digest", self.google_signature_check)
+        self.assertIn("openssl dgst -sha256 -verify", self.google_signature_check)
+        self.assertIn('[[ "$verification_output" == "Verified OK" ]]',
+                      self.google_signature_check)
         self.assertIn('uv run python - "$run_id"', self.cloud_proof)
         self.assertNotIn('PYTHONPATH=src python3', self.cloud_proof)
         self.assertIn('uv run python scripts/cloud/package-evidence.py', self.cloud_smoke)
         self.assertIn('uv run python scripts/cloud/verify-evidence.py', self.cloud_smoke)
+
+    def test_slsa_wrapper_rejects_textual_failure_even_with_zero_exit(self):
+        result = self._run_fake_slsa("FAILED: SLSA verification failed", 0)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("did not produce an explicit PASS", result.stderr)
+
+    def test_slsa_wrapper_accepts_only_explicit_pass_and_zero_exit(self):
+        result = self._run_fake_slsa("PASSED: Verified SLSA provenance", 0)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def _run_fake_slsa(self, output: str, status: int):
+        with tempfile.TemporaryDirectory() as directory:
+            tools = Path(directory)
+            gcloud = tools / "gcloud"
+            gcloud.write_text("#!/usr/bin/env bash\nprintf '{}\\n'\n")
+            gcloud.chmod(0o755)
+            verifier = tools / "slsa-verifier"
+            verifier.write_text(
+                "#!/usr/bin/env bash\n"
+                f"printf '%s\\n' {output!r}\n"
+                f"exit {status}\n"
+            )
+            verifier.chmod(0o755)
+            environment = os.environ | {
+                "PATH": f"{tools}:{os.environ['PATH']}",
+                "CONTINUUM_IMAGE_AT_DIGEST": "registry.example/image@sha256:" + "a" * 64,
+                "CONTINUUM_EXPECTED_SOURCE_URI": "github.com/example/project",
+            }
+            return subprocess.run(
+                ["bash", str(ROOT / "scripts/cloud/verify-build-provenance.sh")],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=environment,
+            )
 
 
 class DeploymentReadinessTests(unittest.TestCase):

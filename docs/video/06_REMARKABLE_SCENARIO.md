@@ -340,7 +340,7 @@ to rescue a long page:
    names, hashed receipts, Gemini recommendation and deterministic admission.
 5. Add a two-delivery convergence scene and a verifier trust-boundary scene.
 6. Add a read-only same-run proof drawer for service identities, trace count and
-   14-object offline report.
+   15-object offline report.
 7. Provide focus anchors so editorial highlights use exact element bounds and
    cannot repeat the previous wrong-size rectangle problem.
 8. Preserve the full unedited recording as the evidentiary master before adding
@@ -358,7 +358,7 @@ The cursor always carries meaning:
 - visit GLEIF → VIES → Gemini → deterministic admission;
 - connect two delivery IDs to one provider resource;
 - cross the verifier trust boundary only when narration does;
-- point to revision, trace ID and `14/14 PASS` in the proof cutaways.
+- point to revision, trace ID and `15/15 PASS` in the proof cutaways.
 
 Use a small 26–30 px soft halo, not a large click animation. The cursor never
 rests over text that the viewer must read.
