@@ -50,10 +50,13 @@ def _provenance_subjects(value: dict[str, Any], errors: list[str]) -> set[str]:
     for entry in entries:
         build = entry.get("build") if isinstance(entry, dict) else None
         statement = build.get("intotoStatement") if isinstance(build, dict) else None
+        v1_statement = build.get("inTotoSlsaProvenanceV1") if isinstance(build, dict) else None
         envelope = entry.get("envelope") if isinstance(entry, dict) else None
-        if not isinstance(statement, dict) or not isinstance(envelope, dict):
+        if not isinstance(envelope, dict) or not (
+                isinstance(statement, dict) or isinstance(v1_statement, dict)):
             continue
-        if statement.get("predicateType") == "https://slsa.dev/provenance/v1":
+        if (isinstance(v1_statement, dict)
+                or statement.get("predicateType") == "https://slsa.dev/provenance/v1"):
             found_v1 = True
         signatures = envelope.get("signatures")
         payload = envelope.get("payload")
@@ -145,6 +148,8 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
     if not isinstance(image_summary, dict):
         errors.append("BUILD_PROVENANCE_IMAGE_SUMMARY_MISSING")
     else:
+        if image_summary.get("slsa_build_level") != 3:
+            errors.append("BUILD_PROVENANCE_SLSA_LEVEL_INVALID")
         if images and image_summary.get("digest") not in images:
             errors.append("BUILD_PROVENANCE_SUMMARY_DIGEST_MISMATCH")
         if image_references and image_summary.get("fully_qualified_digest") not in image_references:
