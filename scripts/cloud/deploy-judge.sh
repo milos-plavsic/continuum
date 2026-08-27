@@ -91,8 +91,9 @@ gcloud run services set-iam-policy "${CONTINUUM_CONTROL_SERVICE:-continuum-contr
   "$policy_dir/control.yaml" --project "$CONTINUUM_PROJECT_ID" \
   --region "$CONTINUUM_REGION" --quiet >/dev/null
 
+grant_jti="${CONTINUUM_JUDGE_GRANT_JTI:-devpost26-${CONTINUUM_GIT_SHA:0:8}}"
 CONTINUUM_JUDGE_HMAC_SECRET="$secret" uv run python scripts/issue_judge_capability.py \
-  --jti devpost26 --hours "${CONTINUUM_JUDGE_TOKEN_HOURS:-720}" \
+  --jti "$grant_jti" --hours "${CONTINUUM_JUDGE_TOKEN_HOURS:-720}" \
   --max-runs "${CONTINUUM_JUDGE_MAX_RUNS:-3}" >"$token_file"
 chmod 600 "$secret_file" "$token_file"
 url="$(gcloud run services describe "$service" --project "$CONTINUUM_PROJECT_ID" \
