@@ -54,9 +54,9 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
         self.objects = {
             "build-provenance": {"image_summary": {
                 "digest": image, "fully_qualified_digest": image_reference,
+                "slsa_build_level": 3,
             }, "provenance_summary": {"provenance": [{
-                "build": {"intotoStatement": {
-                    "predicateType": "https://slsa.dev/provenance/v1"}},
+                "build": {"inTotoSlsaProvenanceV1": {"buildType": "cloud-build"}},
                 "envelope": {
                     "payload": base64.urlsafe_b64encode(json.dumps({
                         "subject": [{"digest": {"sha256": "2" * 64}}],
