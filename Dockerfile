@@ -50,3 +50,7 @@ CMD ["sh", "-c", "module=continuum.api:app; if [ -n \"${CONTINUUM_ROLE:-}\" ]; t
 FROM runtime-base AS local-runtime
 COPY --from=local-builder --chown=continuum:continuum /app/.venv /app/.venv
 CMD ["sh", "-c", "exec uvicorn continuum.local_app:app --host 0.0.0.0 --port ${PORT}"]
+
+# Keep the production target last: an unqualified `docker build .` must never
+# silently select the credential-free local application for Cloud Run.
+FROM cloud-runtime AS final
