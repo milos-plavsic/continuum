@@ -98,6 +98,26 @@ class IndependentVerificationEngineTests(unittest.TestCase):
         self.assertEqual(result["outcome"], "INCONCLUSIVE")
         self.assertNotIn("bundle", result)
 
+    def test_supplier_assurance_decision_pack_is_independently_bound(self):
+        bundle = pre_bundle(); state = observations(bundle)
+        receipt = next(item for item in bundle["artifacts"]
+                       if item["artifact_type"] == "execution_receipt")
+        claim = receipt["extensions"]["continuum.dev/compliance"]
+        claim.update({"workflow": "SUPPLIER_ASSURANCE_AGENT",
+                      "decision_scope": "SANDBOX_ONLY", "recommendation": "ONBOARD",
+                      "decision_pack_digest": "sha256:decision-pack"})
+        receipt["digest"] = {"alg": "sha-256", "value": artifact_digest(receipt)}
+        state["compliance"].update({key: claim[key] for key in (
+            "workflow", "decision_scope", "recommendation", "decision_pack_digest")})
+        result = IndependentVerificationEngine(Reader(**state)).verify(
+            run_id="run-1", bundle=bundle, verifier_principal="urn:verifier")
+        criteria = result["bundle"]["artifacts"][-1]["body"]["verification"]["criteria_results"]
+        self.assertIn({"criterion_id": "supplier-assurance-admitted", "passed": True}, criteria)
+        state["compliance"]["decision_pack_digest"] = "substituted"
+        failure = IndependentVerificationEngine(Reader(**state)).verify(
+            run_id="run-1", bundle=bundle, verifier_principal="urn:verifier")
+        self.assertIn("SUPPLIER_ASSURANCE_STATE_MISMATCH", failure["reason_codes"])
+
     def test_mutated_claim_or_provider_contradiction_fails_closed(self):
         bundle = pre_bundle(); state = observations(bundle)
         changed = deepcopy(bundle)

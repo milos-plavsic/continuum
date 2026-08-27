@@ -14,7 +14,8 @@ and independent verification prove one coherent lifecycle.
 
 ## The 60-second judge path
 
-1. Click once. Continuum persists a compliance obligation and schedules its real deadline.
+1. Click once. A practical Supplier Assurance Agent owns a €250,000 sandbox
+   onboarding case; Continuum persists its obligation and schedules a real deadline.
 2. Cloud Tasks wakes the Sentinel; Pub/Sub deliberately redelivers the missing-event signal.
 3. A deterministic gate assesses v18, v19 and v20 for health, capability,
    jurisdiction, contract compatibility, scope and trust.
@@ -22,10 +23,13 @@ and independent verification prove one coherent lifecycle.
    from the eligible set; deterministic policy validates but never delegates authority.
 5. v17 is fenced. The selected successor receives two purpose-bound verified
    facts while raw injection, a secret, an unsupported inference and revoked memory are excluded.
-6. Fresh compliance evidence is acquired and one transactional provider effect
-   survives redelivery. A read-only verifier re-hashes the selection and context
-   receipts, reads provider state, and alone issues artifact six.
-7. Only a `VERIFIED` artifact-six result can enter the Antibody Foundry. Gemma 4
+6. The successor checks the exact legal entity through GLEIF and EU VAT through
+   VIES. ADK + Gemini 3.6 creates a cited decision pack; deterministic admission
+   checks every source, required control, and the `SANDBOX_ONLY` boundary.
+7. One transactional sandbox onboarding effect survives redelivery. A read-only
+   verifier re-hashes selection, context, and supplier decision-pack bindings,
+   reads provider state, and alone issues artifact six.
+8. Only a `VERIFIED` artifact-six result can enter the Antibody Foundry. Gemma 4
    turns its five bounded facts into a cited learning plan; deterministic
    admission then permits Veo 3.1 and Lyria 3 to render a content-addressed
    resilience brief. The media is explicitly derivative—never authority,
@@ -51,6 +55,11 @@ identifiers and the validity boundary are recorded in
 [the cloud proof](docs/CLOUD_PROOF.md). The complete evidence packet is a public,
 checksum-pinned GitHub Release asset, so judges can run its semantic verifier
 without Google credentials. Local success is never relabelled as cloud proof.
+
+The practical Supplier Assurance extension is implemented and fully tested but
+does not inherit release `0ceda49`'s cloud proof. Its new GLEIF/VIES/Gemini
+decision-pack claim remains pending until a newer exact commit is deployed and
+a fresh canonical evidence bundle passes the same offline verifier.
 
 The optional multimodal learning branch has also completed a genuine managed
 Google Cloud run. It used `google/gemma-4-26b-a4b-it-maas`,
@@ -92,7 +101,7 @@ excluded and there are no `pragma: no cover` shortcuts:
 ./scripts/quality-gate.sh
 ```
 
-The current gate executes 151 tests and reports genuine **100.0% statement and
+The current gate executes 158 tests and reports genuine **100.0% statement and
 branch coverage**.
 
 To generate a verifier-gated multimodal resilience brief in an authorized
@@ -202,6 +211,7 @@ https://continuum-showcase-rdzvxiysbq-ew.a.run.app and pinned to image digest
 ## Documentation
 
 - [Project brief](docs/PROJECT_BRIEF.md)
+- [Supplier Assurance Agent](docs/SUPPLIER_ASSURANCE.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Originality and provenance](docs/ORIGINALITY.md)
 - [Succession Protocol](docs/SUCCESSION_PROTOCOL.md)

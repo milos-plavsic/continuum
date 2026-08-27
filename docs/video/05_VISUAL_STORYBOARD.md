@@ -5,14 +5,18 @@
 - Canvas: 1920×1080, 30 fps, 16:9.
 - Maximum runtime: 3:58; no content may touch the four-minute boundary.
 - The canonical run is started exactly once on camera.
-- Cockpit polling is observational. No cursor action advances lifecycle state.
+- Cockpit polling is observational. **Start recovery** is the only cursor action
+  that advances lifecycle state; scrolling and proof focus remain read-only.
 - A proof cutaway may magnify evidence from that same run, but may not replace
   it with historical evidence or visually imply that an old run is fresh.
 - Use hard cuts for trust-boundary changes and gentle 250–350 ms crops for
   attention. Avoid decorative transitions, kinetic captions, and fake terminal
   typing.
-- Cursor stays parked after **Start recovery**. A small click ring appears only
-  for that one authorized interaction.
+- The source is a real browser recording of the private Cloud Run cockpit. No
+  screenshot sequence may impersonate the workflow.
+- Keep a visible cursor throughout the live sequence. Move it deliberately to
+  newly arrived evidence and scroll to the relevant native panel. Remove dead
+  dependency waits with transparent jump cuts instead of decorative motion.
 
 ## Screen grammar
 
@@ -69,7 +73,9 @@ merely stated by narration.
 
 ### 4 · Dynamic successor selection — 01:13–01:46
 
-- **01:13–01:19** — 130% crop on the succession-decision panel.
+- **01:13–01:19** — move the visible cursor to the populated succession panel,
+  then apply a soft local emphasis. Never place a freestanding square or an
+  early highlight over the preceding scene.
 - **01:19–01:29** — reveal v18 and v19 as eligible, then v20 as rejected with
   `HEALTH_UNVERIFIED · JURISDICTION_MISMATCH` legible.
 - **01:29–01:39** — hold `v18 selected by Gemini`; show its deployed endpoint,
@@ -119,18 +125,30 @@ same deterministic idempotency key.
 
 Acceptance: the executor never appears to attest to its own success.
 
-### 8 · Architecture as evidence — 03:16–03:43
+### 8 · Architecture and verifier-gated learning — 03:16–03:43
 
-- **03:16–03:27** — full 16:9 reference architecture. Illuminate its three
-  horizontal bands in sequence: OBSERVE, GOVERN, PROVE.
-- **03:27–03:36** — same-run Cloud proof strip: five Cloud Run revisions and
-  distinct service identities, Firestore, Cloud Tasks, Pub/Sub, Gemini 3.6.
-- **03:36–03:41** — native Cloud Trace view filtered to the exact trace ID;
-  highlight the Gemini span and verifier span, plus total correlated span count.
-- **03:41–03:43** — cut back to the verified cockpit for the signature line.
+- **03:16–03:21** — full 16:9 reference architecture. Illuminate OBSERVE,
+  GOVERN, and PROVE as one continuous path.
+- **03:21–03:25** — same-run Cloud proof strip and native trace: five private
+  Cloud Run services, distinct identities, and the correlated Gemini and
+  verifier spans. This is a compact proof, not a logo tour.
+- **03:25–03:29** — hard trust-boundary cut to the released learning proof.
+  Show `Gemini 3.6` as the bounded decision role already demonstrated in the
+  live run.
+- **03:29–03:34** — advance to `Independent verifier`; five admitted fact IDs
+  become visible. The top slug must say `RELEASED VERIFIABLE LEARNING PROOF`,
+  never `SAME-RUN PROOF`.
+- **03:34–03:38** — advance to `Gemma 4`; show the actual cited resilience-plan
+  headline and deterministic-admission receipt.
+- **03:38–03:42** — advance to `Veo 3.1 + Lyria 3`; play the actual Veo output
+  while the Lyria waveform activates. Keep both model identifiers and their
+  shortened content digests legible.
+- **03:42–03:43** — land on `DERIVED · NOT AUTHORITY OR EVIDENCE`, then cut back
+  to the verified cockpit for the signature line.
 
-Acceptance: cloud services explain already-observed behavior; they are not a
-technology-logo tour.
+Acceptance: cloud services explain already-observed behavior; the four models
+form one useful chain rather than a technology-logo tour; a viewer cannot
+mistake separately released derivative media for fresh-run authority or proof.
 
 ### 9 · Personal standard — 03:43–03:58
 
@@ -153,6 +171,18 @@ remains visible long enough to read.
 5. Edit picture to the approved scene masters; do not time-stretch the live run.
 6. Export a draft with burnt-in timecode for technical review, then a clean
    submission master after every visual claim is checked against the run.
+
+## Highlight and transition discipline
+
+- Highlights are editorial annotations, not runtime evidence. Use a soft cyan
+  outline or restrained spotlight around the exact native element; never an
+  unexplained opaque square.
+- Begin a highlight 150–250 ms before the narration names the element, keep it
+  for the complete claim, and fade it within 250–350 ms after the phrase.
+- Between major stages only, use the verifier-gated Lyria 3 ambient cue at low
+  level beneath narration. Fade in over 500–700 ms and out over 700–900 ms.
+- Preserve quiet under predecessor denial, `1 provider effect · 0 duplicates`,
+  and verifier-issued `VERIFIED` so the proof lands cleanly.
 
 ## Visual quality gate
 

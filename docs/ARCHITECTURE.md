@@ -45,6 +45,9 @@ Promise Ledger ----> Negative Space Sentinel
 - Gemma 4 for verifier-gated, cited post-incident learning plans
 - Veo 3.1 Lite and Lyria 3 for derivative training media in private,
   content-addressed Cloud Storage
+- Official GLEIF LEI API and European Commission VIES REST service as read-only
+  Supplier Assurance Agent tools; every normalized response is content-addressed
+  before Gemini sees it
 
 The cloud path is an implemented reference binding. A release claim is valid
 only after that exact commit is deployed and a fresh exact-run evidence bundle
@@ -99,6 +102,22 @@ The executor produces a receipt but cannot attest its own success. A separately
 authorized verifier reads provider state, resolves every referenced digest, and
 issues a verified, failed, or inconclusive attestation. Signatures bind content
 to a key; deployment trust policy determines whether that key is authoritative.
+
+## Practical Supplier Assurance workflow
+
+The selected successor receives the purpose-bound supplier application and
+calls two official, read-only sources: GLEIF for the exact LEI record and VIES
+for the exact EU VAT identifier. The host normalizes and hashes both responses;
+Gemini 3.6, invoked through ADK, may synthesize only a structured `ONBOARD` or
+`HOLD` decision pack with exact citations. Deterministic admission independently
+rechecks legal-name and country equality, entity/registration state, VAT result,
+required controls, citation completeness, unique references, requested action,
+and `SANDBOX_ONLY` scope. The model cannot grant authority or execute.
+
+The decision-pack digest is persisted beside compliance state and bound into
+the execution receipt. The independent verifier reads that state directly and
+rejects a substituted workflow, scope, recommendation, or decision-pack digest
+before it may issue artifact six.
 
 ## Shared primitives
 

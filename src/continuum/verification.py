@@ -193,6 +193,14 @@ class IndependentVerificationEngine:
                 compliance.get("evidence_id") != compliance_claim.get("evidence_id") or
                 compliance.get("document_hash") != compliance_claim.get("document_hash")):
             failures.append("COMPLIANCE_STATE_MISMATCH")
+        if "workflow" in compliance_claim and (
+                compliance_claim.get("workflow") != "SUPPLIER_ASSURANCE_AGENT" or
+                compliance_claim.get("decision_scope") != "SANDBOX_ONLY" or
+                compliance_claim.get("recommendation") != "ONBOARD" or
+                not compliance_claim.get("decision_pack_digest") or
+                any(compliance.get(key) != compliance_claim.get(key) for key in (
+                    "workflow", "decision_scope", "recommendation", "decision_pack_digest"))):
+            failures.append("SUPPLIER_ASSURANCE_STATE_MISMATCH")
         provider_body = receipt["body"]["provider"]
         if (provider.get("effect_count") != 1 or
                 provider.get("provider_ref") != provider_body["resource_ref"] or
@@ -232,7 +240,10 @@ class IndependentVerificationEngine:
                         {"criterion_id": "compliance-verified", "passed": True},
                         {"criterion_id": "provider-effect-once", "passed": True},
                         {"criterion_id": "predecessor-revoked", "passed": True},
-                    ],
+                    ] + ([{"criterion_id": "supplier-assurance-admitted", "passed": True}]
+                         if receipt.get("extensions", {}).get(
+                             "continuum.dev/compliance", {}).get("workflow")
+                         == "SUPPLIER_ASSURANCE_AGENT" else []),
                     "provider_observation_refs": [provider["provider_ref"]],
                     "verified_at": issued_at,
                 },

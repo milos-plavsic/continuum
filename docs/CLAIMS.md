@@ -19,6 +19,7 @@
 | Verifier alone issues artifact six | `reference-google-cloud` | five claims plus read-only authority/compliance/provider reads | Verified by separate verifier identity and final bundle |
 | Minimum-context cloud succession | `reference-google-cloud` | content-addressed inclusion/exclusion receipt recomputed by verifier | Verified: two included, four excluded before retrieval |
 | End-to-end Cloud Trace | `reference-google-cloud` | real OTel spans fetched from the Cloud Trace API | Verified: 104 spans under trace `caa315c2…` |
+| Practical Supplier Assurance Agent | `reference-google-cloud-next` | official GLEIF and VIES observations, ADK/Gemini decision pack, deterministic admission, one sandbox effect, independent decision-pack binding | Implemented with 100% local branch coverage; cloud claim intentionally pending fresh exact-commit deployment and capture |
 
 The offline verifier may issue `PASS` only when every mandatory cloud object is
 present, content-addressed, and semantically consistent. Missing evidence is

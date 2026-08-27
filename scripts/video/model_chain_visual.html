@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Continuum — verifier-gated generative learning</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #eef8ff;
+      --muted: #8ea8b9;
+      --cyan: #54d7ff;
+      --green: #6ee7b7;
+      --violet: #b7a5ff;
+      --line: rgba(142, 168, 185, .22);
+      --panel: rgba(8, 22, 32, .84);
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 15%, rgba(24, 126, 162, .22), transparent 30%),
+        radial-gradient(circle at 82% 78%, rgba(101, 72, 184, .17), transparent 30%),
+        #061018;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .22;
+      background-image: linear-gradient(rgba(84,215,255,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(84,215,255,.06) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: linear-gradient(to bottom, black, transparent 88%);
+    }
+    main { height: 100%; padding: 52px 64px 42px; display: grid; grid-template-rows: auto auto 1fr auto; gap: 28px; }
+    header { display: flex; align-items: flex-start; justify-content: space-between; }
+    .slug { color: var(--green); font-size: 17px; letter-spacing: .14em; font-weight: 760; }
+    h1 { margin: 9px 0 0; font-size: 44px; line-height: 1.05; letter-spacing: -.035em; }
+    .truth {
+      border: 1px solid rgba(110, 231, 183, .42); background: rgba(25, 88, 70, .22);
+      border-radius: 999px; padding: 10px 16px; color: #baf7df; font-size: 15px; font-weight: 700;
+    }
+    .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; position: relative; }
+    .flow::before {
+      content: ""; position: absolute; left: 11%; right: 11%; top: 49px; height: 2px;
+      background: linear-gradient(90deg, var(--cyan), var(--green), var(--violet)); opacity: .3;
+    }
+    .stage {
+      position: relative; z-index: 1; min-height: 132px; padding: 18px 20px; border: 1px solid var(--line);
+      border-radius: 18px; background: rgba(6, 16, 24, .94); opacity: .44; transform: translateY(6px);
+      transition: opacity 320ms ease, transform 320ms ease, border-color 320ms ease, box-shadow 320ms ease;
+    }
+    .stage.active, .stage.done { opacity: 1; transform: none; }
+    .stage.active { border-color: rgba(84,215,255,.8); box-shadow: 0 0 0 3px rgba(84,215,255,.11), 0 12px 42px rgba(0,0,0,.25); }
+    .stage.done { border-color: rgba(110,231,183,.42); }
+    .number {
+      width: 34px; height: 34px; display: grid; place-items: center; margin-bottom: 13px; border-radius: 50%;
+      background: #0e2b3a; border: 1px solid rgba(84,215,255,.55); color: var(--cyan); font-weight: 800;
+    }
+    .stage.done .number { background: #103629; border-color: var(--green); color: var(--green); }
+    .stage strong { display: block; font-size: 20px; }
+    .stage small { display: block; margin-top: 6px; color: var(--muted); font-size: 14px; line-height: 1.35; }
+    .workspace { min-height: 0; display: grid; grid-template-columns: 1.08fr .92fr; gap: 26px; }
+    .card { min-height: 0; border: 1px solid var(--line); border-radius: 22px; background: var(--panel); overflow: hidden; }
+    .proof { padding: 28px 30px; display: grid; grid-template-rows: auto 1fr auto; }
+    .eyebrow { color: var(--cyan); font-size: 14px; letter-spacing: .13em; font-weight: 760; }
+    .proof h2 { margin: 8px 0 0; font-size: 30px; line-height: 1.16; letter-spacing: -.02em; }
+    .detail { margin-top: 23px; align-self: center; }
+    .detail article { display: none; animation: reveal 350ms ease both; }
+    .detail article.visible { display: block; }
+    @keyframes reveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .model { color: var(--violet); font: 700 16px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .statement { margin: 14px 0 0; font-size: 25px; line-height: 1.34; max-width: 770px; }
+    .facts { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 9px; }
+    .fact { padding: 8px 11px; border-radius: 8px; background: rgba(110,231,183,.09); border: 1px solid rgba(110,231,183,.28); color: #baf7df; font-size: 13px; }
+    .gate { display: flex; gap: 12px; align-items: center; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); }
+    .gate b { color: var(--green); }
+    .media { display: grid; grid-template-rows: 1fr auto; }
+    .video-shell { position: relative; min-height: 0; background: #020609; }
+    video { width: 100%; height: 100%; object-fit: cover; opacity: .18; filter: saturate(.7); transition: opacity 400ms ease, filter 400ms ease; }
+    video.live { opacity: 1; filter: none; }
+    .media-label { position: absolute; left: 20px; top: 18px; padding: 7px 10px; border-radius: 8px; background: rgba(2,6,9,.78); font-size: 13px; font-weight: 750; letter-spacing: .08em; }
+    .audio { padding: 18px 22px; border-top: 1px solid var(--line); background: rgba(4,12,18,.96); display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; }
+    .audio strong { font-size: 15px; }
+    .wave { height: 34px; display: flex; gap: 5px; align-items: center; opacity: .28; transition: opacity 300ms ease; }
+    .wave.live { opacity: 1; }
+    .wave i { display: block; width: 4px; height: var(--h); border-radius: 4px; background: linear-gradient(var(--cyan), var(--violet)); animation: pulse 1.2s ease-in-out infinite alternate; animation-delay: var(--d); }
+    @keyframes pulse { to { transform: scaleY(.55); opacity: .58; } }
+    .digest { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
+    footer { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 14px; }
+    footer b { color: var(--green); letter-spacing: .08em; }
+    #continuum-demo-cursor {
+      position: fixed; left: 0; top: 0; z-index: 9999; width: 28px; height: 36px; pointer-events: none;
+      transform: translate3d(1760px, 990px, 0); transition: transform 650ms cubic-bezier(.22,.78,.25,1);
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,.8));
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div><div class="slug">RELEASED VERIFIABLE LEARNING PROOF</div><h1>One governed lifecycle. Four generative models.</h1></div>
+      <div class="truth">DERIVED · NOT AUTHORITY OR EVIDENCE</div>
+    </header>
+
+    <section class="flow" aria-label="Generative model chain">
+      <article class="stage active" id="stage-gemini"><div class="number">1</div><strong>Gemini 3.6</strong><small>Bounded successor choice from the eligible set</small></article>
+      <article class="stage" id="stage-gate"><div class="number">2</div><strong>Independent verifier</strong><small>Only VERIFIED outcomes may enter learning</small></article>
+      <article class="stage" id="stage-gemma"><div class="number">3</div><strong>Gemma 4</strong><small>Cited resilience plan from five admitted facts</small></article>
+      <article class="stage" id="stage-media"><div class="number">4</div><strong>Veo 3.1 + Lyria 3</strong><small>Content-addressed training media</small></article>
+    </section>
+
+    <section class="workspace">
+      <div class="card proof">
+        <div><div class="eyebrow" id="proof-eyebrow">BOUNDED DECISION</div><h2 id="proof-title">The model proposes. Policy remains authoritative.</h2></div>
+        <div class="detail">
+          <article class="visible" data-detail="gemini">
+            <div class="model">gemini-3.6-flash · Google ADK · Vertex AI</div>
+            <p class="statement">v18 selected from the deterministically eligible v18 / v19 set, with immutable deployment citations.</p>
+          </article>
+          <article data-detail="gate">
+            <div class="model">continuum/independent-attestation/1.0</div>
+            <p class="statement">Control-plane claims are recomputed by a separately deployed, read-only verifier.</p>
+            <div class="facts"><span class="fact">obligation preserved</span><span class="fact">predecessor revoked</span><span class="fact">successor activated</span><span class="fact">provider effect once</span><span class="fact">independently verified</span></div>
+          </article>
+          <article data-detail="gemma">
+            <div class="model">google/gemma-4-26b-a4b-it-maas</div>
+            <p class="statement">“Systemic Continuity and Version Transition Protocol”</p>
+            <div class="facts"><span class="fact">5 / 5 cited fact IDs</span><span class="fact">deterministic admission passed</span><span class="fact">no new authority</span></div>
+          </article>
+          <article data-detail="media">
+            <div class="model">veo-3.1-lite-generate-001 · lyria-3-clip-preview</div>
+            <p class="statement">The admitted plan becomes a visual workflow and calm transition score—both bound to one request digest.</p>
+          </article>
+        </div>
+        <div class="gate"><b>✓ provenance preserved</b><span>request 8c1e8e14…e74c32 · public release multimodal-proof-8bec862</span></div>
+      </div>
+
+      <div class="card media">
+        <div class="video-shell">
+          <video id="veo" muted loop playsinline preload="auto" src="../../artifacts/learning/public-multimodal-proof-8bec862/continuum-veo-3.1.mp4"></video>
+          <div class="media-label">ACTUAL VEO OUTPUT · SHA-256 fb8bcb2d…c811bd</div>
+        </div>
+        <div class="audio">
+          <strong>Actual Lyria output</strong>
+          <div class="wave" id="wave">
+            <i style="--h:12px;--d:-.1s"></i><i style="--h:25px;--d:-.7s"></i><i style="--h:18px;--d:-.2s"></i><i style="--h:31px;--d:-.9s"></i><i style="--h:20px;--d:-.4s"></i><i style="--h:27px;--d:-1.1s"></i><i style="--h:14px;--d:-.3s"></i><i style="--h:29px;--d:-.8s"></i><i style="--h:22px;--d:-.5s"></i><i style="--h:34px;--d:-1s"></i><i style="--h:17px;--d:-.6s"></i><i style="--h:26px;--d:-.15s"></i><i style="--h:13px;--d:-.75s"></i><i style="--h:30px;--d:-.35s"></i><i style="--h:21px;--d:-.95s"></i><i style="--h:28px;--d:-.55s"></i>
+          </div>
+          <span class="digest">d95f8220…1242ab</span>
+        </div>
+      </div>
+    </section>
+
+    <footer><span>Verifier-gated Antibody Foundry · same contract, separately released proof</span><b>USEFUL OUTPUT ≠ TRUSTED STATE</b></footer>
+  </main>
+  <div id="continuum-demo-cursor" aria-hidden="true"><svg viewBox="0 0 28 36"><path d="M2 2 L2 29 L9.3 22.8 L14.2 34 L19.2 31.8 L14.1 20.7 L24 20 Z" fill="#f8ffff" stroke="#071018" stroke-width="2" stroke-linejoin="round"/></svg></div>
+  <script>
+    const names = ["gemini", "gate", "gemma", "media"];
+    window.showContinuumStage = async (name) => {
+      const index = names.indexOf(name);
+      document.querySelectorAll(".stage").forEach((stage, i) => {
+        stage.classList.toggle("active", i === index);
+        stage.classList.toggle("done", i < index);
+      });
+      document.querySelectorAll("[data-detail]").forEach((node) => node.classList.toggle("visible", node.dataset.detail === name));
+      const titles = {
+        gemini: ["BOUNDED DECISION", "The model proposes. Policy remains authoritative."],
+        gate: ["INDEPENDENT ADMISSION GATE", "Only a verified outcome may become a lesson."],
+        gemma: ["CITED RESILIENCE PLAN", "Five admitted facts in. No invented state out."],
+        media: ["CONTENT-ADDRESSED OUTPUT", "One plan becomes reproducible training media."]
+      };
+      document.querySelector("#proof-eyebrow").textContent = titles[name][0];
+      document.querySelector("#proof-title").textContent = titles[name][1];
+      const video = document.querySelector("#veo");
+      const enabled = name === "media";
+      video.classList.toggle("live", enabled);
+      document.querySelector("#wave").classList.toggle("live", enabled);
+      if (enabled) { video.currentTime = 0; await video.play(); } else { video.pause(); }
+    };
+    window.moveContinuumCursor = (x, y) => { document.querySelector("#continuum-demo-cursor").style.transform = `translate3d(${x}px, ${y}px, 0)`; };
+  </script>
+</body>
+</html>

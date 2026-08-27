@@ -22,6 +22,7 @@ from .succession_selection import (
     SuccessorCandidate, SuccessionRequirements, admit_successor_choice,
     assess_candidates, model_candidate_view,
 )
+from .supplier_assurance import application_digest, canonical_supplier_application
 
 
 PHASES = (
@@ -115,11 +116,13 @@ def canonical_successor_candidates() -> tuple[SuccessorCandidate, ...]:
 
 
 def canonical_context_items() -> tuple[ContextItem, ...]:
+    application = canonical_supplier_application()
     return (
         ContextItem("obligation:vendor-compliance-042", "vendor.approved",
                     "complete vendor onboarding", "sha256:obligation-042", "event:obligation-open"),
-        ContextItem("fact:verified-vendor-identity", "vendor.approved",
-                    "complete vendor onboarding", "sha256:vendor-identity", "event:identity-verified"),
+        ContextItem("application:supplier-assurance-042", "vendor.approved",
+                    "complete vendor onboarding", f"sha256:{application_digest(application)}",
+                    "event:supplier-application-received"),
         ContextItem("raw:injected-document", "vendor.approved", "complete vendor onboarding",
                     "sha256:raw-document", "event:injection", classification="RAW_UNTRUSTED"),
         ContextItem("secret:predecessor-token", "agent.private", "complete vendor onboarding",
@@ -141,6 +144,7 @@ def canonical_run_command(run_id: str,
         "predecessor_epoch": scenario.predecessor_epoch,
         "successor_epoch": scenario.successor_epoch,
         "idempotency_key": scenario.idempotency_key,
+        "supplier_application_digest": application_digest(canonical_supplier_application()),
     }
 
 
@@ -231,8 +235,10 @@ class DurableCloudScenarioService:
             "selected_successor": current.get("successor"),
             "candidate_assessment": current.get("candidate_assessment"),
             "context_reconstruction": current.get("context_reconstruction"),
+            "supplier_assurance": current.get("compliance"),
             "business_impact": {"currency": "EUR", "value_at_risk": 250000,
-                                "obligation": "Compliant supplier onboarding"},
+                                "obligation": "Autonomous supplier assurance and onboarding",
+                                "effect_scope": "SANDBOX_ONLY"},
             "deadline": current.get("deadline"),
             "observation_count": len(self.store.observations(run_id)),
             "observations": self.store.observations(run_id),
@@ -244,6 +250,7 @@ class DurableCloudScenarioService:
         deadline = self.clock() + timedelta(seconds=self.scenario.deadline_delay_seconds)
         return {**command, "command_digest": digest,
                 "correlation_id": canonical_run_correlation_id(run_id, self.scenario),
+                "supplier_application": canonical_supplier_application(),
                 "deadline": deadline.isoformat().replace("+00:00", "Z"),
                 "phase": "CREATED", "revision": 0}
 
@@ -385,6 +392,8 @@ class DurableCloudScenarioService:
                 "run_id": current["run_id"], "correlation_id": current["correlation_id"],
                 "tenant_id": current["tenant_id"], "obligation_id": current["obligation_id"],
                 "vendor_id": self.scenario.vendor_id,
+                "successor": current["successor"],
+                "application": current["supplier_application"],
             })
             if (compliance.get("status") != "VERIFIED" or not compliance.get("evidence_id")
                     or not compliance.get("document_hash")):

@@ -182,6 +182,7 @@ class CloudAppTests(unittest.TestCase):
         self.assertEqual(showcase.post("/internal/attempt-action", json={}).status_code, 404)
         self.assertEqual(showcase.post("/internal/attempt-memory").status_code, 404)
         self.assertEqual(showcase.post("/internal/investigate", json={}).status_code, 404)
+        self.assertEqual(showcase.post("/internal/assess-supplier", json={}).status_code, 404)
         self.assertEqual(showcase.post("/internal/verify", json={}).status_code, 404)
 
     def test_live_investigation_is_injected_typed_and_workload_derived(self):
@@ -209,6 +210,27 @@ class CloudAppTests(unittest.TestCase):
         response = agent.post("/internal/investigate", json={"event_id": "e1"})
         self.assertEqual(response.status_code, 422)
         self.assertEqual(response.json()["detail"]["code"], "INVESTIGATION_ASSERTS_AUTHORITY")
+
+    def test_supplier_assurance_agent_is_typed_workload_derived_and_role_separated(self):
+        observed = {}
+        async def assess(payload, identity):
+            observed.update(payload=payload, identity=identity)
+            return {"workflow": "SUPPLIER_ASSURANCE_AGENT", "status": "VERIFIED"}
+        agent = TestClient(create_cloud_app(role="agent-v18", supplier_assessor=assess,
+            identity_resolver=lambda: "v18@example.iam.gserviceaccount.com"))
+        response = agent.post("/internal/assess-supplier", json={"application": {"id": "a"}})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["actor"], "v18@example.iam.gserviceaccount.com")
+        self.assertEqual(observed["identity"], "v18@example.iam.gserviceaccount.com")
+        control = TestClient(create_cloud_app(role="control", scenario_service=unittest.mock.Mock(),
+                                              supplier_assessor=assess))
+        self.assertEqual(control.post("/internal/assess-supplier", json={}).status_code, 404)
+        unavailable = TestClient(create_cloud_app(role="agent-v19", supplier_assessor=None))
+        self.assertEqual(unavailable.post("/internal/assess-supplier", json={}).status_code, 503)
+        failing = TestClient(create_cloud_app(role="agent-v19",
+            supplier_assessor=lambda payload, identity: (_ for _ in ()).throw(ValueError("bad")),
+            identity_resolver=lambda: "v19@example"))
+        self.assertEqual(failing.post("/internal/assess-supplier", json={}).status_code, 422)
 
     def test_verifier_endpoint_is_role_separated(self):
         adapter = lambda payload, identity: {"status": "PASS", "subject": payload["digest"]}

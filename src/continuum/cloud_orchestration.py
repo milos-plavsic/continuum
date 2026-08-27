@@ -8,10 +8,14 @@ from typing import Any, Awaitable, Callable
 
 from .contract import canonical_bytes
 from .verification import FirestoreVerificationReader, IndependentVerificationEngine
+from .supplier_assurance import (
+    admit_supplier_assessment, check_eu_vat, lookup_gleif, model_supplier_view,
+)
 
 
 Investigator = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[str, Any]]]
 Verifier = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[str, Any]]]
+SupplierAssessor = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[str, Any]]]
 ALLOWED_REMEDIATIONS = {"initiate_governed_succession", "request_operator_review"}
 
 
@@ -102,6 +106,52 @@ async def live_adk_investigator(payload: dict[str, Any], workload_identity: str)
     if not isinstance(result, dict):
         raise ValueError("INVESTIGATION_RESULT_INVALID")
     return result
+
+
+async def live_adk_supplier_assessor(payload: dict[str, Any],
+                                     workload_identity: str) -> dict[str, Any]:
+    """Run the practical supplier workflow with live tools and bounded Gemini synthesis."""
+    application = payload.get("application")
+    if not isinstance(application, dict):
+        raise ValueError("SUPPLIER_APPLICATION_REQUIRED")
+    try:
+        gleif = lookup_gleif(str(application.get("lei", "")))
+        vies = check_eu_vat(str(application.get("country_code", "")),
+                            str(application.get("vat_number", "")))
+    except OSError as error:
+        raise RuntimeError("SUPPLIER_TOOL_UNAVAILABLE") from error
+
+    from google.adk.runners import Runner
+    from google.adk.sessions import InMemorySessionService
+    from google.genai import types
+    from app.agent import supplier_agent
+
+    view = model_supplier_view(application, gleif, vies)
+    session_id = hashlib.sha256(canonical_request(
+        {"run_id": payload.get("run_id"), "supplier": view}, workload_identity)).hexdigest()[:32]
+    sessions = InMemorySessionService()
+    await sessions.create_session(
+        app_name="continuum", user_id=workload_identity, session_id=session_id)
+    runner = Runner(agent=supplier_agent, app_name="continuum", session_service=sessions)
+    prompt = json.dumps({"task": "assess_supplier_for_sandbox_onboarding", **view},
+                        sort_keys=True, separators=(",", ":"))
+    final_text: str | None = None
+    async for event in runner.run_async(
+            user_id=workload_identity, session_id=session_id,
+            new_message=types.Content(role="user", parts=[types.Part(text=prompt)])):
+        if event.is_final_response() and event.content:
+            final_text = "".join(part.text or "" for part in event.content.parts)
+    if final_text is None:
+        raise ValueError("SUPPLIER_ASSESSMENT_MISSING")
+    try:
+        result = json.loads(final_text)
+    except json.JSONDecodeError as error:
+        raise ValueError("SUPPLIER_ASSESSMENT_NOT_JSON") from error
+    if not isinstance(result, dict):
+        raise ValueError("SUPPLIER_MODEL_RESULT_INVALID")
+    return admit_supplier_assessment(
+        application=application, gleif=gleif, vies=vies,
+        model_result=result, actor=workload_identity)
 
 
 def canonical_request(payload: dict[str, Any], workload_identity: str) -> bytes:

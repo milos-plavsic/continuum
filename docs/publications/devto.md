@@ -3,6 +3,7 @@ title: "The Agent Failed. The Promise Did Not: Building Verifiable Agent Success
 published: true
 description: "How Continuum carries obligations across autonomous-agent failure without transferring stale authority, poisoned context, or duplicate effects."
 tags: ai, googlecloud, agents, security
+cover_image: "https://dev-to-uploads.s3.us-east-2.amazonaws.com/uploads/articles/ln4arpyalu3p8hfu9jq2.png"
 ---
 
 Published at: https://dev.to/milos-plavsic/the-agent-failed-the-promise-did-not-building-verifiable-agent-succession-oe4
