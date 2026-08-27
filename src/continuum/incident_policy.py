@@ -1,7 +1,7 @@
 """Deterministic incident assessment; models receive policy output, never policy prose."""
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable
 
@@ -31,7 +31,19 @@ class IncidentAssessmentReceipt:
     receipt_digest: str
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        # This is a protocol DTO, so expose only JSON-native arrays.  Keeping
+        # tuples internally preserves immutability without leaking Python type
+        # distinctions across Firestore or another language implementation.
+        return {
+            "policy_id": self.policy_id,
+            "evidence_receipt_digest": self.evidence_receipt_digest,
+            "evidence_valid": self.evidence_valid,
+            "signal_types": list(self.signal_types),
+            "verdict": self.verdict,
+            "reason_codes": list(self.reason_codes),
+            "allowed_remediations": list(self.allowed_remediations),
+            "receipt_digest": self.receipt_digest,
+        }
 
 
 def lifecycle_trust_policy() -> EvidenceTrustPolicy:
