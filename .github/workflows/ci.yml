@@ -48,9 +48,42 @@ jobs:
         with:
           persist-credentials: false
       - name: Build the submitted Cloud Run image
-        run: docker build --pull --tag continuum:${{ github.sha }} .
+        run: |
+          docker build --pull \
+            --build-arg VCS_REF=${{ github.sha }} \
+            --build-arg BUILD_DATE=1970-01-01T00:00:00Z \
+            --tag continuum:${{ github.sha }} .
       - name: Verify non-root runtime and import surface
         run: |
           test "$(docker run --rm continuum:${{ github.sha }} id -u)" = "10001"
           docker run --rm --entrypoint python continuum:${{ github.sha }} -c \
             "import continuum.cloud_app; import continuum.verification; import continuum.cloud_gateway"
+          test -z "$(docker run --rm --entrypoint sh continuum:${{ github.sha }} -c 'command -v uv || true')"
+      - name: Build and smoke-test credential-free local profile
+        run: |
+          docker build --target local-runtime --tag continuum-local:${{ github.sha }} .
+          docker run --rm continuum-local:${{ github.sha }} python -c \
+            "from continuum.local_runtime import run_local_succession; assert run_local_succession('ci-local')['phase'] == 'VERIFIED'"
+          test -z "$(docker run --rm --entrypoint sh continuum-local:${{ github.sha }} -c 'command -v gcloud || true')"
+      - name: Generate SPDX SBOM from final runtime image
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          image: continuum:${{ github.sha }}
+          format: spdx-json
+          output-file: continuum-${{ github.sha }}.spdx.json
+          upload-artifact: false
+      - name: Gate actionable HIGH and CRITICAL vulnerabilities
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: continuum:${{ github.sha }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Retain SBOM for audit
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: continuum-sbom-${{ github.sha }}
+          path: continuum-${{ github.sha }}.spdx.json
+          if-no-files-found: error
+          retention-days: 30

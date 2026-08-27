@@ -15,6 +15,7 @@ from continuum.cloud_gateway import FirestoreActionGateway
 from continuum.contract import canonical_bytes
 from hashlib import sha256
 from continuum.standard import verify_bundle
+from tests.incident_fixtures import incident_extension
 
 
 class Snapshot:
@@ -205,15 +206,24 @@ class CloudAdapterCompleteTests(unittest.TestCase):
                         "evidence_manifest_refs": ["build:v18", "health:v18"],
                         "supporting_citations": [{"claim": "BUILD_PROVENANCE",
                                                   "evidence_refs": ["build:v18"]}]}}}
-        proposal = RemoteInvestigator(Client(), "https://v18").investigate({"run_id": "r"})
+        proposal = RemoteInvestigator(Client(), "https://v18").investigate({
+            "run_id": "r", "incident_assessment_receipt": {
+                "receipt_digest": incident_extension()["incident_assessment"]["receipt_digest"]}})
         self.assertEqual(proposal["evidence_ids"], ["e1"])
 
         db = Firestore(); workload = Workload("v17@example")
         authority = FirestoreAuthority(db, workload, "https://v17", "v17@example")
         self.assertEqual(authority.decide([])["outcome"], "HOLD")
-        evidence = [{"evidence": {"signals": [{"event_type": value} for value in FirestoreLifecycleEvidence.REQUIRED],
-                                  "selected_plan": "initiate_governed_succession"}}]
+        self.assertEqual(authority.decide([{"evidence": {
+            "incident_assessment": {"unexpected": True}}}])["outcome"], "HOLD")
+        evidence = [{"kind": "investigation.observed", "evidence": {
+            "signals": [{"event_type": value} for value in FirestoreLifecycleEvidence.REQUIRED],
+            "selected_plan": "initiate_governed_succession",
+            "incident_assessment": incident_extension()["incident_assessment"]}}]
         self.assertEqual(authority.decide(evidence)["outcome"], "APPROVE_SUCCESSION")
+        mismatch = deepcopy(evidence)
+        mismatch[0]["evidence"]["signals"] = []
+        self.assertEqual(authority.decide(mismatch)["outcome"], "HOLD")
         with self.assertRaisesRegex(ValueError, "PREDECESSOR_NOT_FENCED"): authority.activate_successor(request())
         authority.fence_predecessor(request())
         with self.assertRaisesRegex(ValueError, "AUTHORITY_EPOCH_REGRESSION"):
@@ -365,6 +375,9 @@ class CloudAdapterCompleteTests(unittest.TestCase):
                    "workflow": "SUPPLIER_ASSURANCE_AGENT", "decision_scope": "SANDBOX_ONLY",
                    "recommendation": "ONBOARD", "decision_pack_digest": "pack"},
                "decision": {"outcome": "APPROVE_SUCCESSION", "decision_id": "d"},
+               "evidence_records": incident_extension()["records"],
+               "evidence_validation": incident_extension()["evidence_validation"],
+               "incident_assessment": incident_extension()["incident_assessment"],
                "provider_observation": {"effect_count": 1, "provider_ref": "firestore://vendor/1", "request_digest": "digest", "compliance_evidence_id": "e1"}}
         exporter = ObservedContractExporter("mailto:control@example", "mailto:verifier@example")
         bundle = exporter.export(run, [{"sequence": 1, "kind": "observed"}])

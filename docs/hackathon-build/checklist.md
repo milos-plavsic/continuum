@@ -222,3 +222,46 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   What to build: Protected-branch PR, green CI merge, exact-commit Cloud Run deployment, fresh canonical run, sanitized bundle, and demo rehearsal.
   Acceptance: Commit, image, candidate decision, context receipt, effect, identities, logs/traces, independent verdict, and published checksums all agree.
   Verify: Required GitHub checks, offline PASS, live unedited rehearsal, and clean main.
+
+## Standards-readiness hardening — autonomous
+
+- [x] **43. Remove the remediation policy table from the model boundary**
+  Spec ref: `spec.md > Standards-readiness hardening`
+  What to build: Deterministic incident assessment, content-addressed receipt, allowed-remediation set, bounded model context, and independent policy admission.
+  Acceptance: Gemini may explain or rank only already-admissible choices; model output cannot create an allowed remediation or alter the incident verdict.
+  Verify: Truth-table, mutation, ablation, malformed-output, and lifecycle tests.
+- [x] **44. Formalize evidence and trust policy**
+  Spec ref: `spec.md > Standards-readiness hardening`
+  What to build: Versioned evidence descriptors for issuer, subject, type, source authority, observation/expiry, payload digest, signature reference, and trust-policy version, plus deterministic validation receipts.
+  Acceptance: Unknown issuers/types, stale/future evidence, digest substitution, duplicate IDs, and missing authentication fail closed with stable reasons.
+  Verify: Golden vector, boundary tests, receipt mutation tests, and cloud adapter checks.
+- [x] **45. Prove a second domain without diluting the live demo**
+  Spec ref: `spec.md > Standards-readiness hardening`
+  What to build: A cloud-neutral incident-remediation consumer that preserves a service-restoration obligation and executes one idempotent rollback effect through the same SDK/contract boundary.
+  Acceptance: No procurement constants or Google packages are required and both domains emit independently verifiable evidence.
+  Verify: Isolated subprocess, domain-independence assertions, and duplicate-effect test.
+- [x] **46. Add deterministic concurrent multi-run stress evidence**
+  Spec ref: `spec.md > Standards-readiness hardening`
+  What to build: Barrier-synchronized multi-run/idempotency contention harness with measured outcomes and digest-bound report.
+  Acceptance: Concurrent duplicate requests converge to one effect per obligation, cross-run keys remain isolated, and conflicts fail visibly.
+  Verify: Repeated stress run, invariant assertions, and report regeneration.
+- [x] **47. Ship a fully local container profile**
+  Spec ref: `spec.md > Standards-readiness hardening`
+  What to build: Deterministic investigator adapter, local composition, health/run endpoints, Docker Compose profile, and credential-free smoke command.
+  Acceptance: A clean machine can execute the full local succession path without Google credentials or network model access.
+  Verify: Local process test and Docker Compose/container smoke.
+- [x] **48. Harden dependencies and runtime supply chain**
+  Spec ref: `spec.md > Standards-readiness hardening`
+  What to build: Bounded ADK dependency, locked environment, multi-stage non-root image, OCI metadata, SBOM generation, vulnerability scan, and pinned CI actions.
+  Acceptance: Runtime excludes build tooling/caches, SBOM is generated from the final image, and HIGH/CRITICAL findings gate CI under a documented policy.
+  Verify: Locked sync, reproducible build, image inspection, SBOM, and scanner execution.
+- [x] **49. Synchronize normative and judge-facing documentation**
+  Spec ref: `spec.md > Standards-readiness hardening`
+  What to build: Evidence specification, architecture/adoption boundary, expanded claims matrix, explicit epistemic limits, runbooks, and originality note.
+  Acceptance: Every new claim links to executable evidence and no one-shot demo is represented as universal production proof.
+  Verify: Link/claim audit and release gate.
+- [ ] **50. Pass, merge, deploy, and recapture the hardened release**
+  Spec ref: `prd.md > Acceptance outcomes`
+  What to build: Genuine 100% statement/branch coverage, all conformance/stress/container/security gates, protected PR, exact-commit deployment, fresh canonical capture, and public checksummed evidence.
+  Acceptance: Code, CI, image, cloud run, proof release, and documentation identify the same hardened application release.
+  Verify: Green required checks, offline PASS, signature verification, and clean `main`.

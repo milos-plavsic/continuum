@@ -26,6 +26,10 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         ).read_text()
         cls.cloud_proof = (ROOT / "scripts/cloud/run-cloud-proof.sh").read_text()
         cls.cloud_smoke = (ROOT / "scripts/cloud/run-smoke.sh").read_text()
+        cls.ci = (ROOT / ".github/workflows/ci.yml").read_text()
+        cls.dockerfile = (ROOT / "Dockerfile").read_text()
+        cls.compose = (ROOT / "compose.local.yaml").read_text()
+        cls.pyproject = (ROOT / "pyproject.toml").read_text()
 
     def test_services_are_private_digest_pinned_and_replace_invoker_policy(self):
         self.assertIn('--image "$image_ref"', self.deploy)
@@ -111,6 +115,21 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
     def test_slsa_wrapper_accepts_only_explicit_pass_and_zero_exit(self):
         result = self._run_fake_slsa("PASSED: Verified SLSA provenance", 0)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_runtime_supply_chain_and_local_profile_are_release_gates(self):
+        self.assertIn("google-adk>=2.7.1,<2.8", self.pyproject)
+        base = "python:3.12-slim@sha256:7a8b475003c4fe15a2cd4e55e5cfc2f3560bdc9333d624f24cdd6d4340fd7a17"
+        self.assertIn(f"FROM {base} AS builder-base", self.dockerfile)
+        self.assertIn(f"FROM {base} AS runtime-base", self.dockerfile)
+        self.assertIn("USER continuum", self.dockerfile)
+        self.assertIn("AS local-runtime", self.dockerfile)
+        self.assertIn("anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610", self.ci)
+        self.assertIn("aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8", self.ci)
+        self.assertIn("severity: HIGH,CRITICAL", self.ci)
+        self.assertIn('exit-code: "1"', self.ci)
+        self.assertIn("target: local-runtime", self.compose)
+        self.assertIn("read_only: true", self.compose)
+        self.assertIn("no-new-privileges:true", self.compose)
 
     def _run_fake_slsa(self, output: str, status: int):
         with tempfile.TemporaryDirectory() as directory:

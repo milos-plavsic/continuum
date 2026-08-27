@@ -9,8 +9,13 @@
 | C0–C6 contract chain | `reference-local` | six artifacts and independent verifier principal | Verified by conformance suite |
 | Successor is discovered rather than fixed | `reference-local` | three immutable candidates, deterministic assessment receipt, bounded choice | Verified by selection and lifecycle tests |
 | Gemini choice is causal but cannot mint authority | `reference-local` | model ablation, complete evidence manifest, selective claim-linked citations, unknown/ineligible/citation denials | Verified by adversarial tests; admission is not described as proof of model reasoning |
+| Incident policy is outside the model | `reference-local` | formal records, trust receipt, incident receipt, immutable allowed-remediation set, verifier recomputation | Verified by truth-table and exported-chain mutation tests |
+| Evidence trust and freshness are explicit | `continuum/evidence-descriptor/1` | closed schema, golden vector, stable issuer/source/authentication/time/digest reasons | Verified by exhaustive boundary tests |
 | Only minimum authorized context crosses | `reference-local` | reconstruction decisions and verifier-recomputed receipt | Verified for two included and four excluded canonical items |
 | Migration-free adoption surface | `continuum-local-sdk/1` | isolated three-call consumer with no Google import or credentials | Verified by subprocess and idempotency tests |
+| Second-domain reuse | `continuum-local-sdk/1` | incident-remediation rollback consumer using the same three calls | Verified without procurement or Google dependencies |
+| Concurrent one-effect invariant | `continuum/concurrent-stress/1` | 16 obligations, 128 barrier-synchronized attempts, semantic-conflict injection | Verified locally: 16 effects, 112 deduplications, 16 rejected substitutions |
+| Complete credential-free lifecycle | `reference-local-container/1` | hardened read-only non-root container reaches independent local verification | Verified by container smoke; not cloud proof |
 | Ten declared failure modes are safe or explicit | `resilience-local/1` | distinct input/result digests and measured outcomes | Verified; zero duplicate effects, ambiguity holds |
 | Multi-witness evidence aggregation | `optional-witness/1` | distinct principals, same bundle, configured threshold, dissent | Verified locally; explicitly not Byzantine consensus |
 | Distinct deployed workload identities | `reference-google-cloud` | Cloud Run API plus workload-derived actors | Verified for release `5e579f4`, including separate v18 and v19 successors |

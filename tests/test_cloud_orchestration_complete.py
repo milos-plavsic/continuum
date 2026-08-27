@@ -15,6 +15,7 @@ from continuum.cloud_orchestration import (
 from continuum.standard import build_contract_bundle
 from continuum.contract import artifact_digest
 from continuum.models import digest
+from tests.incident_fixtures import incident_extension
 from tests.test_verification_engine import Reader, observations
 
 
@@ -52,11 +53,16 @@ class CloudOrchestrationCompleteTests(unittest.TestCase):
                               ({**complete, "authority_grant": {}}, "INVESTIGATION_ASSERTS_AUTHORITY")]:
             with self.assertRaisesRegex(ValueError, code): validate_investigation(invalid)
         self.assertEqual(canonical_request({"é": 1}, "id"), b'{"identity":"id","payload":{"\xc3\xa9":1}}')
-        self.assertEqual(admit_remediation_plan({"proposed_actions": ["request_operator_review"]}),
+        assessment = incident_extension()["incident_assessment"]
+        self.assertEqual(admit_remediation_plan({"proposed_actions": ["request_operator_review"]}, assessment),
                          "request_operator_review")
-        for actions in (None, [], ["unknown"], ["request_operator_review", "initiate_governed_succession"]):
-            with self.assertRaisesRegex(ValueError, "REMEDIATION_PLAN_UNSUPPORTED"):
-                admit_remediation_plan({"proposed_actions": actions})
+        for actions, code in ((None, "REMEDIATION_PLAN_SCHEMA_INVALID"),
+                              ([], "REMEDIATION_PLAN_SCHEMA_INVALID"),
+                              (["unknown"], "REMEDIATION_NOT_ALLOWED"),
+                              (["request_operator_review", "initiate_governed_succession"],
+                               "REMEDIATION_PLAN_SCHEMA_INVALID")):
+            with self.assertRaisesRegex(RuntimeError, code):
+                admit_remediation_plan({"proposed_actions": actions}, assessment)
 
     def _adk_modules(self, outputs):
         class SessionService:
@@ -155,7 +161,8 @@ class CloudOrchestrationCompleteTests(unittest.TestCase):
             "decisions": [{"included": True}, {"included": False}]}
         reconstruction["receipt_digest"] = digest(reconstruction)
         manifest["extensions"] = {"continuum.dev/successor-selection": selection,
-                                  "continuum.dev/context-reconstruction": reconstruction}
+                                  "continuum.dev/context-reconstruction": reconstruction,
+                                  "continuum.dev/incident-evidence": incident_extension("obl-1")}
         manifest["digest"] = {"alg": "sha-256", "value": artifact_digest(manifest)}
         state = observations(bundle)
         with self.assertRaisesRegex(ValueError, "RUN_ID_REQUIRED"):

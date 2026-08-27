@@ -8,17 +8,16 @@ version = "0.1.0"
 description = "Governed succession control plane for enterprise agents"
 requires-python = ">=3.11"
 license = "Apache-2.0"
-dependencies = ["rfc8785>=0.1.4,<0.2"]
+dependencies = ["rfc8785>=0.1.4,<0.2", "opentelemetry-api>=1.37,<2"]
 
 [project.optional-dependencies]
 signatures = ["cryptography>=46,<47"]
 google = [
-  "google-adk",
+  "google-adk>=2.7.1,<2.8",
   "google-auth>=2,<3",
   "google-cloud-firestore>=2.28,<3",
   "google-cloud-pubsub>=2,<3",
   "google-cloud-tasks>=2,<3",
-  "opentelemetry-api>=1.37,<2",
   "opentelemetry-sdk>=1.37,<2",
   "opentelemetry-exporter-gcp-trace>=1.13,<2",
   "opentelemetry-instrumentation-fastapi>=0.58b0,<1"

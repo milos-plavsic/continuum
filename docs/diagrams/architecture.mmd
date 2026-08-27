@@ -22,9 +22,11 @@ flowchart TB
       direction LR
       REG["SUCCESSOR REGISTRY<br/><small>v18 · v19 · v20<br/>signed health + build evidence</small>"]:::state
       FILTER["ELIGIBILITY GATE<br/><small>health · capability · jurisdiction<br/>contract · scope · trust</small>"]:::control
+      EVID["EVIDENCE + INCIDENT GATE<br/><small>issuer · digest · freshness · subject<br/>code-authored allowed actions</small>"]:::control
       GEM["GOOGLE ADK + GEMINI 3.6<br/><small>complete evidence manifest<br/>selective claim-linked citations</small>"]:::agent
       POLICY["DETERMINISTIC POLICY<br/><small>validates choice · epoch CAS<br/>v17 action + memory denied</small>"]:::control
       REG --> FILTER -->|eligible set only| GEM -->|non-authoritative choice| POLICY
+      EVID -->|admissible actions only| GEM
     end
     subgraph R2B[" "]
       direction LR
@@ -59,3 +61,6 @@ flowchart TB
   R1 -->|redelivery causes transition| R2
   R2 --> R3
   R3 -. VERIFIED only .-> R4
+
+  PORT["PORTABLE CONTRACT + 3-CALL SDK<br/><small>full credential-free container · second domain<br/>Google Cloud is the reference binding</small>"]:::state
+  PORT -. same invariants .-> R2

@@ -122,6 +122,22 @@ the execution receipt. The independent verifier reads that state directly and
 rejects a substituted workflow, scope, recommendation, or decision-pack digest
 before it may issue artifact six.
 
+## Deterministic incident boundary
+
+Lifecycle inputs are first converted to formal Evidence Descriptor 1 records.
+The host validates issuer, source authority, authentication reference, subject,
+freshness, expiry, uniqueness, and payload digest, then runs Incident Policy 1.
+Only the resulting allowed-remediation set crosses into ADK/Gemini. The model
+therefore performs bounded synthesis and evidence-linked selection, while code
+owns admissibility and the authority gateway owns mutation. The exported
+succession manifest contains all records and both receipts; the independent
+verifier recomputes them before direct provider reads.
+
+The same core also runs behind a `ContinuumTransport` interface with a
+credential-free container and a second incident-remediation consumer. Google
+Cloud is the production reference binding and hackathon deployment proof, not a
+requirement for adopting the protocol or SDK.
+
 ## Shared primitives
 
 - Append-only event envelope

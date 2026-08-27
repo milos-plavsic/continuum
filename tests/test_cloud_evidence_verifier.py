@@ -79,6 +79,7 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
             "vertex-call": {"run_id": "run-001", "provider": "vertex-ai",
                             "model": "gemini-3.6-flash",
                             "service_account": "v18@example.iam.gserviceaccount.com",
+                            "incident_assessment_digest": "1" * 64,
                             "evidence_event_ids": ["evt-001"],
                             "proposed_actions": ["initiate_governed_succession"],
                             "selected_candidate_id": "v18",
@@ -216,6 +217,13 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
         result = verifier.verify(self.directory)
         self.assertIn("CONTRACT_SELECTED_SUCCESSOR_MISMATCH", result["reason_codes"])
         self.assertIn("CONTRACT_EXECUTING_SUCCESSOR_MISMATCH", result["reason_codes"])
+
+    def test_vertex_incident_assessment_must_be_digest_bound(self):
+        objects = deepcopy(self.objects)
+        objects["vertex-call"]["incident_assessment_digest"] = "unbound"
+        self.write_bundle(objects)
+        result = verifier.verify(self.directory)
+        self.assertIn("VERTEX_INCIDENT_ASSESSMENT_UNBOUND", result["reason_codes"])
 
     def test_selective_citations_are_claim_bound_and_cannot_be_fabricated(self):
         for citations, reason in (

@@ -1,0 +1,21 @@
+{
+  "descriptor": {
+    "authentication": {"kind": "CONTENT_DIGEST", "reference": "event:event-document"},
+    "evidence_id": "event-document",
+    "evidence_type": "document.injection_detected",
+    "expires_at": "2026-08-17T10:20:00Z",
+    "issuer": "document-ingress",
+    "observed_at": "2026-08-17T10:05:00Z",
+    "payload_digest": "sha256:a1b042f6555e66a439051c98e89895e1a89a77125f8e1c332a1b9b8c5b847fc9",
+    "profile": "continuum/evidence-descriptor/1",
+    "source_authority": "CONTINUUM_EVENT_LEDGER",
+    "subject": "obl-1",
+    "trust_policy": "continuum/lifecycle-evidence-trust/1"
+  },
+  "payload": {
+    "event_id": "event-document",
+    "event_type": "document.injection_detected",
+    "source": "document-ingress",
+    "subject": "obl-1"
+  }
+}

@@ -9,6 +9,8 @@ from typing import Any, Callable, Protocol
 from .canonicalization import PROFILE as CANONICALIZATION_PROFILE
 from .contract import ContractError, artifact_ref, canonical_bytes, make_envelope, validate_envelope
 from .models import digest
+from .incident_policy import verify_incident_evidence_chain
+from .models import Denied
 
 
 PRE_ATTESTATION_TYPES = {
@@ -135,8 +137,18 @@ class IndependentVerificationEngine:
         extensions = manifest.get("extensions", {})
         selection = extensions.get("continuum.dev/successor-selection")
         reconstruction = extensions.get("continuum.dev/context-reconstruction")
-        if not isinstance(selection, dict) or not isinstance(reconstruction, dict):
+        incident = extensions.get("continuum.dev/incident-evidence")
+        if (not isinstance(selection, dict) or not isinstance(reconstruction, dict)
+                or not isinstance(incident, dict)):
             raise ContractError("HANDOFF_EVIDENCE_MISSING")
+        if set(incident) != {"subject", "records", "evidence_validation", "incident_assessment"}:
+            raise ContractError("INCIDENT_EVIDENCE_SCHEMA_INVALID")
+        try:
+            verify_incident_evidence_chain(
+                records=incident["records"], evidence_receipt=incident["evidence_validation"],
+                incident_receipt=incident["incident_assessment"], subject=incident["subject"])
+        except Denied as error:
+            raise ContractError(str(error)) from error
         selection_body = {
             "requirements": selection.get("requirements_digest"),
             "candidates": selection.get("candidates_digest"),

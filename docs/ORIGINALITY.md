@@ -125,3 +125,12 @@ authored new in this repository. Google Cloud emits the captured DSSE/SLSA
 metadata; it is third-party runtime evidence, not incorporated source code.
 The implementation follows the public RFC 8785, SLSA, DSSE, and Google Cloud
 Build specifications without copying source from another project.
+
+## August 27, 2026 standards-readiness note
+
+Evidence Descriptor 1, Incident Policy 1, exported receipt recomputation, the
+credential-free full lifecycle, incident-remediation consumer, concurrent
+stress harness, and supply-chain workflow were authored new in this repository.
+No source from RecallOps, LineageGuard, Fahim's verifier PRs, or any other prior
+project was copied. Anchore Syft/SBOM Action and Aqua Trivy are third-party
+Apache-2.0 tools invoked by pinned CI actions; their source is not incorporated.

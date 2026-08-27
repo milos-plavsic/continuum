@@ -1,0 +1,25 @@
+services:
+  continuum-local:
+    build:
+      context: .
+      target: local-runtime
+      args:
+        VCS_REF: local
+        BUILD_DATE: reproducible-local
+    environment:
+      PORT: "8080"
+    ports:
+      - "127.0.0.1:8080:8080"
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2).read()"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
