@@ -24,6 +24,9 @@
   DSSE signature independently returned `Verified OK`. The checksummed packet
   is public as release `cloud-proof-a1e00ac`; capture provenance remains
   explicitly outside the offline verifier's claim.
+- The separate no-role public showcase was advanced to revision
+  `continuum-showcase-00003-rql` and now links that exact packet; a live
+  mutation probe returned `404` and the showcase identity has no project role.
 
 ## Practical-agent golden cloud proof — August 27
 
