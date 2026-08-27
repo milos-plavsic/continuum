@@ -169,7 +169,7 @@ class CloudAppTests(unittest.TestCase):
         response = showcase.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertIn("Public read-only showcase", response.text)
-        self.assertIn("13 required objects", response.text)
+        self.assertIn("14 required objects", response.text)
         self.assertIn("default-src 'none'", response.headers["Content-Security-Policy"])
         self.assertEqual(response.headers["Referrer-Policy"], "no-referrer")
         self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
