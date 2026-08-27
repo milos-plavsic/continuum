@@ -123,7 +123,7 @@ PYTHONPATH=src python3 -m continuum --output artifacts/latest
 python3 examples/local_sdk_consumer.py
 ```
 
-The quality gate installs locked dependencies, executes 151 tests, enforces genuine 100.0% statement and branch coverage, runs C0–C6 conformance, and runs the release gate. The repository's GitHub Actions also builds and imports the locked non-root runtime image.
+The quality gate installs locked dependencies, executes 159 tests, enforces genuine 100.0% statement and branch coverage, runs C0–C6 conformance, and runs the release gate. The repository's GitHub Actions also builds and imports the locked non-root runtime image.
 
 For an authorized Google Cloud project, copy `deploy/cloud.env.example`, then run:
 
@@ -138,7 +138,7 @@ export CONTINUUM_EVIDENCE_DIR="artifacts/cloud/$(date -u +%Y%m%dT%H%M%SZ)"
 bash scripts/cloud/run-cloud-proof.sh
 ```
 
-The accepted exact-source proof is documented in `docs/CLOUD_PROOF.md`: 13/13 read-only objects, 104 correlated spans, and a network-free/credential-free offline semantic PASS. The complete security-audited packet is publicly downloadable from the checksum-pinned `cloud-proof-0ceda49` GitHub Release. The separate `multimodal-proof-8bec862` release publishes the exact Gemma/Veo/Lyria receipt and both generated assets with SHA-256 checksums.
+The accepted exact-source proof is documented in `docs/CLOUD_PROOF.md`: 14/14 read-only objects, 118 correlated spans, and a network-free/credential-free offline semantic PASS. The complete security-audited packet is publicly downloadable from the checksum-pinned `cloud-proof-abb4472` GitHub Release. The separate `multimodal-proof-8bec862` release publishes the exact Gemma/Veo/Lyria receipt and both generated assets with SHA-256 checksums.
 
 ## Hosted Project
 
@@ -149,9 +149,9 @@ private by design.
 
 Hosted URL: https://continuum-showcase-rdzvxiysbq-ew.a.run.app
 
-The live surface is revision `continuum-showcase-00001-z9j`, pinned to source
-commit `b00866f90353bc936fde5c4799e2ba5fba99cb81` and immutable image digest
-`sha256:3ba085bd39f147bef5d9e7bbdea9ea7513913e14e9ad401f26c19cbbab0bb0bb`.
+The live surface is revision `continuum-showcase-00002-jt8`, pinned to source
+commit `8c91694d94aaebff6244692ab1ec96e877788168` and immutable image digest
+`sha256:b2804e4417e126c7e9ee133bf6392a2ac18b386c3581606151af8fe943009f41`.
 
 Judge-facing Devpost project page: https://devpost.com/software/continuum-lq35x2
 
@@ -165,7 +165,7 @@ TODO: add the final **public** YouTube/Vimeo URL after recording the live,
 unedited, no-longer-than-four-minute run. Unlisted is not sufficient under the
 host's final checklist.
 
-Demo outline: `docs/DEMO_SCRIPT.md`.
+Canonical film scenario: `docs/video/06_REMARKABLE_SCENARIO.md`.
 
 ## Screenshot Shot List
 
@@ -173,13 +173,14 @@ Demo outline: `docs/DEMO_SCRIPT.md`.
 2. Candidate panel: v18/v19 eligible, v20 rejected, Gemini-selected v18 with citations.
 3. Minimum-context receipt: two included, four excluded with reason codes.
 4. Continuity proof: two Pub/Sub deliveries, one provider effect, v17 denied, verifier-issued artifact six.
-5. Google Cloud evidence: five Cloud Run revisions/identities and the exact 104-span Cloud Trace.
+5. Supplier decision pack: official GLEIF/VIES receipts, Gemini recommendation, deterministic sandbox admission.
+6. Google Cloud evidence: five Cloud Run revisions/identities, 14/14 offline PASS, and the exact 118-span Cloud Trace.
 
 ## Submission Readiness Notes
 
 - Fortified Enterprise Fleet is the target category.
 - Public repository, reproducible README, architecture PNG, exact cloud identifiers, and a downloadable offline-verifiable proof packet are ready.
-- The Devpost project page is published as “Continuum” with the workflow-first description, technology stack, repository, and public proof-release links. It is not yet entered into the hackathon submission: live `submitted_at` remains empty.
+- The Devpost project page is published as “Continuum” with the workflow-first description, technology stack, repository, and public proof-release links. Live `submitted_at` remains empty, so it is not yet a verified hackathon entry.
 - Remaining required asset: record/upload the approximately four-minute live demo and add its URL.
 - Remaining presentation assets: capture the five screenshots above and upload `docs/diagrams/architecture.png` to the required architecture field.
 - The final video URL and required hackathon form answers remain intentionally unset until the rebuilt film is approved.

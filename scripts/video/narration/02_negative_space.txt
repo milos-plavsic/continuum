@@ -1,0 +1,1 @@
+There is no exception, no crash event, and no helpful apology. Just a very expensive nothing. Cloud Tasks crosses the persisted deadline. Continuum proves the required event is absent, records that fact in Firestore, and resumes safely when Pub/Sub redelivers it.

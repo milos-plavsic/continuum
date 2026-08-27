@@ -105,13 +105,15 @@ def snapshot(page: Page) -> dict[str, Any]:
         """
         () => ({
           phase: document.querySelector('#phase')?.textContent?.trim(),
-          run: document.querySelector('#run')?.textContent?.trim(),
-          events: document.querySelectorAll('#events li.done').length,
-          selected: document.querySelector('#selected')?.textContent?.trim(),
-          context: document.querySelector('#context')?.textContent?.trim(),
-          effect: document.querySelector('#effect')?.textContent?.trim(),
-          result: document.querySelector('#result')?.textContent?.trim(),
-          proof_visible: !document.querySelector('#proofsurface')?.hidden,
+          run: document.querySelector('#runHeader')?.textContent?.trim(),
+          trace: document.querySelector('#traceHeader')?.textContent?.trim(),
+          completed_stages: document.querySelectorAll('.stage.done').length,
+          active_stage: [...document.querySelectorAll('.stage')].findIndex(
+            item => item.classList.contains('active')),
+          selected: document.querySelector('#selectionStatus')?.textContent?.trim(),
+          context: `${document.querySelector('#includedCount')?.textContent?.trim()} / ${document.querySelector('#excludedCount')?.textContent?.trim()}`,
+          effect: document.querySelector('#effectStatus')?.textContent?.trim(),
+          result: document.querySelector('#finalVerdict')?.textContent?.trim(),
         })
         """
     )
@@ -156,17 +158,15 @@ def main() -> int:
 
         page.wait_for_timeout(1200)
         reveal(page, "h1", hold=1.0)
-        reveal(page, ".hero article:first-child .metric", hold=1.0)
+        reveal(page, ".scene.active .metric", hold=1.0)
         reveal(page, "#start", hold=0.8)
         click(page, "#start")
         click_at = round(time.monotonic() - started, 3)
         page.wait_for_timeout(800)
-        reveal(page, "#run", hold=1.0)
+        reveal(page, "#runHeader", hold=1.0)
+        reveal(page, "#deadline", hold=1.0)
 
         previous: dict[str, Any] = {}
-        pointed_events: set[int] = set()
-        pointed_candidate = False
-        pointed_context = False
         deadline = time.monotonic() + args.timeout_seconds
         while time.monotonic() < deadline:
             current = snapshot(page)
@@ -175,39 +175,45 @@ def main() -> int:
                     {"t": round(time.monotonic() - started, 3), **current}
                 )
                 previous = current
-
-            event_count = int(current.get("events") or 0)
-            if event_count in {1, 2, 3, 5, 7, 9, 11} and event_count not in pointed_events:
-                reveal(page, "#events li.done:last-child", hold=0.65)
-                pointed_events.add(event_count)
-            selected = str(current.get("selected") or "")
-            if "selected by Gemini" in selected and not pointed_candidate:
-                reveal(page, "#selected", hold=0.8)
-                reveal(page, "#candidates", hold=1.0)
-                pointed_candidate = True
-            context_text = str(current.get("context") or "")
-            if "included" in context_text and not pointed_context:
-                reveal(page, "#context", hold=0.8)
-                reveal(page, "#excluded", hold=0.9)
-                pointed_context = True
             if current.get("phase") == "VERIFIED":
                 break
+            reveal(page, "#promiseState", hold=0.45)
             page.wait_for_timeout(500)
         else:
             raise RuntimeError("live workflow did not reach VERIFIED before timeout")
 
-        reveal(page, "#result", hold=0.9)
-        reveal(page, "#effect", hold=1.1)
-        reveal(page, "#digest", hold=1.0)
-        reveal(page, "#focusproof", hold=0.7)
-        click(page, "#focusproof")
-        page.wait_for_timeout(700)
+        # The browser now contains only the persisted observations from this
+        # exact run. Tour them in causal order with a real, visible cursor.
+        click(page, ".stage[data-i='1']")
+        reveal(page, "#missingStatus", hold=1.0)
+        reveal(page, "#missingEvent", hold=1.2)
+        click(page, ".stage[data-i='2']")
+        reveal(page, "#candidates .candidate.rejected", hold=1.2)
+        reveal(page, "#candidates .candidate.selected", hold=1.2)
+        reveal(page, "#selectionStatus", hold=1.0)
+        click(page, ".stage[data-i='3']")
         reveal(page, "#denials", hold=1.2)
-        reveal(page, "#citations", hold=1.2)
-        reveal(page, "#artifactcount", hold=0.8)
+        reveal(page, "#contextChips", hold=1.4)
+        reveal(page, "#activation", hold=1.1)
+        click(page, ".stage[data-i='4']")
+        reveal(page, "#sourceReceipts .receipt:first-child", hold=1.1)
+        reveal(page, "#sourceReceipts .receipt:last-child", hold=1.1)
+        reveal(page, "#recommendation", hold=1.0)
+        reveal(page, "#decisionScope", hold=1.0)
+        click(page, ".stage[data-i='5']")
+        reveal(page, ".deliveries", hold=1.2)
+        reveal(page, "#effectCount", hold=1.4)
+        click(page, ".stage[data-i='6']")
         reveal(page, "#artifacts", hold=1.0)
-        reveal(page, "#verifier", hold=1.1)
-        reveal(page, "#proofdigest", hold=1.5)
+        reveal(page, "#verifierIdentity", hold=1.1)
+        reveal(page, "#verdict", hold=1.4)
+        click(page, ".stage[data-i='7']")
+        reveal(page, "#runHeader", hold=1.0)
+        reveal(page, "#traceHeader", hold=1.0)
+        reveal(page, "#observationCount", hold=1.0)
+        click(page, ".stage[data-i='8']")
+        reveal(page, "#finalVerdict", hold=1.3)
+        reveal(page, "#finalEffect", hold=1.3)
         page.screenshot(path=args.output_dir / "final-proof.png", full_page=False)
         final = snapshot(page)
         page.wait_for_timeout(1800)
@@ -219,8 +225,8 @@ def main() -> int:
         video.save_as(output_video)
         browser.close()
 
-    run_display = str(final.get("run") or "")
-    run_id, _, trace_id = run_display.partition(" · ")
+    run_id = str(final.get("run") or "")
+    trace_id = str(final.get("trace") or "").removeprefix("trace ")
     manifest = {
         "schema": "continuum/live-screen-capture/0.2",
         "captured_at": datetime.now(UTC).isoformat(),
