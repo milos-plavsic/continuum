@@ -26,7 +26,7 @@ submitted.
 | Public code repository | 100% | `https://github.com/milos-plavsic/continuum` |
 | Reproducible spin-up/testing instructions | 100% | README, locked dependencies, CI, C0–C6 conformance, local container, release gate, 201 tests and genuine 100.0% branch coverage. |
 | Architecture diagram | 80% | Clean PNG/SVG and Mermaid source exist. The PNG still must be uploaded to form field 28092. |
-| Hosted project URL | 100% | Public read-only Cloud Run showcase is live; this field is strongly recommended, not mandatory. |
+| Hosted project URL | 100% | Public read-only Cloud Run showcase is live; a separate release-scoped judge runner permits bounded execution through a private capability supplied only in testing instructions. |
 | Public demo video, at most about four minutes | 0% | Not yet recorded/uploaded. Must be public (not private or unlisted), English or subtitled, and show problem, value, live action and visible Google Cloud proof. |
 | Required form answers | 90% | Answers are drafted in `devpost-submission.md`; architecture upload and video URL remain missing. |
 | Teammates accepted | N/A | Live project membership currently shows the author only. If a teammate is added, acceptance must occur before submission. |
@@ -60,7 +60,7 @@ formally claimed until these URLs and models are included in the submitted form.
 | Criterion | Weight | Current conservative grade | Largest remaining risk |
 |---|---:|---:|---|
 | Innovation & operational utility | 40% | 9.2/10 | The video must make the causal autonomous action obvious before explaining protocol depth. |
-| Architectural discipline & tech stack | 30% | 9.8/10 | Publish the final multimodal receipt and avoid overloading judges with internal names. |
+| Architectural discipline & tech stack | 30% | 9.8/10 | Keep the sparse succession lifecycle primary and the detailed topology secondary. |
 | Demo & production readiness | 30% | 6.0/10 | Required public video and architecture form upload are still absent. |
 
 ## Final lock rule

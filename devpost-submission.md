@@ -26,11 +26,11 @@ Google Cloud is the reference deployment, not an adoption prerequisite. A cloud-
 
 ## How We Used AI
 
-- Google ADK invokes `gemini-3.6-flash` on Vertex AI inside the v18 investigator service.
+- Google ADK invokes `gemini-3.6-flash` on Vertex AI inside the investigator service.
 - Gemini receives only candidates that passed deterministic eligibility; rejected candidates never enter the prompt.
 - Typed output requires the remediation, exact successor ID, objective, rationale, incident evidence IDs, and every candidate evidence citation.
 - The model cannot grant authority or execute. Deterministic policy independently revalidates its choice and can hold or deny it before mutation.
-- In the fresh cloud proof, Gemini selected deployed v18 from eligible v18/v19 records; v20 was excluded for degraded health and wrong jurisdiction.
+- In the fresh cloud proof, Gemini selected warm v19 from eligible v18/v19 records through an explicit 18-second-recovery versus very-high-assurance trade-off; v20 was excluded for degraded health and wrong jurisdiction.
 - After independent verification, Gemma 4 produced a five-citation resilience
   plan that deterministically admitted the exact Veo 3.1 Lite and Lyria 3 calls.
   Their digest-bound receipt and generated media are public at
@@ -39,7 +39,7 @@ Google Cloud is the reference deployment, not an adoption prerequisite. A cloud-
 
 ## How We Used Codex
 
-Codex helped turn the product brief into a scope, PRD, technical spec, 42-item build checklist, implementation, adversarial tests, deployment automation, architecture diagram, and evidence-backed submission materials. It also drove fresh exact-commit cloud runs. Those runs exposed three integration defects—a non-canonical tuple at the wire boundary, a missing context-receipt field in the action gateway, and stale duplicated trace-ID logic. Each failed closed before unsupported proof, was fixed through a protected pull request with a regression test, and was redeployed before a new run was accepted.
+Codex helped turn the product brief into a scope, PRD, technical spec, 59-item build checklist, implementation, adversarial tests, deployment automation, architecture diagram, and evidence-backed submission materials. It also drove fresh exact-commit cloud runs. Those runs exposed integration defects at canonicalization, context receipt, trace correlation, immutable fleet publication, provider reconciliation, credential formatting, and verifier projection boundaries. Each failed closed before unsupported proof, was fixed through a protected pull request with a regression test, and was redeployed before a new run was accepted.
 
 No source was copied from prior projects or external contributor pull requests. Provenance is recorded in `docs/ORIGINALITY.md`.
 
@@ -49,7 +49,7 @@ No source was copied from prior projects or external contributor pull requests. 
 - **Missing-evidence detection:** a Cloud Tasks deadline detects silence; real Pub/Sub redelivery resumes work.
 - **Bounded successor selection:** v18/v19/v20 registry assessment, deterministic pre-filter, typed evidence-cited Gemini choice.
 - **Succession Protocol:** epoch CAS, predecessor fencing, separate successor identities, and idempotent roll-forward.
-- **Minimum-context reconstruction:** two verified facts included; raw injection, secrets, model inference, and revoked notes excluded before retrieval.
+- **Raw-input defense and minimum context:** Google Model Armor blocks prompt injection before Gemini; two verified facts are included while secrets, unsupported inference, and revoked notes are excluded before retrieval.
 - **Selected action gateway:** identity, epoch, policy, compliance, context receipt, request digest, and idempotency checked in one Firestore transaction.
 - **Independent verification:** five control claims plus a verifier-only sixth artifact after direct read-only observations.
 - **Verified Resilience Brief:** only a verifier-issued `VERIFIED` bundle can
@@ -58,13 +58,14 @@ No source was copied from prior projects or external contributor pull requests. 
   authority or execution evidence.
 - **Resilience lab:** ten distinct crash, retry, ambiguity, stale-message, citation, verifier, race, and partition fixtures with content-addressed results.
 - **Portable adoption:** three-call cloud-neutral SDK, local credential-free consumer, and optional same-bundle witness aggregation.
-- **Business-first cockpit:** obligation at risk, candidate decisions, transferred context, one effect, and independent verdict in one judge path.
+- **Enterprise queue effect:** two deliveries reconcile to one reversible synthetic GitHub issue that the independent verifier reads directly.
+- **Business-first cockpit:** obligation at risk, candidate decisions, transferred context, one external effect, and independent verdict in one judge path.
 
 ## Architecture
 
 The operator makes one IAM-authenticated start against a private Cloud Run control service. Cloud Tasks crosses the real persisted deadline. Firestore records the event/projection/outbox transactionally, and Pub/Sub delivers the missing-event signal at least once with a deliberate first-delivery failure.
 
-The control service reads the registry, deterministically gates candidates, and invokes the private v18 Google ADK/Gemini investigator. After choice validation, Firestore atomically advances authority from v17 to v18, excludes unauthorized context, verifies compliance, and records one sandbox provider effect. The private verifier has a distinct read-only service account and issues the final attestation. OpenTelemetry spans from all services are exported to Cloud Trace under one canonical trace ID.
+The control service resumes a Firestore-backed cross-department fleet catalog after a simulated 21-day dormancy, deterministically gates candidates, and invokes the private Google ADK/Gemini investigator. After choice validation, Firestore atomically advances authority from v17 to selected successor v19, excludes unauthorized context, verifies official GLEIF/VIES observations, and reconciles one synthetic GitHub work item. The private verifier has a distinct read-only service account, reads the external provider independently, and issues the final attestation. OpenTelemetry spans from all services are exported to Cloud Trace under one canonical trace ID.
 
 Architecture diagram: `docs/diagrams/architecture.png` (source: `docs/diagrams/architecture.mmd`).
 
@@ -79,15 +80,16 @@ Cloud Storage, Python/FastAPI, Pydantic, and Ed25519 contract support.
   profile, authorized scope, and trust score.
 - Firestore append-only lifecycle events, projections, authority epochs,
   compliance evidence, context receipts, outbox/inbox delivery records, and the
-  sandbox provider observation.
+  external-provider reconciliation record.
 - Cloud Tasks deadline metadata and Pub/Sub message/delivery identity.
 - Google ADK/Gemini request and typed response metadata from Vertex AI.
 - Cloud Run service/revision identities and correlated OpenTelemetry spans read
   from the owning Google Cloud APIs.
 
-The canonical demonstration uses synthetic procurement and compliance records;
-it does not ingest personal data, confidential enterprise records, or a
-third-party procurement system.
+The canonical demonstration uses a synthetic supplier and obligation, official
+public GLEIF and EU VIES observations, and one synthetic GitHub issue; it does
+not ingest personal data, confidential enterprise records, or a production
+procurement system.
 
 ## Findings and Learnings
 
@@ -149,9 +151,9 @@ private by design.
 
 Hosted URL: https://continuum-showcase-rdzvxiysbq-ew.a.run.app
 
-The live surface is revision `continuum-showcase-00004-dcc`, pinned to source
-commit `0d8233695eeae0980088f3209f531181852a4a60` and immutable image digest
-`sha256:5f7d04a08e2818cca4a705560c9da95a1ecdd5a46be72a51ac84ab7f4211b11a`.
+The live surface is revision `continuum-showcase-00005-bg9`, pinned to source
+commit `3e41cced560a9a9a05cbee75564dd4c8b5fc1208` and immutable image digest
+`sha256:c038974fa568514e25374e6ac04ebda6565b458a70a23f3d0aa6e445e565cb57`.
 
 Judge-facing Devpost project page: https://devpost.com/software/continuum-lq35x2
 
@@ -182,13 +184,13 @@ Canonical film scenario: `docs/video/06_REMARKABLE_SCENARIO.md`.
 - Public repository, reproducible README, architecture PNG, exact cloud identifiers, and a downloadable offline-verifiable proof packet are ready.
 - The Devpost project page is published as “Continuum” with the workflow-first description, technology stack, repository, and public proof-release links. Live `submitted_at` remains empty, so it is not yet a verified hackathon entry.
 - Remaining required asset: record/upload the approximately four-minute live demo and add its URL.
-- Remaining presentation assets: capture the five screenshots above and upload `docs/diagrams/architecture.png` to the required architecture field.
-- The final video URL and required hackathon form answers remain intentionally unset until the rebuilt film is approved.
+- The architecture asset is finalized at `docs/diagrams/architecture.png`; its required form upload and all drafted field answers will be applied with the final video submission because Devpost's submission API validates the complete form atomically.
+- The final video URL remains intentionally unset until the rebuilt film is approved.
 
 ## Known Limitations
 
-- The reference effect is a Firestore sandbox vendor record, not a third-party procurement API.
-- The v20 record is an explicit negative control; the reference registry is bounded rather than a global discovery service.
+- The reference effect is a reversible synthetic GitHub work item, not a production procurement API transaction.
+- The catalog spans bounded departmental publications and a 21-day dormant-resume fixture; it is not an unbounded global marketplace.
 - Optional witness aggregation is same-bundle evidence aggregation, not Byzantine consensus.
 - The project proves one regional Google Cloud reference profile, not universal exactly-once execution, global credential revocation, or third-party interoperability.
 - The Cloud Run cockpit is private and requires an authorized IAM identity.
@@ -203,7 +205,7 @@ Canonical film scenario: `docs/video/06_REMARKABLE_SCENARIO.md`.
 - **Repository (28141):** https://github.com/milos-plavsic/continuum
 - **Reproducible README (28089):** Yes
 - **Hosted project (28088, optional):** https://continuum-showcase-rdzvxiysbq-ew.a.run.app
-- **Private testing instructions (28090):** Use `./scripts/quality-gate.sh`; exact cloud proof, immutable identifiers, public packet URL, archive checksum, and credential-free verification command are in `docs/CLOUD_PROOF.md`. Contact the submitter if temporary IAM cockpit access is required.
+- **Private testing instructions (28090):** Use the release-scoped judge-run credential supplied only in this private field to trigger one bounded canonical cloud run, or run `./scripts/quality-gate.sh`; exact cloud proof, immutable identifiers, public packet URL, archive checksum, and credential-free verification command are in `docs/CLOUD_PROOF.md`.
 - **Google SDK (28091):** Agent Development Kit (ADK)
 - **Google Cloud service (28142):** Cloud Run (primary selection if the live field permits only one; the project also uses Firestore and Pub/Sub)
 - **Architecture upload (28092):** `docs/diagrams/architecture.png`

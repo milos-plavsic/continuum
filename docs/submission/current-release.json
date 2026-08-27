@@ -23,9 +23,9 @@
   },
   "showcase": {
     "url": "https://continuum-showcase-rdzvxiysbq-ew.a.run.app",
-    "source_commit": "0d8233695eeae0980088f3209f531181852a4a60",
-    "revision": "continuum-showcase-00004-dcc",
-    "image_digest": "sha256:5f7d04a08e2818cca4a705560c9da95a1ecdd5a46be72a51ac84ab7f4211b11a"
+    "source_commit": "3e41cced560a9a9a05cbee75564dd4c8b5fc1208",
+    "revision": "continuum-showcase-00005-bg9",
+    "image_digest": "sha256:c038974fa568514e25374e6ac04ebda6565b458a70a23f3d0aa6e445e565cb57"
   },
   "superseded_markers": [
     "0ceda49",
