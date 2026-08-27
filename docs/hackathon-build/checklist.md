@@ -260,7 +260,7 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   What to build: Evidence specification, architecture/adoption boundary, expanded claims matrix, explicit epistemic limits, runbooks, and originality note.
   Acceptance: Every new claim links to executable evidence and no one-shot demo is represented as universal production proof.
   Verify: Link/claim audit and release gate.
-- [ ] **50. Pass, merge, deploy, and recapture the hardened release**
+- [x] **50. Pass, merge, deploy, and recapture the hardened release**
   Spec ref: `prd.md > Acceptance outcomes`
   What to build: Genuine 100% statement/branch coverage, all conformance/stress/container/security gates, protected PR, exact-commit deployment, fresh canonical capture, and public checksummed evidence.
   Acceptance: Code, CI, image, cloud run, proof release, and documentation identify the same hardened application release.

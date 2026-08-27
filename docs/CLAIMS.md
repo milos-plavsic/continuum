@@ -18,14 +18,14 @@
 | Complete credential-free lifecycle | `reference-local-container/1` | hardened read-only non-root container reaches independent local verification | Verified by container smoke; not cloud proof |
 | Ten declared failure modes are safe or explicit | `resilience-local/1` | distinct input/result digests and measured outcomes | Verified; zero duplicate effects, ambiguity holds |
 | Multi-witness evidence aggregation | `optional-witness/1` | distinct principals, same bundle, configured threshold, dissent | Verified locally; explicitly not Byzantine consensus |
-| Distinct deployed workload identities | `reference-google-cloud` | Cloud Run API plus workload-derived actors | Verified for release `5e579f4`, including separate v18 and v19 successors |
+| Distinct deployed workload identities | `reference-google-cloud` | Cloud Run API plus workload-derived actors | Verified for release `a1e00ac`, including separate v18 and v19 successors |
 | Live Gemini 3.5+ through Google ADK | `reference-google-cloud` | correlated Vertex call and admitted cited plan | Verified: `gemini-3.6-flash` selected v18 from the eligible v18/v19 set with exact deployment citations |
 | Pub/Sub redelivery causes one provider effect | `reference-google-cloud` | inbox delivery count, lifecycle transition and direct provider read | Verified: one message, two deliveries, one effect |
 | Verifier alone issues artifact six | `reference-google-cloud` | five claims plus read-only authority/compliance/provider reads | Verified by separate verifier identity and final bundle |
 | Minimum-context cloud succession | `reference-google-cloud` | content-addressed inclusion/exclusion receipt recomputed by verifier | Verified: two included, four excluded before retrieval |
-| End-to-end Cloud Trace | `reference-google-cloud` | real OTel spans fetched from the Cloud Trace API | Verified: 124 spans under trace `d9ea0337…` |
-| Practical Supplier Assurance Agent | `reference-google-cloud` | official GLEIF and VIES observations, ADK/Gemini decision pack, deterministic admission, one sandbox effect, independent decision-pack binding | Verified in release `5e579f4`: successor identity, source receipts, sandbox scope and decision-pack digest are mandatory offline checks |
-| Immutable build subject | `reference-google-cloud` | Google-signed SLSA v1 DSSE statement plus five revision reads | Verified for release `5e579f4`: Google Hosted Worker signature authenticates the image subject; manual source upload is explicitly not claimed as GitHub-source provenance |
+| End-to-end Cloud Trace | `reference-google-cloud` | real OTel spans fetched from the Cloud Trace API | Verified: 89 spans under trace `7f215487…` |
+| Practical Supplier Assurance Agent | `reference-google-cloud` | official GLEIF and VIES observations, ADK/Gemini decision pack, deterministic admission, one sandbox effect, independent decision-pack binding | Verified in release `a1e00ac`: successor identity, source receipts, sandbox scope and decision-pack digest are mandatory offline checks |
+| Immutable build subject | `reference-google-cloud` | Google-signed SLSA v1 DSSE statement plus five revision reads | Verified for release `a1e00ac`: Google Hosted Worker signature authenticates the image subject; manual source upload is explicitly not claimed as GitHub-source provenance |
 
 The offline verifier may issue `PASS` only when every mandatory cloud object is
 present, content-addressed, and semantically consistent. It does not reperform
@@ -38,5 +38,5 @@ The exact deployment identifiers, bundle UUID, report digest, and evidence
 retention policy are recorded in [CLOUD_PROOF.md](CLOUD_PROOF.md). Cloud claims
 must be recaptured whenever the deployed source commit or image digest changes.
 The golden-standard cloud claims—v19 warm-successor identity, dynamic bounded
-selection, reconstruction receipt and supplier decision pack—are covered by the exact-commit `5e579f4`
+selection, reconstruction receipt, formal incident-evidence chain and supplier decision pack—are covered by the exact-commit `a1e00ac`
 capture. They do not transfer to a newer deployment without recapture.
