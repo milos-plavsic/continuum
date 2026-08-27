@@ -131,6 +131,16 @@ excluded and there are no `pragma: no cover` shortcuts:
 The current gate executes 215 tests and reports genuine **100.0% statement and
 branch coverage**.
 
+Each successful gate also writes `artifacts/coverage/` with `coverage.xml`, detailed
+JSON, browsable HTML, the exact source/measured module inventories, explicit omission
+and pragma checks, and nested `SHA256SUMS`. The same packet is shown in the GitHub job
+summary and retained as the commit-addressed `continuum-coverage-<sha>` CI artifact;
+the [workflow itself](.github/workflows/ci.yml) is read-only and pinned. This makes the
+scope independently inspectable: the claim covers every Python module under
+`src/continuum`, not a selected subset. See the [failed-run ledger](docs/FAILURE_LEDGER.md)
+for the unsuccessful cloud attempts that preceded the accepted proof and the functional
+PR lineage behind the final release pin.
+
 To generate a verifier-gated multimodal resilience brief in an authorized
 Google Cloud project:
 

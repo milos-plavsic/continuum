@@ -33,6 +33,15 @@ jobs:
           enable-cache: true
       - name: Run the repository's complete quality gate
         run: ./scripts/quality-gate.sh
+      - name: Publish coverage summary
+        run: cat artifacts/coverage/README.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain independently inspectable coverage packet
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: continuum-coverage-${{ github.sha }}
+          path: artifacts/coverage/
+          if-no-files-found: error
+          retention-days: 90
       - name: Verify independent TypeScript contract consumer
         run: npm test --prefix interop/typescript
       - name: Assert generated state and credentials are absent

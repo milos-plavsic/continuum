@@ -1,3 +1,4 @@
+from importlib.util import module_from_spec, spec_from_file_location
 import os
 from pathlib import Path
 import subprocess
@@ -11,6 +12,11 @@ from continuum.cloud_app import create_cloud_app
 
 
 ROOT = Path(__file__).resolve().parents[1]
+ROLLBACK_SPEC = spec_from_file_location(
+    "rollback_showcase", ROOT / "scripts/cloud/rollback_showcase.py"
+)
+ROLLBACK = module_from_spec(ROLLBACK_SPEC)
+ROLLBACK_SPEC.loader.exec_module(ROLLBACK)
 
 
 class DeploymentScriptSecurityTests(unittest.TestCase):
@@ -19,6 +25,9 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         cls.bootstrap = (ROOT / "scripts/cloud/bootstrap.sh").read_text()
         cls.deploy = (ROOT / "scripts/cloud/build-deploy.sh").read_text()
         cls.showcase = (ROOT / "scripts/cloud/deploy-showcase.sh").read_text()
+        cls.rollback = (ROOT / "scripts/cloud/rollback_showcase.py").read_text()
+        cls.quality_gate = (ROOT / "scripts/quality-gate.sh").read_text()
+        cls.coverage_builder = (ROOT / "scripts/build_coverage_evidence.py").read_text()
         cls.judge = (ROOT / "scripts/cloud/deploy-judge.sh").read_text()
         cls.cloudbuild = (ROOT / "deploy/cloudbuild.yaml").read_text()
         cls.provenance_check = (ROOT / "scripts/cloud/verify-build-provenance.sh").read_text()
@@ -52,6 +61,56 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertNotIn('CONTINUUM_CONTROL_URL', self.showcase)
         self.assertNotIn('GOOGLE_APPLICATION_CREDENTIALS', self.showcase)
         self.assertIn('CONTINUUM_OBSERVABILITY_ENABLED=false', self.showcase)
+        self.assertIn('default="continuum-showcase"', self.rollback)
+        self.assertIn("ONLY_DEDICATED_SHOWCASE_MAY_BE_ROLLED_BACK", self.rollback)
+        self.assertIn('"--to-revisions", f"{args.target_revision}=100"', self.rollback)
+        self.assertIn('if not args.apply:', self.rollback)
+        self.assertIn("TARGET_REVISION_WRONG_IDENTITY", self.rollback)
+        self.assertIn("SHOWCASE_SERVICE_IAM_NOT_EXACT", self.rollback)
+        self.assertIn("SHOWCASE_IDENTITY_HAS_PROJECT_ROLE", self.rollback)
+        self.assertIn("SHOWCASE_MUTATION_ROUTE_STATUS_", self.rollback)
+        identity = "continuum-showcase@p.iam.gserviceaccount.com"
+        revision = {
+            "metadata": {
+                "name": "continuum-showcase-00001-abc",
+                "labels": {"serving.knative.dev/service": "continuum-showcase"},
+            },
+            "spec": {"serviceAccountName": identity},
+            "status": {"conditions": [{"type": "Ready", "status": "True"}]},
+        }
+        ROLLBACK._validate_revision(
+            revision,
+            service="continuum-showcase",
+            target="continuum-showcase-00001-abc",
+            expected_identity=identity,
+        )
+        self.assertEqual(
+            ROLLBACK._current_revision(
+                {"status": {"traffic": [{"revisionName": "r", "percent": 100}]}}
+            ),
+            "r",
+        )
+        service_policy = {
+            "bindings": [{"members": ["allUsers"], "role": "roles/run.invoker"}]
+        }
+        ROLLBACK._validate_iam(service_policy, {"bindings": []}, identity=identity)
+        with self.assertRaisesRegex(ValueError, "TARGET_REVISION_WRONG_SERVICE"):
+            ROLLBACK._validate_revision(
+                revision | {
+                    "metadata": revision["metadata"] | {
+                        "labels": {"serving.knative.dev/service": "continuum-control"}
+                    }
+                },
+                service="continuum-showcase",
+                target="continuum-showcase-00001-abc",
+                expected_identity=identity,
+            )
+        with self.assertRaisesRegex(ValueError, "SHOWCASE_IDENTITY_HAS_PROJECT_ROLE"):
+            ROLLBACK._validate_iam(
+                service_policy,
+                {"bindings": [{"role": "roles/viewer", "members": [f"serviceAccount:{identity}"]}]},
+                identity=identity,
+            )
 
     def test_judge_gateway_is_public_but_capability_scoped_and_cost_bounded(self):
         self.assertIn('CONTINUUM_ROLE=judge', self.judge)
@@ -153,6 +212,16 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertIn("target: local-runtime", self.compose)
         self.assertIn("read_only: true", self.compose)
         self.assertIn("no-new-privileges:true", self.compose)
+        for report in ("coverage.json", "coverage.xml", "coverage html"):
+            self.assertIn(report, self.quality_gate)
+        self.assertIn("build_coverage_evidence.py", self.quality_gate)
+        self.assertIn("every_source_module_measured", self.coverage_builder)
+        self.assertIn("no_source_coverage_pragmas", self.coverage_builder)
+        self.assertIn("no_configured_source_omissions", self.coverage_builder)
+        self.assertIn("SHA256SUMS", self.coverage_builder)
+        self.assertIn("continuum-coverage-${{ github.sha }}", self.ci)
+        self.assertIn("cat artifacts/coverage/README.md", self.ci)
+        self.assertIn("retention-days: 90", self.ci)
 
     def _run_fake_slsa(self, output: str, status: int):
         with tempfile.TemporaryDirectory() as directory:

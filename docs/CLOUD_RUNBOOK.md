@@ -66,6 +66,49 @@ the identity has no project-level role. The page points to the exact hardened
 `cloud-proof-d4d7d52` packet. Its mutation probe returns `404`; the service IAM
 policy contains only the intentional `allUsers`/`roles/run.invoker` binding.
 
+“No project-level role” is a concrete blast-radius statement, not a reassuring
+label. Even if arbitrary code execution were obtained inside the public showcase,
+its workload identity has no project IAM grant with which to read Firestore, call
+Vertex AI, publish Pub/Sub, invoke the private agent/control services, access their
+secrets, or mutate control-plane state. Public `roles/run.invoker` is attached to the
+showcase *service*, allowing people to request only this deployment; it grants the
+showcase identity no permission over another resource.
+
+## Showcase rollback
+
+Rollback never rebuilds an image and never accepts a tag. It shifts traffic to one
+explicit, already-Ready revision after checking that the revision belongs to
+`continuum-showcase`, uses the dedicated no-role identity, the service IAM policy is
+exactly `allUsers`/`roles/run.invoker`, and the identity has zero project-level roles.
+The command is read-only unless `--apply` is present:
+
+```bash
+uv run python scripts/cloud/rollback_showcase.py \
+  --project "$CONTINUUM_PROJECT_ID" \
+  --region "$CONTINUUM_REGION" \
+  --target-revision continuum-showcase-00005-bg9
+
+# Review the JSON plan, then perform and verify the rollback.
+uv run python scripts/cloud/rollback_showcase.py \
+  --project "$CONTINUUM_PROJECT_ID" \
+  --region "$CONTINUUM_REGION" \
+  --target-revision continuum-showcase-00005-bg9 \
+  --apply
+```
+
+After the traffic update, the command waits until `/build-info` identifies the exact
+target revision, requires the mutation probe to remain `404`, re-reads both service and
+project IAM, and writes an ignored JSON receipt under `artifacts/cloud/`. Re-applying
+the current known-good revision uses the same command with
+`--target-revision continuum-showcase-00006-drz --apply`. The underlying Cloud Run
+operation is:
+
+```bash
+gcloud run services update-traffic continuum-showcase \
+  --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" \
+  --to-revisions continuum-showcase-00005-bg9=100
+```
+
 ## Evidence interpretation
 
 The initial smoke captures infrastructure objects only, so the verifier should

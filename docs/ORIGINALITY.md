@@ -1,5 +1,14 @@
 # Originality and provenance
 
+## Final auditability and rollback hardening (August 28, 2026)
+
+The coverage-evidence packager, fail-closed public-showcase rollback command, failed-run
+ledger, no-role blast-radius language, CI artifact publication and their tests were
+authored new in this repository during the submission period. No source or operational
+script was copied from another project. The rollback command composes documented Google
+Cloud CLI and Cloud Run HTTP interfaces; generated coverage packets and live rollback
+receipts remain ignored runtime evidence rather than incorporated source.
+
 ## Submission hardening (August 27, 2026)
 
 The Model Armor boundary, fleet catalogue, reversible GitHub work-queue
