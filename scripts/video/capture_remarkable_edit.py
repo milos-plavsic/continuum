@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture the 3:56 same-run edit and mux the locked narration."""
+"""Capture the sub-four-minute same-run edit and mux the locked narration."""
 
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ def main() -> int:
         page.goto(f"{page_source.as_uri()}?{query}", wait_until="load")
         video = page.video
         page.evaluate("review => window.startContinuumRemarkable(review)", args.review)
-        page.wait_for_function("window.__continuumRemarkableDone === true", timeout=245_000)
+        page.wait_for_function("window.__continuumRemarkableDone === true", timeout=250_000)
         context.close()
         if video is None:
             raise RuntimeError("Playwright video recorder unavailable")
@@ -58,11 +58,20 @@ def main() -> int:
         browser.close()
 
     final = args.output_dir / "continuum-remarkable-final.mp4"
+    padded_audio = args.output_dir / "continuum-remarkable-audio-with-intro.wav"
+    subprocess.run([
+        "gst-launch-1.0", "-q", "concat", "name=join", "!", "audioconvert", "!",
+        "wavenc", "!", "filesink", f"location={padded_audio}",
+        "audiotestsrc", "wave=silence", "samplesperbuffer=48000", "num-buffers=3", "!",
+        "audio/x-raw,format=S16LE,channels=1,rate=48000", "!", "join.",
+        "filesrc", f"location={args.audio}", "!", "wavparse", "!", "audioconvert", "!",
+        "audioresample", "!", "audio/x-raw,format=S16LE,channels=1,rate=48000", "!", "join."
+    ], check=True)
     subprocess.run([
         "gst-launch-1.0", "-q", "mp4mux", "name=mux", "!", "filesink", f"location={final}",
         "filesrc", f"location={visual}", "!", "matroskademux", "!", "queue", "!", "decodebin", "!",
         "videoconvert", "!", "x264enc", "speed-preset=medium", "bitrate=8000", "key-int-max=50", "!",
-        "h264parse", "!", "queue", "!", "mux.", "filesrc", f"location={args.audio}", "!", "wavparse", "!",
+        "h264parse", "!", "queue", "!", "mux.", "filesrc", f"location={padded_audio}", "!", "wavparse", "!",
         "audioconvert", "!", "audioresample", "!",
         "audio/x-raw,format=S16LE,channels=1,rate=48000", "!",
         "voaacenc", "bitrate=160000", "!", "aacparse", "!", "queue", "!", "mux."
