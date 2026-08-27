@@ -99,8 +99,9 @@ boundary explicit.
 
 The deterministic succession core, fixtures, tests, documentation, Mermaid
 diagram source, and rendering/evaluation scripts were authored new in this
-repository during the submission period. The deterministic runtime uses only
-the Python standard library. Design patterns such as fencing tokens, idempotency keys,
+repository during the submission period. The deterministic domain logic uses
+the Python standard library; the wire boundary uses the declared RFC 8785
+package. Design patterns such as fencing tokens, idempotency keys,
 transactional outbox, optimistic concurrency, least-privilege capabilities, and
 saga-style roll-forward recovery are established industry patterns rather than
 copied project material. No source or assets from RecallOps, LineageGuard, or
