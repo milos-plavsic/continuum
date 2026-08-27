@@ -177,7 +177,7 @@ def main() -> int:
                 previous = current
             if current.get("phase") == "VERIFIED":
                 break
-            reveal(page, "#promiseState", hold=0.45)
+            reveal(page, "#phase", hold=0.45)
             page.wait_for_timeout(500)
         else:
             raise RuntimeError("live workflow did not reach VERIFIED before timeout")
