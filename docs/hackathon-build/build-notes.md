@@ -19,6 +19,12 @@
   served revision, mutation `404`, exact public service policy and zero project roles,
   then restored `00006-drz` and independently repeated every postcondition. Both local
   receipts are generated cloud state and remain ignored.
+- The first downloaded main-CI coverage artifact exposed that GitHub's artifact action
+  omits hidden files by default: Coverage.py's generated `html/.gitignore` was present in
+  `SHA256SUMS` but absent from the download. The provisional release had zero downloads
+  and was immediately removed rather than mislabeled as proof. CI now explicitly includes
+  hidden files; publication must repeat from a green exact-commit run and pass every nested
+  checksum after download before a durable release is created.
 
 ## Submission hardening checkpoint — August 27
 

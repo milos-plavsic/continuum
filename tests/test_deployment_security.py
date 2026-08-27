@@ -221,6 +221,7 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertIn("SHA256SUMS", self.coverage_builder)
         self.assertIn("continuum-coverage-${{ github.sha }}", self.ci)
         self.assertIn("cat artifacts/coverage/README.md", self.ci)
+        self.assertIn("include-hidden-files: true", self.ci)
         self.assertIn("retention-days: 90", self.ci)
 
     def _run_fake_slsa(self, output: str, status: int):

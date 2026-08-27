@@ -41,6 +41,7 @@ jobs:
           name: continuum-coverage-${{ github.sha }}
           path: artifacts/coverage/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 90
       - name: Verify independent TypeScript contract consumer
         run: npm test --prefix interop/typescript
