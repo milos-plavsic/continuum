@@ -2,17 +2,18 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import StrEnum
-from hashlib import sha256
-import json
 from typing import Any
+
+from .canonicalization import canonical_json_text, canonical_sha256
 
 
 def canonical(value: Any) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    """Compatibility name for the single RFC 8785 canonicalization boundary."""
+    return canonical_json_text(value)
 
 
 def digest(value: Any) -> str:
-    return sha256(canonical(value).encode()).hexdigest()
+    return canonical_sha256(value)
 
 
 class AgentStatus(StrEnum):

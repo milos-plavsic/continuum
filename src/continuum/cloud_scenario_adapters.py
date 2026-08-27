@@ -14,6 +14,7 @@ from typing import Any, Callable
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
+from .canonicalization import PROFILE as CANONICALIZATION_PROFILE
 from .cloud_scenario_service import DurableCloudScenarioService, FirestoreScenarioStore
 from .contract import artifact_ref, canonical_bytes, make_envelope
 from .google_binding import GoogleBindingConfig, PubSubLifecyclePublisher
@@ -149,7 +150,8 @@ class RemoteInvestigator:
               "evidence_event_ids": proposal["evidence_ids"],
               "proposed_actions": proposal["proposed_actions"],
               "selected_candidate_id": proposal["successor_choice"]["selected_candidate_id"],
-              "candidate_evidence_refs": proposal["successor_choice"]["candidate_evidence_refs"]})
+              "evidence_manifest_refs": proposal["successor_choice"]["evidence_manifest_refs"],
+              "supporting_citations": proposal["successor_choice"]["supporting_citations"]})
         return proposal
 
 
@@ -383,7 +385,9 @@ class ObservedContractExporter:
             if key in run["compliance"]:
                 compliance_extension[key] = run["compliance"][key]
         receipt = make_envelope("execution_receipt", f"{base}:receipt", self.issuer, at, {"tenant_id": run["tenant_id"], "obligation": artifact_ref(obligation), "executing_principal": run["successor"], "authority_domain": f"{base}:authority", "epoch": run["successor_epoch"], "decision": decision, "idempotency_key": run["idempotency_key"], "request_digest": provider["request_digest"], "execution_id": run["run_id"], "provider": {"adapter": "firestore-sandbox/1", "operation": "vendor.create", "resource_ref": provider["provider_ref"]}, "disposition": "EXECUTED", "observed_at": at}, extensions={"continuum.dev/compliance": compliance_extension})
-        return {"profile": "reference-google-cloud", "protocol": "continuum/0.1-draft", "artifacts": [obligation, grant, manifest, revocation, receipt]}
+        return {"profile": "reference-google-cloud", "protocol": "continuum/0.1-draft",
+                "canonicalization_profile": CANONICALIZATION_PROFILE,
+                "artifacts": [obligation, grant, manifest, revocation, receipt]}
 
 
 class RemoteVerifier:

@@ -95,7 +95,8 @@ def _run_object(scope: CaptureScope, role: str, service: dict[str, Any],
     containers = template.get("containers", [])
     container = containers[0] if isinstance(containers, list) and containers else {}
     env = _env(container if isinstance(container, dict) else {})
-    digest = revision.get("status", {}).get("imageDigest")
+    image_reference = revision.get("status", {}).get("imageDigest")
+    digest = image_reference
     if isinstance(digest, str) and "@sha256:" in digest:
         digest = digest.rsplit("@", 1)[1]
     if not isinstance(digest, str) or not digest.startswith("sha256:"):
@@ -118,6 +119,7 @@ def _run_object(scope: CaptureScope, role: str, service: dict[str, Any],
         "ready": _ready(service),
         "service_account": identity,
         "image_digest": digest,
+        "image_reference": image_reference,
         "build_info": {
             "git_commit": env.get("GIT_SHA", ""),
             "protocol": env.get("CONTINUUM_PROTOCOL", ""),
@@ -137,6 +139,11 @@ def _log_command(scope: CaptureScope, object_id: str) -> list[str]:
              f'jsonPayload.continuum_evidence.object_id="{object_id}"')
     return ["gcloud", "logging", "read", query, "--project", scope.project,
             "--limit=2", "--order=desc", "--format=json"]
+
+
+def _provenance_command(scope: CaptureScope, image_reference: str) -> list[str]:
+    return ["gcloud", "artifacts", "docker", "images", "describe", image_reference,
+            "--project", scope.project, "--show-provenance", "--format=json"]
 
 
 def _logged_payload(entries: Any, scope: CaptureScope, object_id: str) -> dict[str, Any] | None:
@@ -164,6 +171,7 @@ def collect(scope: CaptureScope, destination: Path, runner: CommandRunner,
     service_map = services or RUN_SERVICES
     captured: list[str] = []
     unavailable: dict[str, str] = {}
+    image_references: set[str] = set()
     for object_id, (role, service_name) in service_map.items():
         try:
             service = runner.json(_service_command(scope, service_name))
@@ -174,10 +182,24 @@ def collect(scope: CaptureScope, destination: Path, runner: CommandRunner,
                 "gcloud", "run", "revisions", "describe", revision_name,
                 "--project", scope.project, "--region", scope.region, "--format=json",
             ])
-            _write(destination, object_id, _run_object(scope, role, service, revision))
+            run_object = _run_object(scope, role, service, revision)
+            image_references.add(run_object["image_reference"])
+            _write(destination, object_id, run_object)
             captured.append(object_id)
         except (KeyError, TypeError, ValueError, subprocess.CalledProcessError, json.JSONDecodeError) as exc:
             unavailable[object_id] = type(exc).__name__
+    try:
+        if len(image_references) != 1:
+            raise ValueError("deployed services do not share exactly one immutable image")
+        image_reference = next(iter(image_references))
+        provenance = runner.json(_provenance_command(scope, image_reference))
+        if (not isinstance(provenance, dict)
+                or not provenance.get("provenance_summary", {}).get("provenance")):
+            raise ValueError("signed build provenance unavailable")
+        _write(destination, "build-provenance", provenance)
+        captured.append("build-provenance")
+    except (KeyError, TypeError, ValueError, subprocess.CalledProcessError, json.JSONDecodeError) as exc:
+        unavailable["build-provenance"] = type(exc).__name__
     for object_id in RUN_OBJECTS:
         try:
             payload = _logged_payload(runner.json(_log_command(scope, object_id)), scope, object_id)

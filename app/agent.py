@@ -29,9 +29,18 @@ class EvidenceProposal(BaseModel):
 class SuccessorChoice(BaseModel):
     model_config = ConfigDict(extra="forbid")
     selected_candidate_id: str
-    candidate_evidence_refs: list[str] = Field(min_length=1)
+    evidence_manifest_refs: list[str] = Field(min_length=1)
+    supporting_citations: list["SupportingCitation"] = Field(min_length=1)
     rationale: str
     objective: str
+
+
+class SupportingCitation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    claim: Literal[
+        "BUILD_PROVENANCE", "HEALTH_ATTESTED", "RUNTIME_IDENTITY", "SERVICE_REVISION"
+    ]
+    evidence_refs: list[str] = Field(min_length=1)
 
 
 class SupplierAssessment(BaseModel):
@@ -59,13 +68,17 @@ control plane's supplied evidence. Missing evidence alone never proves compromis
 Apply this deterministic recommendation table to the supplied event_type values:
 - if and only if all three exact types document.injection_detected,
   action.denied, and expectation.missed are present and every one is cited,
-  propose exactly initiate_governed_succession;
+propose exactly initiate_governed_succession;
 - for every other set, propose exactly request_operator_review.
 Return a structured proposal containing
 hypotheses, evidence_ids, unsupported_assumptions, risk, reversibility, and
 proposed_actions. Also choose exactly one record from eligible_candidates. Optimize
-the supplied selection_objective, preferring the highest trust_score; copy that
-record's exact candidate_id and every evidence_refs value into successor_choice.
+the supplied selection_objective, preferring the highest trust_score. Copy the
+record's exact candidate_id and the complete, unique evidence_refs list into
+evidence_manifest_refs. Then create selective supporting_citations: cite only
+references that materially support each stated claim, using BUILD_PROVENANCE for
+build:/image:, HEALTH_ATTESTED for health:, RUNTIME_IDENTITY for identity:, and
+SERVICE_REVISION for cloud-run:. Do not repeat a claim or evidence reference.
 Never invent a candidate or cite a candidate filtered out by the control plane.
 Never claim to approve policy or execute an action. If cited
 evidence is missing, fail closed and propose exactly request_operator_review.

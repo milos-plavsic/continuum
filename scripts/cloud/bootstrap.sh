@@ -11,6 +11,7 @@ deadline_queue="${CONTINUUM_DEADLINE_QUEUE:-continuum-deadlines}"
 
 gcloud services enable --project "$CONTINUUM_PROJECT_ID" \
   run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com \
+  containeranalysis.googleapis.com \
   firestore.googleapis.com pubsub.googleapis.com aiplatform.googleapis.com \
   cloudtasks.googleapis.com cloudtrace.googleapis.com
 

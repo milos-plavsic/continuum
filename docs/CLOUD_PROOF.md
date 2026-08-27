@@ -29,12 +29,13 @@ The five ready services were independently read from the Cloud Run API:
 | Independent verifier | `continuum-verifier-00015-w5r` | `continuum-verifier@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com` |
 
 All five revisions reported the same source commit, protocol and immutable
-image digest. The 14 content-addressed mandatory objects prove:
+image digest. The content-addressed mandatory objects establish internal
+consistency of:
 
-- a real Google ADK call to `gemini-3.6-flash` from the v18 identity, citing all
-  exact incident evidence, proposing only `initiate_governed_succession`, and
-  selecting v18 from the eligible v18/v19 set with Cloud Run, identity and image
-  citations; v20 was rejected for health and jurisdiction before model access;
+- a real Google ADK call to `gemini-3.6-flash` from the v18 identity, proposing
+  only `initiate_governed_succession`, and selecting v18 from the eligible
+  v18/v19 set with a complete evidence manifest plus selective, claim-linked
+  citations; v20 was rejected before model access;
 - a verifier-recomputed minimum-context receipt: two verified facts included and
   raw untrusted input, a secret, model inference and revoked memory excluded;
 - a practical successor-agent workflow that queried the official GLEIF and EU
@@ -78,6 +79,10 @@ the persisted deadline, Pub/Sub resumes the effect-bearing lifecycle after a
 deliberate first-delivery failure, and the independent verifier alone issues
 the attestation. The collector reads exact-run objects from Google APIs and
 Cloud Logging; the final verifier performs no network or credential access.
+Consequently its `PASS` proves content integrity and cross-object semantic
+consistency, not that the capture itself came from those APIs. New deployments
+also require a Google-signed SLSA v1 statement whose subject matches the image
+digest read from every Cloud Run revision. See [PROVENANCE.md](PROVENANCE.md).
 
 This proof applies only to the deployed source commit and image digest named
 above. Any newer application release must be deployed and recaptured; local

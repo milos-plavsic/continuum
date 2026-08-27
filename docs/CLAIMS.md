@@ -8,7 +8,7 @@
 | One externally observed sandbox effect | `reference-local` | persistent provider reconciliation and redelivery | Verified by tests |
 | C0–C6 contract chain | `reference-local` | six artifacts and independent verifier principal | Verified by conformance suite |
 | Successor is discovered rather than fixed | `reference-local` | three immutable candidates, deterministic assessment receipt, bounded choice | Verified by selection and lifecycle tests |
-| Gemini choice is causal but cannot mint authority | `reference-local` | model ablation plus unknown/ineligible/citation denials | Verified by adversarial tests |
+| Gemini choice is causal but cannot mint authority | `reference-local` | model ablation, complete evidence manifest, selective claim-linked citations, unknown/ineligible/citation denials | Verified by adversarial tests; admission is not described as proof of model reasoning |
 | Only minimum authorized context crosses | `reference-local` | reconstruction decisions and verifier-recomputed receipt | Verified for two included and four excluded canonical items |
 | Migration-free adoption surface | `continuum-local-sdk/1` | isolated three-call consumer with no Google import or credentials | Verified by subprocess and idempotency tests |
 | Ten declared failure modes are safe or explicit | `resilience-local/1` | distinct input/result digests and measured outcomes | Verified; zero duplicate effects, ambiguity holds |
@@ -22,7 +22,9 @@
 | Practical Supplier Assurance Agent | `reference-google-cloud` | official GLEIF and VIES observations, ADK/Gemini decision pack, deterministic admission, one sandbox effect, independent decision-pack binding | Verified in release `abb4472`: successor identity, source receipts, sandbox scope and decision-pack digest are mandatory offline checks |
 
 The offline verifier may issue `PASS` only when every mandatory cloud object is
-present, content-addressed, and semantically consistent. Missing evidence is
+present, content-addressed, and semantically consistent. It does not reperform
+capture or authenticate Google signatures; build authenticity is a separate
+SLSA verification step in [PROVENANCE.md](PROVENANCE.md). Missing evidence is
 `NOT_ASSESSED`; observed contradiction or mutation is `FAIL`. A local result is
 never promoted into the cloud profile.
 

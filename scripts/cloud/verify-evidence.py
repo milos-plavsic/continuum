@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import base64
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -13,13 +14,16 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 from continuum.contract import canonical_bytes
+from continuum.canonicalization import PROFILE as CANONICALIZATION_PROFILE
 from continuum.standard import verify_bundle
+from continuum.succession_selection import SUPPORT_CLAIMS
 
 MANDATORY = {
     "cloud-run-control", "cloud-run-v17", "cloud-run-v18", "cloud-run-v19", "cloud-run-verifier",
     "firestore-event", "firestore-projection", "firestore-outbox",
     "pubsub-publish", "pubsub-deliveries", "vertex-call", "trace-export",
     "supplier-assurance", "contract-export",
+    "build-provenance",
 }
 BASE_NON_CLAIMS = {"third_party_interoperability", "universal_exactly_once",
                    "global_credential_revocation", "tamper_proof"}
@@ -33,6 +37,44 @@ GIT_COMMIT = re.compile(r"^[0-9a-f]{7,64}$")
 def _same(value: Any, expected: Any, code: str, errors: list[str]) -> None:
     if value != expected:
         errors.append(code)
+
+
+def _provenance_subjects(value: dict[str, Any], errors: list[str]) -> set[str]:
+    summary = value.get("provenance_summary")
+    entries = summary.get("provenance") if isinstance(summary, dict) else None
+    if not isinstance(entries, list) or not entries:
+        errors.append("BUILD_PROVENANCE_MISSING")
+        return set()
+    subjects: set[str] = set()
+    found_v1 = False
+    for entry in entries:
+        build = entry.get("build") if isinstance(entry, dict) else None
+        statement = build.get("intotoStatement") if isinstance(build, dict) else None
+        envelope = entry.get("envelope") if isinstance(entry, dict) else None
+        if not isinstance(statement, dict) or not isinstance(envelope, dict):
+            continue
+        if statement.get("predicateType") == "https://slsa.dev/provenance/v1":
+            found_v1 = True
+        signatures = envelope.get("signatures")
+        payload = envelope.get("payload")
+        if (not isinstance(signatures, list) or not signatures
+                or any(not isinstance(item, dict) or not item.get("sig") for item in signatures)
+                or not isinstance(payload, str) or not payload):
+            errors.append("BUILD_PROVENANCE_DSSE_INCOMPLETE")
+            continue
+        try:
+            padding = "=" * (-len(payload) % 4)
+            decoded = json.loads(base64.urlsafe_b64decode(payload + padding))
+        except (ValueError, json.JSONDecodeError):
+            errors.append("BUILD_PROVENANCE_PAYLOAD_INVALID")
+            continue
+        for subject in decoded.get("subject", []) if isinstance(decoded, dict) else []:
+            digest = subject.get("digest", {}).get("sha256") if isinstance(subject, dict) else None
+            if isinstance(digest, str) and re.fullmatch(r"[0-9a-f]{64}", digest):
+                subjects.add(f"sha256:{digest}")
+    if not found_v1:
+        errors.append("BUILD_PROVENANCE_SLSA_V1_MISSING")
+    return subjects
 
 
 def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
@@ -49,6 +91,7 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
 
     identities: set[str] = set()
     images: set[str] = set()
+    image_references: set[str] = set()
     services: set[str] = set()
     revisions: set[str] = set()
     for object_id, role in ROLES.items():
@@ -81,11 +124,31 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
             errors.append(f"IMAGE_DIGEST_INVALID:{object_id}")
         else:
             images.add(digest)
+        image_reference = value.get("image_reference")
+        if (not isinstance(image_reference, str) or not isinstance(digest, str)
+                or not image_reference.endswith(f"@{digest}")):
+            errors.append(f"IMAGE_REFERENCE_INVALID:{object_id}")
+        else:
+            image_references.add(image_reference)
         build = value.get("build_info", {})
         _same(build.get("git_commit"), scope["git_commit"], f"BUILD_COMMIT_MISMATCH:{object_id}", errors)
         _same(build.get("protocol"), scope["protocol"], f"BUILD_PROTOCOL_MISMATCH:{object_id}", errors)
     if len(images) != 1:
         errors.append("DEPLOYED_IMAGE_DIGEST_MISMATCH")
+    if len(image_references) != 1:
+        errors.append("DEPLOYED_IMAGE_REFERENCE_MISMATCH")
+    provenance = objects["build-provenance"]
+    provenance_subjects = _provenance_subjects(provenance, errors)
+    if images and not images.issubset(provenance_subjects):
+        errors.append("BUILD_PROVENANCE_IMAGE_MISMATCH")
+    image_summary = provenance.get("image_summary")
+    if not isinstance(image_summary, dict):
+        errors.append("BUILD_PROVENANCE_IMAGE_SUMMARY_MISSING")
+    else:
+        if images and image_summary.get("digest") not in images:
+            errors.append("BUILD_PROVENANCE_SUMMARY_DIGEST_MISMATCH")
+        if image_references and image_summary.get("fully_qualified_digest") not in image_references:
+            errors.append("BUILD_PROVENANCE_SUMMARY_REFERENCE_MISMATCH")
 
     event, projection, outbox = (objects["firestore-event"], objects["firestore-projection"],
                                   objects["firestore-outbox"])
@@ -134,18 +197,41 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
     selected = vertex.get("selected_candidate_id")
     if selected not in {"v18", "v19"}:
         errors.append("VERTEX_SUCCESSOR_CHOICE_INVALID")
-    candidate_refs = vertex.get("candidate_evidence_refs")
-    if not isinstance(candidate_refs, list) or not candidate_refs:
-        errors.append("VERTEX_CANDIDATE_CITATION_MISSING")
+    manifest_refs = vertex.get("evidence_manifest_refs")
+    if (not isinstance(manifest_refs, list) or not manifest_refs
+            or any(not isinstance(ref, str) or not ref for ref in manifest_refs)
+            or len(set(manifest_refs)) != len(manifest_refs)):
+        errors.append("VERTEX_EVIDENCE_MANIFEST_INVALID")
     elif selected in {"v18", "v19"}:
         selected_run = objects[f"cloud-run-{selected}"]
         expected_identity_ref = f'identity:{selected_run.get("service_account")}'
         expected_service_ref = f'cloud-run:https://continuum-{"agent-" if selected else ""}{selected}'
-        if expected_identity_ref not in candidate_refs:
+        if expected_identity_ref not in manifest_refs:
             errors.append("VERTEX_CANDIDATE_IDENTITY_UNPROVEN")
         if not any(isinstance(ref, str) and ref.startswith(expected_service_ref)
-                   for ref in candidate_refs):
+                   for ref in manifest_refs):
             errors.append("VERTEX_CANDIDATE_SERVICE_UNPROVEN")
+    supporting = vertex.get("supporting_citations")
+    if not isinstance(supporting, list) or not supporting:
+        errors.append("VERTEX_SUPPORTING_CITATION_INVALID")
+    elif isinstance(manifest_refs, list):
+        seen_claims: set[str] = set()
+        seen_refs: set[str] = set()
+        for citation in supporting:
+            if not isinstance(citation, dict) or set(citation) != {"claim", "evidence_refs"}:
+                errors.append("VERTEX_SUPPORTING_CITATION_INVALID")
+                continue
+            claim, refs = citation.get("claim"), citation.get("evidence_refs")
+            prefixes = SUPPORT_CLAIMS.get(claim) if isinstance(claim, str) else None
+            if (prefixes is None or not isinstance(refs, list) or not refs
+                    or any(not isinstance(ref, str) or ref not in manifest_refs
+                           or not ref.startswith(prefixes) for ref in refs)):
+                errors.append("VERTEX_SUPPORTING_CITATION_INVALID")
+                continue
+            if claim in seen_claims or any(ref in seen_refs for ref in refs):
+                errors.append("VERTEX_SUPPORTING_CITATION_DUPLICATE")
+            seen_claims.add(claim)
+            seen_refs.update(refs)
 
     supplier = objects["supplier-assurance"]
     _same(supplier.get("run_id"), scope["run_id"], "RUN_ID_MISMATCH:supplier-assurance", errors)
@@ -256,7 +342,9 @@ def verify(directory: Path) -> dict:
     if not isinstance(bundle, dict):
         return report("unknown", "FAIL", [], [], ["BUNDLE_INVALID"])
     errors: list[str] = []
-    if bundle.get("schema") != "continuum/cloud-evidence/0.1" or bundle.get("profile") != "reference-google-cloud":
+    if (bundle.get("schema") != "continuum/cloud-evidence/0.1"
+            or bundle.get("profile") != "reference-google-cloud"
+            or bundle.get("canonicalization_profile") != CANONICALIZATION_PROFILE):
         errors.append("BUNDLE_SCHEMA_INVALID")
     non_claims = bundle.get("declared_non_claims")
     if not isinstance(non_claims, list) or not BASE_NON_CLAIMS.issubset(
@@ -318,7 +406,12 @@ def report(bundle_id: str, overall: str, present: list[str], missing: list[str],
               "verifier": {"name": "continuum-offline-cloud-verifier", "version": "0.2",
                            "credentials_used": False, "network_used": False},
               "overall": overall, "present_objects": present, "missing_mandatory_objects": missing,
-              "reason_codes": errors, "evidence_capture_not_reperformed": True}
+              "reason_codes": errors, "evidence_capture_not_reperformed": True,
+              "assurance": {
+                  "content_integrity": "ASSESSED",
+                  "semantic_consistency": "ASSESSED",
+                  "capture_provenance": "NOT_REPERFORMED",
+              }}
     result["report_digest"] = {"alg": "sha-256", "value": sha256(canonical_bytes(result)).hexdigest()}
     return result
 

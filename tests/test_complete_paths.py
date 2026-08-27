@@ -125,7 +125,8 @@ class ContractDefensivePathTests(unittest.TestCase):
     def tearDownClass(cls): cls.directory.cleanup()
 
     def test_json_uri_timestamp_and_envelope_failures(self):
-        for value, code in [({1: "x"}, "NON_STRING_KEY"), ({"x": object()}, "UNSUPPORTED_JSON_TYPE")]:
+        for value, code in [({1: "x"}, "CANONICALIZATION_FAILED"),
+                            ({"x": object()}, "CANONICALIZATION_FAILED")]:
             with self.assertRaisesRegex(ContractError, code): canonical_bytes(value)
         base = self.bundle["artifacts"][0]
         for changed, code in [
@@ -200,7 +201,9 @@ class ContractDefensivePathTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "UNSUPPORTED_SIGNATURE_ALGORITHM"):
             verify_ed25519(unsigned, lambda _: None)
         with self.assertRaisesRegex(ContractError, "BUNDLE_ARTIFACT_SET_INCOMPLETE"):
-            verify_bundle({"artifacts": []})
+            verify_bundle({"protocol": "continuum/0.1-draft",
+                           "canonicalization_profile": "urn:ietf:rfc:8785",
+                           "artifacts": []})
         changed = deepcopy(self.bundle)
         att = next(a for a in changed["artifacts"] if a["artifact_type"] == "continuity_attestation")
         att["body"]["obligation"]["artifact_id"] = "urn:missing"

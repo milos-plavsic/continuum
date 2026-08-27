@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 from copy import deepcopy
 from hashlib import sha256
 import importlib.util
@@ -28,12 +29,15 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
                       "git_commit": "1" * 40, "protocol": "continuum/0.1-draft"}
         image = "sha256:" + "2" * 64
         build = {"git_commit": self.scope["git_commit"], "protocol": self.scope["protocol"]}
+        image_reference = "registry.example/continuum@" + image
         run = lambda role, account: {"project_id": self.scope["project_id"],
                                      "region": self.scope["region"], "role": role,
                                      "service": f"continuum-{role}",
                                      "revision": f"continuum-{role}-00001-abc",
                                      "ready": True, "service_account": account,
-                                     "image_digest": image, "build_info": build}
+                                     "image_digest": image,
+                                     "image_reference": image_reference,
+                                     "build_info": build}
         contract_bundle = build_contract_bundle(self.directory / "contract-fixture")
         contract_bundle["profile"] = "reference-google-cloud"
         receipt = next(item for item in contract_bundle["artifacts"]
@@ -48,6 +52,18 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
         attestation["body"]["execution_receipts"][0]["digest"] = receipt["digest"]
         attestation["digest"] = {"alg": "sha-256", "value": artifact_digest(attestation)}
         self.objects = {
+            "build-provenance": {"image_summary": {
+                "digest": image, "fully_qualified_digest": image_reference,
+            }, "provenance_summary": {"provenance": [{
+                "build": {"intotoStatement": {
+                    "predicateType": "https://slsa.dev/provenance/v1"}},
+                "envelope": {
+                    "payload": base64.urlsafe_b64encode(json.dumps({
+                        "subject": [{"digest": {"sha256": "2" * 64}}],
+                    }).encode()).decode().rstrip("="),
+                    "signatures": [{"keyid": "google-cloud-build", "sig": "signed"}],
+                },
+            }]}},
             "cloud-run-control": run("control", "control@example.iam.gserviceaccount.com"),
             "cloud-run-v17": run("agent-v17", "v17@example.iam.gserviceaccount.com"),
             "cloud-run-v18": run("agent-v18", "v18@example.iam.gserviceaccount.com"),
@@ -66,9 +82,13 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
                             "evidence_event_ids": ["evt-001"],
                             "proposed_actions": ["initiate_governed_succession"],
                             "selected_candidate_id": "v18",
-                            "candidate_evidence_refs": [
+                            "evidence_manifest_refs": [
                                 "cloud-run:https://continuum-agent-v18-fixture",
-                                "identity:v18@example.iam.gserviceaccount.com"]},
+                                "identity:v18@example.iam.gserviceaccount.com"],
+                            "supporting_citations": [{
+                                "claim": "RUNTIME_IDENTITY",
+                                "evidence_refs": ["identity:v18@example.iam.gserviceaccount.com"],
+                            }]},
             "supplier-assurance": {
                 "run_id": "run-001", "workflow": "SUPPLIER_ASSURANCE_AGENT",
                 "model": "gemini-3.6-flash",
@@ -116,7 +136,9 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
         bundle = {"schema": "continuum/cloud-evidence/0.1",
                   "bundle_id": "urn:continuum:cloud-evidence:run-001",
                   "captured_at": "2026-08-17T12:00:00Z",
-                  "profile": "reference-google-cloud", "scope": self.scope,
+                  "profile": "reference-google-cloud",
+                  "canonicalization_profile": "urn:ietf:rfc:8785",
+                  "scope": self.scope,
                   "collector": {"name": "fixture", "version": "1",
                                 "started_at": "2026-08-17T12:00:00Z",
                                 "finished_at": "2026-08-17T12:00:01Z"},
@@ -179,7 +201,7 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
 
     def test_selected_successor_must_bind_cloud_identity_and_contract(self):
         objects = deepcopy(self.objects)
-        objects["vertex-call"]["candidate_evidence_refs"] = ["cloud-run:https://continuum-agent-v18"]
+        objects["vertex-call"]["evidence_manifest_refs"] = ["cloud-run:https://continuum-agent-v18"]
         self.write_bundle(objects)
         result = verifier.verify(self.directory)
         self.assertEqual("FAIL", result["overall"])
@@ -187,13 +209,40 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
 
         objects = deepcopy(self.objects)
         objects["vertex-call"]["selected_candidate_id"] = "v19"
-        objects["vertex-call"]["candidate_evidence_refs"] = [
+        objects["vertex-call"]["evidence_manifest_refs"] = [
             "cloud-run:https://continuum-agent-v19-fixture",
             "identity:v19@example.iam.gserviceaccount.com"]
         self.write_bundle(objects)
         result = verifier.verify(self.directory)
         self.assertIn("CONTRACT_SELECTED_SUCCESSOR_MISMATCH", result["reason_codes"])
         self.assertIn("CONTRACT_EXECUTING_SUCCESSOR_MISMATCH", result["reason_codes"])
+
+    def test_selective_citations_are_claim_bound_and_cannot_be_fabricated(self):
+        for citations, reason in (
+            ([{"claim": "BUILD_PROVENANCE", "evidence_refs": [
+                "identity:v18@example.iam.gserviceaccount.com"]}],
+             "VERTEX_SUPPORTING_CITATION_INVALID"),
+            ([{"claim": "RUNTIME_IDENTITY", "evidence_refs": ["fabricated"]}],
+             "VERTEX_SUPPORTING_CITATION_INVALID"),
+            ([{"claim": "RUNTIME_IDENTITY", "evidence_refs": [
+                "identity:v18@example.iam.gserviceaccount.com"]}] * 2,
+             "VERTEX_SUPPORTING_CITATION_DUPLICATE"),
+        ):
+            objects = deepcopy(self.objects)
+            objects["vertex-call"]["supporting_citations"] = citations
+            self.write_bundle(objects)
+            result = verifier.verify(self.directory)
+            with self.subTest(reason=reason):
+                self.assertIn(reason, result["reason_codes"])
+
+    def test_slsa_provenance_must_bind_the_deployed_image(self):
+        objects = deepcopy(self.objects)
+        payload = json.dumps({"subject": [{"digest": {"sha256": "9" * 64}}]}).encode()
+        objects["build-provenance"]["provenance_summary"]["provenance"][0][
+            "envelope"]["payload"] = base64.urlsafe_b64encode(payload).decode().rstrip("=")
+        self.write_bundle(objects)
+        result = verifier.verify(self.directory)
+        self.assertIn("BUILD_PROVENANCE_IMAGE_MISMATCH", result["reason_codes"])
 
     def test_content_mutation_fails_integrity(self):
         self.write_bundle()

@@ -14,6 +14,7 @@ from uuid import uuid4
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 from continuum.contract import canonical_bytes
+from continuum.canonicalization import PROFILE as CANONICALIZATION_PROFILE
 
 NON_CLAIMS = ["global_credential_revocation", "tamper_proof",
               "third_party_interoperability", "universal_exactly_once"]
@@ -22,6 +23,7 @@ EVIDENCE_OBJECTS = {
     "firestore-event", "firestore-projection", "firestore-outbox",
     "pubsub-publish", "pubsub-deliveries", "vertex-call", "trace-export",
     "supplier-assurance", "contract-export",
+    "build-provenance",
 }
 
 
@@ -52,6 +54,7 @@ def package(source: Path, destination: Path, *, project: str, region: str,
     bundle = {"schema": "continuum/cloud-evidence/0.1",
               "bundle_id": f"urn:uuid:{uuid4()}", "captured_at": _now(),
               "profile": "reference-google-cloud",
+              "canonicalization_profile": CANONICALIZATION_PROFILE,
               "scope": {"project_id": project, "region": region, "run_id": run_id,
                         "trace_id": trace_id, "git_commit": git_commit,
                         "protocol": "continuum/0.1-draft"},
@@ -68,7 +71,8 @@ def package(source: Path, destination: Path, *, project: str, region: str,
 def _authority(object_id: str) -> str:
     if object_id == "trace-export":
         return "GOOGLE_TRACE_API"
-    if object_id.startswith(("cloud-run-", "firestore-", "artifact-", "enabled-services", "iam-policy")):
+    if object_id.startswith(("cloud-run-", "firestore-", "artifact-", "build-provenance",
+                             "enabled-services", "iam-policy")):
         return "GOOGLE_API"
     if object_id.startswith(("pubsub-deliveries", "vertex-call", "supplier-assurance")):
         return "CLOUD_LOG_EXPORT"

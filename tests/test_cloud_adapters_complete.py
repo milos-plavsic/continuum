@@ -202,7 +202,9 @@ class CloudAdapterCompleteTests(unittest.TestCase):
                     "evidence_ids": ["e1"],
                     "proposed_actions": ["initiate_governed_succession"],
                     "successor_choice": {"selected_candidate_id": "v18",
-                        "candidate_evidence_refs": ["build:v18", "health:v18"]}}}
+                        "evidence_manifest_refs": ["build:v18", "health:v18"],
+                        "supporting_citations": [{"claim": "BUILD_PROVENANCE",
+                                                  "evidence_refs": ["build:v18"]}]}}}
         proposal = RemoteInvestigator(Client(), "https://v18").investigate({"run_id": "r"})
         self.assertEqual(proposal["evidence_ids"], ["e1"])
 

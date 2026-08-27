@@ -44,7 +44,10 @@ class Investigator:
                 "hypothesis": "compromised",
                 "proposed_actions": ["initiate_governed_succession"],
                 "successor_choice": {"selected_candidate_id": selected["candidate_id"],
-                    "candidate_evidence_refs": selected["evidence_refs"],
+                    "evidence_manifest_refs": selected["evidence_refs"],
+                    "supporting_citations": [
+                        {"claim": "BUILD_PROVENANCE", "evidence_refs": [selected["evidence_refs"][0]]},
+                        {"claim": "HEALTH_ATTESTED", "evidence_refs": [selected["evidence_refs"][1]]}],
                     "rationale": "highest verified trust", "objective": request["selection_objective"]}}
 
 
@@ -257,7 +260,10 @@ class CloudScenarioServiceTests(unittest.TestCase):
             "evidence_types": [item["type"] for item in request["evidence"]],
             "proposed_actions": ["initiate_governed_succession"],
             "successor_choice": {"selected_candidate_id": "unknown",
-                "candidate_evidence_refs": ["unknown"], "rationale": "x", "objective": "x"}}
+                "evidence_manifest_refs": ["unknown"],
+                "supporting_citations": [{"claim": "BUILD_PROVENANCE",
+                                           "evidence_refs": ["unknown"]}],
+                "rationale": "x", "objective": "x"}}
         with self.assertRaisesRegex(ValueError, "SUCCESSOR_CHOICE_UNKNOWN"):
             self.service._advance(current("MISSING_EVENT_PUBLISHED"))
         self.service.investigator = Investigator()

@@ -50,6 +50,8 @@ class FakeRunner:
         if argv[1:4] == ["run", "revisions", "describe"]:
             return {"metadata": {"name": argv[4]},
                     "status": {"imageDigest": "registry.example/image@sha256:" + "2" * 64}}
+        if argv[1:4] == ["artifacts", "docker", "images"]:
+            return {"provenance_summary": {"provenance": [{"envelope": {"payload": "x"}}]}}
         if argv[1:3] == ["logging", "read"]:
             object_id = next(value for value in collector.RUN_OBJECTS
                              if f'object_id="{value}"' in argv[3])
@@ -88,12 +90,12 @@ class EvidenceCollectorTests(unittest.TestCase):
         runner = FakeRunner(self.scope)
         report = collector.collect(self.scope, self.destination, runner, services=self.services,
                                    trace_reader=FakeTraceReader(self.scope))
-        self.assertEqual(14, len(report["captured"]))
+        self.assertEqual(15, len(report["captured"]))
         self.assertEqual({}, report["unavailable"])
-        self.assertEqual(14, len([path for path in self.destination.glob("*.json")
+        self.assertEqual(15, len([path for path in self.destination.glob("*.json")
                                   if not path.name.startswith(".")]))
         for command in runner.commands:
-            self.assertIn(command[1], {"run", "logging"})
+            self.assertIn(command[1], {"run", "logging", "artifacts"})
             self.assertNotIn("auth", command)
             self.assertNotIn("print-access-token", command)
         logging_commands = [c for c in runner.commands if c[1] == "logging"]

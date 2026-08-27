@@ -23,6 +23,14 @@ class ContractTests(unittest.TestCase):
     def test_bundle_has_all_six_artifacts(self):
         verify_bundle(self.bundle)
         self.assertEqual(len(self.bundle["artifacts"]), 6)
+        self.assertEqual(self.bundle["canonicalization_profile"], "urn:ietf:rfc:8785")
+        for field, value, reason in (
+            ("protocol", "other", "UNSUPPORTED_PROTOCOL"),
+            ("canonicalization_profile", "other", "UNSUPPORTED_CANONICALIZATION_PROFILE"),
+        ):
+            changed = deepcopy(self.bundle); changed[field] = value
+            with self.subTest(field=field), self.assertRaisesRegex(ContractError, reason):
+                verify_bundle(changed)
 
     def test_mutation_breaks_content_digest(self):
         artifact = deepcopy(self.bundle["artifacts"][0])
@@ -30,9 +38,10 @@ class ContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "DIGEST_MISMATCH"):
             validate_envelope(artifact)
 
-    def test_float_is_outside_canonical_subset(self):
-        with self.assertRaisesRegex(ContractError, "FLOAT_NOT_ALLOWED"):
-            canonical_bytes({"risk": 0.5})
+    def test_rfc8785_numbers_are_canonical_and_nonfinite_values_fail(self):
+        self.assertEqual(b'{"risk":0.5}', canonical_bytes({"risk": 0.5}))
+        with self.assertRaisesRegex(ContractError, "CANONICALIZATION_FAILED"):
+            canonical_bytes({"risk": float("nan")})
 
     def test_published_golden_vector(self):
         path = Path(__file__).resolve().parents[1] / "examples/continuity-contract/golden-obligation.json"

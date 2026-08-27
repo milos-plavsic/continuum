@@ -6,6 +6,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
+from .canonicalization import PROFILE as CANONICALIZATION_PROFILE
 from .contract import ContractError, artifact_ref, make_envelope, validate_envelope
 from .scenario import load_fixture, run_scenario
 
@@ -80,12 +81,17 @@ def build_contract_bundle(workdir: Path) -> dict[str, Any]:
         "outcome": "VERIFIED",
     })
     bundle = {"profile": "reference-local", "protocol": "continuum/0.1-draft",
+              "canonicalization_profile": CANONICALIZATION_PROFILE,
               "artifacts": [obligation, grant, manifest, revocation, receipt, attestation]}
     verify_bundle(bundle)
     return bundle
 
 
 def verify_bundle(bundle: dict[str, Any]) -> None:
+    if bundle.get("protocol") != "continuum/0.1-draft":
+        raise ContractError("UNSUPPORTED_PROTOCOL")
+    if bundle.get("canonicalization_profile") != CANONICALIZATION_PROFILE:
+        raise ContractError("UNSUPPORTED_CANONICALIZATION_PROFILE")
     artifacts = bundle.get("artifacts", [])
     if len(artifacts) != 6 or {a["artifact_type"] for a in artifacts} != {
         "obligation", "authority_grant", "succession_manifest", "revocation_proof", "execution_receipt", "continuity_attestation"}:
@@ -111,4 +117,3 @@ def mutate_copy(bundle: dict[str, Any], artifact_type: str, body_key: str, value
     artifact = next(a for a in changed["artifacts"] if a["artifact_type"] == artifact_type)
     artifact["body"][body_key] = value
     return changed
-

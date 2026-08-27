@@ -1,8 +1,8 @@
 """Continuity Contract Profile 0.1-draft portable artifacts.
 
-Canonicalization is an explicitly restricted JSON subset: UTF-8 objects, arrays,
-strings, booleans, null, and integers only. Floats are rejected. This is stable
-for the shipped vectors but is not advertised as complete RFC 8785 support.
+Every digest and signature uses the repository-wide RFC 8785 boundary.  Wire
+schemas—not a competing serializer—decide which values a particular artifact
+may contain.
 """
 from __future__ import annotations
 
@@ -10,9 +10,10 @@ import base64
 from copy import deepcopy
 from datetime import datetime
 from hashlib import sha256
-import json
 from typing import Any, Callable
 from urllib.parse import urlparse
+
+from .canonicalization import CanonicalizationError, canonical_json_bytes
 
 PROTOCOL = "continuum/0.1-draft"
 MEDIA_TYPE = "application/vnd.continuum.contract+json"
@@ -25,27 +26,12 @@ class ContractError(ValueError):
     pass
 
 
-def _validate_json(value: Any, path: str = "$") -> None:
-    if isinstance(value, float):
-        raise ContractError(f"FLOAT_NOT_ALLOWED:{path}")
-    if value is None or isinstance(value, (str, bool, int)):
-        return
-    if isinstance(value, list):
-        for index, item in enumerate(value):
-            _validate_json(item, f"{path}[{index}]")
-        return
-    if isinstance(value, dict):
-        for key, item in value.items():
-            if not isinstance(key, str):
-                raise ContractError(f"NON_STRING_KEY:{path}")
-            _validate_json(item, f"{path}.{key}")
-        return
-    raise ContractError(f"UNSUPPORTED_JSON_TYPE:{path}")
-
-
 def canonical_bytes(value: Any) -> bytes:
-    _validate_json(value)
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    """Compatibility API backed exclusively by RFC 8785."""
+    try:
+        return canonical_json_bytes(value)
+    except CanonicalizationError as error:
+        raise ContractError(f"CANONICALIZATION_FAILED:{error}") from error
 
 
 def artifact_digest(envelope: dict[str, Any]) -> str:
