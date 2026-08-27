@@ -9,10 +9,12 @@
 | C0–C6 contract chain | `reference-local` | six artifacts and independent verifier principal | Verified by conformance suite |
 | Successor is discovered rather than fixed | `reference-local` | three immutable candidates, deterministic assessment receipt, bounded choice | Verified by selection and lifecycle tests |
 | Gemini choice is causal but cannot mint authority | `reference-local` | model ablation, complete evidence manifest, selective claim-linked citations, unknown/ineligible/citation denials | Verified by adversarial tests; admission is not described as proof of model reasoning |
+| Model selection is governed, not accepted as legal rationale | `reference-local` | deterministic baseline, deviation receipt, value-at-risk boundary, model-unavailable hold and explicit production approval | Verified by decision truth table and independent receipt recomputation |
 | Incident policy is outside the model | `reference-local` | formal records, trust receipt, incident receipt, immutable allowed-remediation set, verifier recomputation | Verified by truth-table and exported-chain mutation tests |
 | Evidence trust and freshness are explicit | `continuum/evidence-descriptor/1` | closed schema, golden vector, stable issuer/source/authentication/time/digest reasons | Verified by exhaustive boundary tests |
 | Only minimum authorized context crosses | `reference-local` | reconstruction decisions and verifier-recomputed receipt | Verified for two included and four excluded canonical items |
 | Migration-free adoption surface | `continuum-local-sdk/1` | isolated three-call consumer with no Google import or credentials | Verified by subprocess and idempotency tests |
+| Workflow-engine companion surface | `continuum-local-sdk/1` | stable engine-task mapping with host/Continuum responsibility split | Verified first-party bridge; no third-party adoption claim |
 | Second-domain reuse | `continuum-local-sdk/1` | incident-remediation rollback consumer using the same three calls | Verified without procurement or Google dependencies |
 | Concurrent one-effect invariant | `continuum/concurrent-stress/1` | 16 obligations, 128 barrier-synchronized attempts, semantic-conflict injection | Verified locally: 16 effects, 112 deduplications, 16 rejected substitutions |
 | Complete credential-free lifecycle | `reference-local-container/1` | hardened read-only non-root container reaches independent local verification | Verified by container smoke; not cloud proof |
@@ -33,6 +35,12 @@ capture or authenticate Google signatures; build authenticity is a separate
 SLSA verification step in [PROVENANCE.md](PROVENANCE.md). Missing evidence is
 `NOT_ASSESSED`; observed contradiction or mutation is `FAIL`. A local result is
 never promoted into the cloud profile.
+
+The normative [machine-readable trust profile](trust-profile.json) and its
+[plain-language proof ceiling](TRUST_ASSUMPTIONS.md) enumerate every trust root.
+In particular, internal consistency does not prove upstream factual truth,
+capture provenance, an uncompromised cloud/model, Byzantine consensus, or
+universal exactly-once execution.
 
 The exact deployment identifiers, bundle UUID, report digest, and evidence
 retention policy are recorded in [CLOUD_PROOF.md](CLOUD_PROOF.md). Cloud claims

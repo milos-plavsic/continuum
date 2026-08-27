@@ -23,7 +23,8 @@ from .fleet_registry import FleetCatalog, FleetPublication, InMemoryFleetCatalog
 from .observability import lifecycle_span
 from .succession_selection import (
     SuccessorCandidate, SuccessionRequirements, admit_successor_choice,
-    assess_candidates, canonical_selection_objective, model_candidate_view,
+    assess_candidates, canonical_selection_objective, govern_successor_selection,
+    model_candidate_view,
 )
 from .supplier_assurance import application_digest, canonical_supplier_application
 
@@ -386,11 +387,19 @@ class DurableCloudScenarioService:
                 raise ValueError(str(error)) from error
             selected_record = next(item for item in discovered_candidates
                                    if item.principal_id == successor)
+            selection_governance = govern_successor_selection(
+                selected_candidate_id=successor, receipt=receipt, model_available=True,
+                decision_scope="SANDBOX_ONLY",
+                value_at_risk={"currency": "EUR", "amount": 250000})
+            if selection_governance["outcome"] != "APPROVED":
+                raise ValueError("SUCCESSOR_SELECTION_REVIEW_REQUIRED")
             observed = {"signals": evidence, "proposal": proposal, "selected_plan": selected_plan,
                         "incident_assessment": incident_receipt.to_dict(),
                         "evidence_validation": evidence_receipt,
                         "evidence_records": [item.to_dict() for item in evidence_records],
-                        "candidate_assessment": receipt.to_dict(), "selected_successor": successor}
+                        "candidate_assessment": receipt.to_dict(),
+                        "selection_governance": selection_governance,
+                        "selected_successor": successor}
             observed["selection_objective"] = objective.to_dict()
             return self._commit(current, "INVESTIGATED", {"investigation": proposal,
                                 "selected_plan": selected_plan,
@@ -398,6 +407,7 @@ class DurableCloudScenarioService:
                                 "evidence_validation": evidence_receipt,
                                 "evidence_records": [item.to_dict() for item in evidence_records],
                                 "candidate_assessment": receipt.to_dict(),
+                                "selection_governance": selection_governance,
                                 "selection_objective": objective.to_dict(),
                                 "successor": successor, "successor_version": selected_record.version,
                                 "successor_service_identity": selected_record.service_identity},

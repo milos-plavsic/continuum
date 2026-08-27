@@ -11,6 +11,7 @@ import unittest
 
 from continuum.contract import artifact_digest, canonical_bytes
 from continuum.standard import build_contract_bundle
+from tests.selection_fixtures import selection_extensions
 
 
 SCRIPT = Path(__file__).parents[1] / "scripts" / "cloud" / "verify-evidence.py"
@@ -49,6 +50,16 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
         receipt["digest"] = {"alg": "sha-256", "value": artifact_digest(receipt)}
         attestation = next(item for item in contract_bundle["artifacts"]
                            if item["artifact_type"] == "continuity_attestation")
+        manifest = next(item for item in contract_bundle["artifacts"]
+                        if item["artifact_type"] == "succession_manifest")
+        selection, governance = selection_extensions(
+            manifest["body"]["successor"]["principal_id"])
+        manifest["extensions"] = {
+            "continuum.dev/successor-selection": selection,
+            "continuum.dev/selection-governance": governance,
+        }
+        manifest["digest"] = {"alg": "sha-256", "value": artifact_digest(manifest)}
+        attestation["body"]["succession_manifest"]["digest"] = manifest["digest"]
         attestation["body"]["execution_receipts"][0]["digest"] = receipt["digest"]
         attestation["digest"] = {"alg": "sha-256", "value": artifact_digest(attestation)}
         self.objects = {
@@ -107,10 +118,16 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
                 "tools": [
                     {"tool": "gleif.lei-records.read",
                      "source_url": "https://api.gleif.org/api/v1/lei-records/W38RGI023J3WT1HWRP32",
-                     "evidence_ref": "sha256:" + "4" * 64},
+                     "evidence_ref": "sha256:" + "4" * 64,
+                     "availability_mode": "LIVE", "observed_at": "2026-08-27T12:00:00Z",
+                     "freshness_expires_at": "2026-08-28T12:00:00Z",
+                     "cached_from_evidence_ref": None},
                     {"tool": "ec.vies.check-vat-number",
                      "source_url": "https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number",
-                     "evidence_ref": "sha256:" + "5" * 64},
+                     "evidence_ref": "sha256:" + "5" * 64,
+                     "availability_mode": "LIVE", "observed_at": "2026-08-27T12:00:00Z",
+                     "freshness_expires_at": "2026-08-28T12:00:00Z",
+                     "cached_from_evidence_ref": None},
                 ],
             },
             "trace-export": {"run_id": "run-001", "trace_id": "a" * 32,
@@ -207,6 +224,29 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
         self.write_bundle(objects)
         result = verifier.verify(self.directory)
         self.assertIn("SUPPLIER_OFFICIAL_TOOL_EVIDENCE_INVALID", result["reason_codes"])
+
+        objects = deepcopy(self.objects)
+        objects["supplier-assurance"]["tools"][0]["availability_mode"] = "UNKNOWN"
+        self.write_bundle(objects)
+        result = verifier.verify(self.directory)
+        self.assertIn("SUPPLIER_TOOL_AVAILABILITY_INVALID", result["reason_codes"])
+
+        objects = deepcopy(self.objects)
+        contract = objects["contract-export"]["bundle"]
+        manifest = next(item for item in contract["artifacts"]
+                        if item["artifact_type"] == "succession_manifest")
+        manifest["extensions"]["continuum.dev/selection-governance"]["receipt_digest"] = "bad"
+        manifest["digest"] = {"alg": "sha-256", "value": artifact_digest(manifest)}
+        attestation = next(item for item in contract["artifacts"]
+                           if item["artifact_type"] == "continuity_attestation")
+        attestation["body"]["succession_manifest"]["digest"] = manifest["digest"]
+        attestation["digest"] = {"alg": "sha-256", "value": artifact_digest(attestation)}
+        objects["contract-export"]["report_digest"] = {"alg": "sha-256",
+            "value": sha256(canonical_bytes(contract)).hexdigest()}
+        self.write_bundle(objects)
+        result = verifier.verify(self.directory)
+        self.assertIn("SELECTION_GOVERNANCE_RECEIPT_DIGEST_MISMATCH",
+                      result["reason_codes"])
 
     def test_selected_successor_must_bind_cloud_identity_and_contract(self):
         objects = deepcopy(self.objects)

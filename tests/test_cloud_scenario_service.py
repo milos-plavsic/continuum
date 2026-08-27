@@ -188,6 +188,15 @@ class CloudScenarioServiceTests(unittest.TestCase):
         self.assertEqual(self.store.runs["run-silence-only"]["phase"], "MISSING_EVENT_PUBLISHED")
         self.assertEqual(self.effects.execute_calls, 0)
 
+    def test_selection_governance_hold_stops_before_authority_mutation(self):
+        with patch("continuum.cloud_scenario_service.govern_successor_selection",
+                   return_value={"outcome": "HOLD"}), self.assertRaisesRegex(
+                       ValueError, "SUCCESSOR_SELECTION_REVIEW_REQUIRED"):
+            self.complete("run-review")
+        self.assertEqual(self.store.runs["run-review"]["phase"],
+                         "MISSING_EVENT_PUBLISHED")
+        self.assertEqual(self.effects.execute_calls, 0)
+
     def test_verifier_result_requires_independent_identity(self):
         self.verifier.verify = lambda request: {"status": "PASS"}
         with self.assertRaisesRegex(ValueError, "VERIFIER_IDENTITY_MISSING"):

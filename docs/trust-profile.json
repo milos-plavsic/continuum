@@ -1,0 +1,46 @@
+{
+  "schema": "continuum/trust-profile/1",
+  "profile_id": "reference-google-cloud/2026-08",
+  "trust_roots": [
+    {
+      "id": "google-cloud-control-plane",
+      "role": "workload identity, execution isolation, build and trace APIs",
+      "assumption": "Google Cloud returns authentic control-plane observations for the named project.",
+      "compromise_impact": "A compromised control plane could produce authentic-looking but false infrastructure observations."
+    },
+    {
+      "id": "continuum-verifier-identity",
+      "role": "read-only recomputation and sole continuity attestation",
+      "assumption": "The verifier workload identity and its deployed code are not controlled by an executor.",
+      "compromise_impact": "A compromised verifier could attest a semantically invalid lifecycle."
+    },
+    {
+      "id": "gleif-and-eu-vies",
+      "role": "official legal-entity and VAT observations",
+      "assumption": "The official services accurately report the queried public identifiers at observation time.",
+      "compromise_impact": "An incorrect upstream record can remain internally consistent and still be factually wrong."
+    },
+    {
+      "id": "github-issues-provider",
+      "role": "externally readable reversible work-item state",
+      "assumption": "GitHub reports the state of the identified synthetic issue accurately.",
+      "compromise_impact": "A compromised provider can misreport or mutate the external effect."
+    }
+  ],
+  "assessed_claims": [
+    "archive-integrity",
+    "content-addressed-object-integrity",
+    "cross-object-semantic-consistency",
+    "declared-identity-separation",
+    "one-observed-provider-effect",
+    "predecessor-gateway-denial"
+  ],
+  "not_assessed": [
+    "capture-provenance-by-offline-verifier",
+    "upstream-factual-truth",
+    "absence-of-cloud-control-plane-compromise",
+    "absence-of-model-compromise",
+    "byzantine-consensus",
+    "universal-exactly-once-execution"
+  ]
+}

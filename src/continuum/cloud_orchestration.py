@@ -1,22 +1,38 @@
 """Authenticated adapters for the live Google Cloud orchestration boundary."""
 from __future__ import annotations
 
+import asyncio
+from datetime import datetime, timezone
+from functools import lru_cache
 import inspect
 import hashlib
 import json
+import os
 from typing import Any, Awaitable, Callable
 
 from .contract import canonical_bytes
 from .incident_policy import admit_model_remediation
 from .verification import FirestoreVerificationReader, IndependentVerificationEngine
 from .supplier_assurance import (
-    admit_supplier_assessment, check_eu_vat, lookup_gleif, model_supplier_view,
+    ExternalToolError, FirestoreEvidenceCache, admit_supplier_assessment,
+    check_eu_vat, lookup_gleif, model_supplier_view, resolve_tool_observation,
+    supplier_evidence_cache_keys,
 )
 
 
 Investigator = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[str, Any]]]
 Verifier = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[str, Any]]]
 SupplierAssessor = Callable[[dict[str, Any], str], dict[str, Any] | Awaitable[dict[str, Any]]]
+
+
+@lru_cache(maxsize=1)
+def production_supplier_evidence_cache() -> FirestoreEvidenceCache | None:
+    """Build the durable cache lazily only inside a configured Google workload."""
+    project = os.getenv("GOOGLE_CLOUD_PROJECT", "")
+    if not project:
+        return None
+    from google.cloud import firestore
+    return FirestoreEvidenceCache(firestore.Client(project=project))
 
 
 def workload_service_account(*, credentials_provider: Callable[[], tuple[Any, Any]] | None = None,
@@ -107,17 +123,41 @@ async def live_adk_investigator(payload: dict[str, Any], workload_identity: str)
 
 
 async def live_adk_supplier_assessor(payload: dict[str, Any],
-                                     workload_identity: str) -> dict[str, Any]:
+                                     workload_identity: str, *,
+                                     cache: Any | None = None,
+                                     now: datetime | None = None) -> dict[str, Any]:
     """Run the practical supplier workflow with live tools and bounded Gemini synthesis."""
     application = payload.get("application")
     if not isinstance(application, dict):
         raise ValueError("SUPPLIER_APPLICATION_REQUIRED")
+    active_cache = cache if cache is not None else production_supplier_evidence_cache()
+    observed_at = now or datetime.now(timezone.utc)
+    gleif_key, vies_key = supplier_evidence_cache_keys(application)
     try:
-        gleif = lookup_gleif(str(application.get("lei", "")))
-        vies = check_eu_vat(str(application.get("country_code", "")),
-                            str(application.get("vat_number", "")))
-    except OSError as error:
-        raise RuntimeError("SUPPLIER_TOOL_UNAVAILABLE") from error
+        gleif, vies = await asyncio.gather(
+            asyncio.to_thread(resolve_tool_observation, cache_key=gleif_key,
+                fetch=lambda: lookup_gleif(str(application.get("lei", ""))),
+                cache=active_cache, now=observed_at),
+            asyncio.to_thread(resolve_tool_observation, cache_key=vies_key,
+                fetch=lambda: check_eu_vat(str(application.get("country_code", "")),
+                                           str(application.get("vat_number", ""))),
+                cache=active_cache, now=observed_at),
+        )
+    except (ExternalToolError, OSError) as error:
+        reason_code = (error.code if isinstance(error, ExternalToolError)
+                       else "SUPPLIER_TOOL_UNAVAILABLE")
+        return {
+            "workflow": "SUPPLIER_ASSURANCE_AGENT",
+            "status": "HOLD",
+            "recommendation": "HOLD",
+            "decision_scope": "SANDBOX_ONLY",
+            "reason_code": reason_code,
+            "actor": workload_identity,
+            "application_id": str(application.get("application_id", "")),
+            "vendor_id": str(application.get("vendor_id", "")),
+            "model_invoked": False,
+            "proposed_action": "none",
+        }
 
     from google.adk.runners import Runner
     from google.adk.sessions import InMemorySessionService

@@ -145,3 +145,14 @@ stress harness, and supply-chain workflow were authored new in this repository.
 No source from RecallOps, LineageGuard, Fahim's verifier PRs, or any other prior
 project was copied. Anchore Syft/SBOM Action and Aqua Trivy are third-party
 Apache-2.0 tools invoked by pinned CI actions; their source is not incorporated.
+
+## August 27, 2026 dependency and trust hardening note
+
+The bounded GLEIF/VIES adapters, freshness-bound evidence cache, workflow-engine
+companion bridge, selection-governance receipt, machine-readable trust profile,
+proof-ceiling documentation, tests, and presentation changes were authored new
+in this repository. They apply established retry-budget, cache-freshness,
+idempotency, fencing, and zero-trust verification patterns; no source from a
+workflow-engine vendor, prior project, external contributor PR, or registry
+client was copied. The bridge is first-party compatibility evidence and is not
+presented as third-party adoption.

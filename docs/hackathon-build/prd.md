@@ -54,3 +54,12 @@ context moved to a successor without duplicating the external effect.
 28. A fresh deployed run proves dynamic candidate assessment, bounded Gemini selection,
     context reconstruction, one external effect, predecessor fencing, and independent
     verification in one correlated trace.
+29. GLEIF/VIES timeout, DNS, HTTP throttling, service outage and malformed payloads
+    resolve to stable outcomes; a fresh policy-bound cache may continue safely and an
+    unavailable or stale source must HOLD before Gemini or execution.
+30. A workflow-engine operator can see exactly which responsibilities remain with the
+    engine and which authority, memory and attestation responsibilities Continuum adds.
+31. Every model selection records a deterministic comparison baseline and whether a
+    production-impact approval boundary would require human review.
+32. Public proof language distinguishes internal consistency from upstream factual truth,
+    capture provenance and compromise of a declared trust root.

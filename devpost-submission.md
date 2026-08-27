@@ -10,6 +10,12 @@ Continuum is a governed succession control plane that detects silent agent failu
 
 Enterprise agents increasingly own long-running obligations: onboard a compliant supplier, renew a contract, file a control report, or complete a regulated handoff. When an agent silently fails, is compromised, or is replaced, ordinary retry logic preserves a process—not institutional intent. It can lose the obligation, reuse revoked memory, overlap authority, repeat an external effect, or claim success from its own logs.
 
+Continuum does not replace a workflow engine. Scheduling, retries, DLQs and task
+state stay where they already work. Continuum governs the harder boundary those
+mechanisms do not answer when the executor identity changes: what promise is
+still open, who may act now, what verified context may cross, and who separately
+verified the effect.
+
 The buyer is an enterprise platform, security, compliance, or operations team running asynchronous agent fleets. The reference incident puts a €250,000 compliant supplier onboarding obligation at risk.
 
 ## Solution
@@ -17,6 +23,11 @@ The buyer is an enterprise platform, security, compliance, or operations team ru
 Continuum treats succession as a governed lifecycle, not a restart. A persisted deadline monitor detects that required evidence did not arrive. A deterministic eligibility gate assesses multiple registry candidates using tenant, health, capability, memory scope, jurisdiction, contract profile, and trust constraints. Google ADK and Gemini 3.6 Flash then choose only from the eligible set and must cite the selected deployment evidence.
 
 Deterministic policy validates that non-authoritative model choice, fences the old epoch, reconstructs the minimum authorized context, and sends one effect through the selected successor's identity. A separate read-only verifier recomputes the selection and context receipts, directly reads authority, compliance, and provider state, and alone may issue the sixth continuity attestation: VERIFIED, FAILED, or INCONCLUSIVE.
+
+The selection record also names a deterministic comparison baseline, whether
+Gemini deviated from it, the value at risk, and the applicable human-review
+boundary. A production high-impact choice cannot proceed on model output alone;
+the hackathon effect remains explicitly reversible and `SANDBOX_ONLY`.
 
 ## Why This Matters
 

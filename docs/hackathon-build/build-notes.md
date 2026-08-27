@@ -315,3 +315,23 @@
   API. It contains the same application commit, 17-object/43-span proof, 201-test
   gate, v19 trade-off, Model Armor receipt, GitHub Issue #41 and proof release;
   the video remains unset and the hackathon submission remains a draft.
+
+## External resilience and positioning plan — August 27
+
+- The participant explicitly requested every improvement from the latest skeptical
+  review while preserving the complete technical architecture and named services.
+- Items 60–66 add bounded official-registry access, freshness-bound durable fallback,
+  a workflow-engine companion bridge, model-selection governance, explicit trust
+  assumptions, layered judge language and a fresh exact-release proof.
+- Technical depth is not being reduced. The presentation boundary will become simpler
+  while the full protocol, verifier, observability, supply-chain and multimodal branches
+  remain available as secondary evidence.
+- Items 60–65 are complete. GLEIF/VIES use bounded retry budgets and a freshness-
+  and identity-bound Firestore cache; outages become persisted HOLDs before Gemini
+  or mutation. The cloud-neutral workflow bridge, model baseline/deviation/approval
+  receipt, independent recomputation, trust profile, proof ceiling, and layered
+  README/showcase framing are implemented.
+- The full gate now executes 215 Python tests plus the cross-language suite at
+  genuine 100.0% statement and branch coverage. Item 66 remains active: protected
+  merge, exact-commit deployment, fresh proof, release/showcase/Devpost truth sync.
+  Video remains deliberately deferred.

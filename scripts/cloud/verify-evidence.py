@@ -16,7 +16,9 @@ sys.path.insert(0, str(ROOT / "src"))
 from continuum.contract import canonical_bytes
 from continuum.canonicalization import PROFILE as CANONICALIZATION_PROFILE
 from continuum.standard import verify_bundle
-from continuum.succession_selection import SUPPORT_CLAIMS
+from continuum.models import Denied
+from continuum.succession_selection import (SUPPORT_CLAIMS,
+    validate_selection_governance_receipt)
 
 MANDATORY = {
     "cloud-run-control", "cloud-run-v17", "cloud-run-v18", "cloud-run-v19", "cloud-run-verifier",
@@ -288,6 +290,14 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
              or not re.fullmatch(r"sha256:[0-9a-f]{64}", item["evidence_ref"])
              for item in tools):
         errors.append("SUPPLIER_TOOL_RECEIPT_INVALID")
+    elif any(item.get("availability_mode") not in {"LIVE", "CACHED_WITHIN_POLICY"}
+             or not isinstance(item.get("observed_at"), str)
+             or not isinstance(item.get("freshness_expires_at"), str)
+             or (item.get("availability_mode") == "CACHED_WITHIN_POLICY" and
+                 (not isinstance(item.get("cached_from_evidence_ref"), str)
+                  or not item["cached_from_evidence_ref"].startswith("sha256:")))
+             for item in tools):
+        errors.append("SUPPLIER_TOOL_AVAILABILITY_INVALID")
 
     external = objects["external-work-item"]
     _same(external.get("run_id"), scope["run_id"], "RUN_ID_MISMATCH:external-work-item", errors)
@@ -342,6 +352,7 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
         artifacts = {artifact.get("artifact_type"): artifact
                      for artifact in cloud_bundle.get("artifacts", []) if isinstance(artifact, dict)}
         manifest = artifacts.get("succession_manifest", {}).get("body", {})
+        manifest_envelope = artifacts.get("succession_manifest", {})
         receipt = artifacts.get("execution_receipt", {}).get("body", {})
         receipt_envelope = artifacts.get("execution_receipt", {})
         manifest_successor = manifest.get("successor", {}).get("principal_id")
@@ -352,6 +363,15 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
                 errors.append("CONTRACT_SELECTED_SUCCESSOR_MISMATCH")
             if executing_principal not in accepted_principals:
                 errors.append("CONTRACT_EXECUTING_SUCCESSOR_MISMATCH")
+        handoff_extensions = manifest_envelope.get("extensions", {})
+        try:
+            validate_selection_governance_receipt(
+                governance=handoff_extensions.get("continuum.dev/selection-governance"),
+                assessment=handoff_extensions.get("continuum.dev/successor-selection"),
+                successor_id=manifest_successor,
+            )
+        except Denied as error:
+            errors.append(str(error))
         compliance = receipt_envelope.get("extensions", {}).get(
             "continuum.dev/compliance", {})
         if compliance.get("workflow") != supplier.get("workflow"):
