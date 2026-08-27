@@ -19,7 +19,7 @@ MANDATORY = {
     "cloud-run-control", "cloud-run-v17", "cloud-run-v18", "cloud-run-v19", "cloud-run-verifier",
     "firestore-event", "firestore-projection", "firestore-outbox",
     "pubsub-publish", "pubsub-deliveries", "vertex-call", "trace-export",
-    "contract-export",
+    "supplier-assurance", "contract-export",
 }
 BASE_NON_CLAIMS = {"third_party_interoperability", "universal_exactly_once",
                    "global_credential_revocation", "tamper_proof"}
@@ -147,6 +147,41 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
                    for ref in candidate_refs):
             errors.append("VERTEX_CANDIDATE_SERVICE_UNPROVEN")
 
+    supplier = objects["supplier-assurance"]
+    _same(supplier.get("run_id"), scope["run_id"], "RUN_ID_MISMATCH:supplier-assurance", errors)
+    _same(supplier.get("workflow"), "SUPPLIER_ASSURANCE_AGENT",
+          "SUPPLIER_WORKFLOW_INVALID", errors)
+    _same(supplier.get("decision_scope"), "SANDBOX_ONLY",
+          "SUPPLIER_SCOPE_NOT_SANDBOXED", errors)
+    _same(supplier.get("recommendation"), "ONBOARD",
+          "SUPPLIER_RECOMMENDATION_NOT_ADMITTED", errors)
+    supplier_model = supplier.get("model")
+    supplier_match = re.search(r"gemini-(\d+)(?:\.(\d+))?", supplier_model or "")
+    if (not supplier_match or
+            (int(supplier_match.group(1)), int(supplier_match.group(2) or 0)) < (3, 5)):
+        errors.append("SUPPLIER_MODEL_TOO_OLD")
+    decision_pack_digest = supplier.get("decision_pack_digest")
+    if not isinstance(decision_pack_digest, str) or not re.fullmatch(r"[0-9a-f]{64}", decision_pack_digest):
+        errors.append("SUPPLIER_DECISION_PACK_DIGEST_INVALID")
+    if selected in {"v18", "v19"} and supplier.get("service_account") != objects[
+            f"cloud-run-{selected}"].get("service_account"):
+        errors.append("SUPPLIER_SUCCESSOR_IDENTITY_MISMATCH")
+    tools = supplier.get("tools")
+    expected_tools = {
+        ("gleif.lei-records.read",
+         "https://api.gleif.org/api/v1/lei-records/W38RGI023J3WT1HWRP32"),
+        ("ec.vies.check-vat-number",
+         "https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number"),
+    }
+    if not isinstance(tools, list) or {
+            (item.get("tool"), item.get("source_url"))
+            for item in tools if isinstance(item, dict)} != expected_tools:
+        errors.append("SUPPLIER_OFFICIAL_TOOL_EVIDENCE_INVALID")
+    elif any(not isinstance(item.get("evidence_ref"), str)
+             or not re.fullmatch(r"sha256:[0-9a-f]{64}", item["evidence_ref"])
+             for item in tools):
+        errors.append("SUPPLIER_TOOL_RECEIPT_INVALID")
+
     trace = objects["trace-export"]
     _same(trace.get("trace_id"), scope["trace_id"], "TRACE_ID_MISMATCH", errors)
     _same(trace.get("run_id"), scope["run_id"], "RUN_ID_MISMATCH:trace-export", errors)
@@ -188,6 +223,7 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
                      for artifact in cloud_bundle.get("artifacts", []) if isinstance(artifact, dict)}
         manifest = artifacts.get("succession_manifest", {}).get("body", {})
         receipt = artifacts.get("execution_receipt", {}).get("body", {})
+        receipt_envelope = artifacts.get("execution_receipt", {})
         manifest_successor = manifest.get("successor", {}).get("principal_id")
         executing_principal = receipt.get("executing_principal")
         if selected in {"v18", "v19"}:
@@ -196,6 +232,16 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
                 errors.append("CONTRACT_SELECTED_SUCCESSOR_MISMATCH")
             if executing_principal not in accepted_principals:
                 errors.append("CONTRACT_EXECUTING_SUCCESSOR_MISMATCH")
+        compliance = receipt_envelope.get("extensions", {}).get(
+            "continuum.dev/compliance", {})
+        if compliance.get("workflow") != supplier.get("workflow"):
+            errors.append("CONTRACT_SUPPLIER_WORKFLOW_MISMATCH")
+        if compliance.get("decision_scope") != supplier.get("decision_scope"):
+            errors.append("CONTRACT_SUPPLIER_SCOPE_MISMATCH")
+        if compliance.get("recommendation") != supplier.get("recommendation"):
+            errors.append("CONTRACT_SUPPLIER_RECOMMENDATION_MISMATCH")
+        if compliance.get("decision_pack_digest") != decision_pack_digest:
+            errors.append("CONTRACT_SUPPLIER_DECISION_PACK_MISMATCH")
     return sorted(set(errors))
 
 

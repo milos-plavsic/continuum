@@ -8,7 +8,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from continuum.contract import canonical_bytes
+from continuum.contract import artifact_digest, canonical_bytes
 from continuum.standard import build_contract_bundle
 
 
@@ -36,6 +36,17 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
                                      "image_digest": image, "build_info": build}
         contract_bundle = build_contract_bundle(self.directory / "contract-fixture")
         contract_bundle["profile"] = "reference-google-cloud"
+        receipt = next(item for item in contract_bundle["artifacts"]
+                       if item["artifact_type"] == "execution_receipt")
+        receipt["extensions"] = {"continuum.dev/compliance": {
+            "workflow": "SUPPLIER_ASSURANCE_AGENT", "decision_scope": "SANDBOX_ONLY",
+            "recommendation": "ONBOARD", "decision_pack_digest": "3" * 64,
+        }}
+        receipt["digest"] = {"alg": "sha-256", "value": artifact_digest(receipt)}
+        attestation = next(item for item in contract_bundle["artifacts"]
+                           if item["artifact_type"] == "continuity_attestation")
+        attestation["body"]["execution_receipts"][0]["digest"] = receipt["digest"]
+        attestation["digest"] = {"alg": "sha-256", "value": artifact_digest(attestation)}
         self.objects = {
             "cloud-run-control": run("control", "control@example.iam.gserviceaccount.com"),
             "cloud-run-v17": run("agent-v17", "v17@example.iam.gserviceaccount.com"),
@@ -58,6 +69,21 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
                             "candidate_evidence_refs": [
                                 "cloud-run:https://continuum-agent-v18-fixture",
                                 "identity:v18@example.iam.gserviceaccount.com"]},
+            "supplier-assurance": {
+                "run_id": "run-001", "workflow": "SUPPLIER_ASSURANCE_AGENT",
+                "model": "gemini-3.6-flash",
+                "service_account": "v18@example.iam.gserviceaccount.com",
+                "decision_scope": "SANDBOX_ONLY", "recommendation": "ONBOARD",
+                "decision_pack_digest": "3" * 64,
+                "tools": [
+                    {"tool": "gleif.lei-records.read",
+                     "source_url": "https://api.gleif.org/api/v1/lei-records/W38RGI023J3WT1HWRP32",
+                     "evidence_ref": "sha256:" + "4" * 64},
+                    {"tool": "ec.vies.check-vat-number",
+                     "source_url": "https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number",
+                     "evidence_ref": "sha256:" + "5" * 64},
+                ],
+            },
             "trace-export": {"run_id": "run-001", "trace_id": "a" * 32,
                              "spans": [{"name": name} for name in
                                        ("continuum.missing_event_published",
@@ -128,6 +154,28 @@ class CloudEvidenceVerifierTests(unittest.TestCase):
         result = verifier.verify(self.directory)
         self.assertEqual("FAIL", result["overall"])
         self.assertIn("VERTEX_MODEL_TOO_OLD", result["reason_codes"])
+
+    def test_supplier_assurance_must_be_official_identity_bound_and_receipt_bound(self):
+        cases = (
+            ("service_account", "attacker@example.iam.gserviceaccount.com",
+             "SUPPLIER_SUCCESSOR_IDENTITY_MISMATCH"),
+            ("decision_scope", "PRODUCTION", "SUPPLIER_SCOPE_NOT_SANDBOXED"),
+            ("decision_pack_digest", "invalid", "SUPPLIER_DECISION_PACK_DIGEST_INVALID"),
+        )
+        for field, value, reason in cases:
+            with self.subTest(field=field):
+                objects = deepcopy(self.objects)
+                objects["supplier-assurance"][field] = value
+                self.write_bundle(objects)
+                result = verifier.verify(self.directory)
+                self.assertEqual("FAIL", result["overall"])
+                self.assertIn(reason, result["reason_codes"])
+
+        objects = deepcopy(self.objects)
+        objects["supplier-assurance"]["tools"][0]["source_url"] = "https://example.invalid"
+        self.write_bundle(objects)
+        result = verifier.verify(self.directory)
+        self.assertIn("SUPPLIER_OFFICIAL_TOOL_EVIDENCE_INVALID", result["reason_codes"])
 
     def test_selected_successor_must_bind_cloud_identity_and_contract(self):
         objects = deepcopy(self.objects)

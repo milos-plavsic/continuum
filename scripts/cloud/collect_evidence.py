@@ -20,7 +20,7 @@ RUN_SERVICES = {
 RUN_OBJECTS = (
     "firestore-event", "firestore-projection", "firestore-outbox",
     "pubsub-publish", "pubsub-deliveries", "vertex-call",
-    "contract-export",
+    "supplier-assurance", "contract-export",
 )
 
 
