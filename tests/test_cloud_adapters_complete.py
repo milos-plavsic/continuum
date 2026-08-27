@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from contextlib import redirect_stdout
+import io
 import os
 import unittest
 from unittest.mock import patch
@@ -135,7 +137,12 @@ class CloudAdapterCompleteTests(unittest.TestCase):
     def test_lifecycle_evidence_create_reuse_emission_and_content_conflict(self):
         db, publisher = Firestore(), Publisher(); adapter = FirestoreLifecycleEvidence(db, publisher)
         command = {**request(), "deadline": "2026-08-26T10:00:00Z", "now": "2026-08-26T10:00:01Z"}
-        adapter.record_initial(command); adapter.detect_missing(command)
+        output = io.StringIO()
+        with redirect_stdout(output):
+            adapter.record_initial({**command, "input_security_receipt": {
+                "provider": "google-model-armor", "match_state": "MATCH_FOUND"}})
+        self.assertIn('"object_id":"model-armor"', output.getvalue())
+        adapter.detect_missing(command)
         observed = adapter.observe(command)
         self.assertEqual(len(observed), 3); self.assertEqual(len(publisher.events), 3)
         self.assertEqual(len(adapter.record_initial(command)), 2)
@@ -279,6 +286,13 @@ class CloudAdapterCompleteTests(unittest.TestCase):
                     "compliance_evidence_id": "e1"})
         self.assertEqual(effects.execute(req)["state"], "DISPATCHED")
         self.assertEqual(effects.reconcile(req)["effect_count"], 1)
+        db.data[ref.path]["external_effect"] = {
+            "provider": "github-issues", "provider_ref": "https://github.com/o/r/issues/41",
+            "resource_id": "41", "state": "OPEN"}
+        output = io.StringIO()
+        with redirect_stdout(output):
+            self.assertEqual(effects.reconcile(req)["state"], "OPEN")
+        self.assertIn('"object_id":"external-work-item"', output.getvalue())
         with self.assertRaisesRegex(ValueError, "PROVIDER_DIGEST_CONFLICT"):
             effects.reconcile({**req, "request_digest": "other"})
         effects.successor_identity = "other"
@@ -342,7 +356,14 @@ class CloudAdapterCompleteTests(unittest.TestCase):
             db, expected_actor="v18@example", external_queue=external).execute_vendor_create(
                 req, actor="v18@example")
         self.assertEqual(external_result["provider"], "github-issues")
+        self.assertEqual((external_result["state"], external_result["provider_state"]),
+                         ("DEDUPLICATED", "OPEN"))
         self.assertEqual(db.data[provider_path]["external_effect"]["resource_id"], "7")
+        replay = FirestoreActionGateway(
+            db, expected_actor="v18@example", external_queue=external).execute_vendor_create(
+                req, actor="v18@example")
+        self.assertEqual((replay["state"], replay["provider"]),
+                         ("DEDUPLICATED", "github-issues"))
         with self.assertRaisesRegex(ValueError, "ACTION_REQUEST_INVALID"):
             gateway.execute_vendor_create({"run_id": "r"}, actor="v18@example")
         with self.assertRaisesRegex(ValueError, "ACTION_REQUEST_DIGEST_MISMATCH"):

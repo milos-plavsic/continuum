@@ -74,7 +74,10 @@ class FirestoreActionGateway:
             }
             if provider_snapshot.exists:
                 existing = provider_snapshot.to_dict()
-                if existing != record:
+                # Provider enrichment is appended after the transaction.  Compare
+                # the immutable request projection, not later observation fields,
+                # so a Pub/Sub retry converges instead of becoming a false conflict.
+                if any(existing.get(field) != value for field, value in record.items()):
                     raise ValueError("IDEMPOTENCY_KEY_CONFLICT")
                 return {"state": "DEDUPLICATED", "provider_ref": existing["provider_ref"]}
             txn.create(provider_ref, record)
@@ -85,4 +88,8 @@ class FirestoreActionGateway:
             return {**admitted, "actor": actor}
         external = self.external_queue.converge(request)
         provider_ref.set({"external_effect": external}, merge=True)
-        return {**admitted, **external, "actor": actor}
+        # Keep the action-gateway disposition distinct from provider lifecycle
+        # state (OPEN/CLOSED); callers authorize only DISPATCHED/DEDUPLICATED.
+        provider_state = external.get("state")
+        provider_fields = {key: value for key, value in external.items() if key != "state"}
+        return {**admitted, **provider_fields, "provider_state": provider_state, "actor": actor}

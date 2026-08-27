@@ -23,6 +23,7 @@ EVIDENCE_OBJECTS = {
     "firestore-event", "firestore-projection", "firestore-outbox",
     "pubsub-publish", "pubsub-deliveries", "vertex-call", "trace-export",
     "supplier-assurance", "contract-export",
+    "model-armor", "external-work-item",
     "build-provenance",
 }
 
@@ -74,7 +75,8 @@ def _authority(object_id: str) -> str:
     if object_id.startswith(("cloud-run-", "firestore-", "artifact-", "build-provenance",
                              "enabled-services", "iam-policy")):
         return "GOOGLE_API"
-    if object_id.startswith(("pubsub-deliveries", "vertex-call", "supplier-assurance")):
+    if object_id.startswith(("pubsub-deliveries", "vertex-call", "supplier-assurance",
+                             "model-armor", "external-work-item")):
         return "CLOUD_LOG_EXPORT"
     return "APP_RESPONSE"
 
