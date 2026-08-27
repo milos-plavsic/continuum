@@ -203,14 +203,15 @@ def create_cloud_app(*, store: Any | None = None,
     if is_judge:
         from .judge_access import JudgeAccessDenied
 
-        def capability(authorization: str | None) -> str:
-            if not authorization or not authorization.startswith("Bearer "):
+        def capability(value: str | None) -> str:
+            if not value:
                 raise HTTPException(status_code=401, detail={"code": "JUDGE_CAPABILITY_REQUIRED"})
-            return authorization.removeprefix("Bearer ")
+            return value
 
         @app.post("/judge/runs")
         async def start_judge_run(request: Request,
-                                  authorization: str | None = Header(default=None)) -> dict[str, Any]:
+                                  judge_capability: str | None = Header(
+                                      default=None, alias="X-Continuum-Judge-Capability")) -> dict[str, Any]:
             if judge_controller is None:
                 raise HTTPException(status_code=503, detail={"code": "JUDGE_GATEWAY_NOT_CONFIGURED"})
             try:
@@ -220,7 +221,7 @@ def create_cloud_app(*, store: Any | None = None,
             if payload != {}:
                 raise HTTPException(status_code=400, detail={"code": "JUDGE_COMMAND_INVALID"})
             try:
-                return judge_controller.start(capability(authorization))
+                return judge_controller.start(capability(judge_capability))
             except JudgeAccessDenied as error:
                 code = str(error)
                 status = 429 if code == "JUDGE_QUOTA_EXHAUSTED" else 403
@@ -230,11 +231,12 @@ def create_cloud_app(*, store: Any | None = None,
 
         @app.get("/judge/runs/{run_id}")
         def judge_run_status(run_id: str,
-                             authorization: str | None = Header(default=None)) -> dict[str, Any]:
+                             judge_capability: str | None = Header(
+                                 default=None, alias="X-Continuum-Judge-Capability")) -> dict[str, Any]:
             if judge_controller is None:
                 raise HTTPException(status_code=503, detail={"code": "JUDGE_GATEWAY_NOT_CONFIGURED"})
             try:
-                return judge_controller.status(capability(authorization), run_id)
+                return judge_controller.status(capability(judge_capability), run_id)
             except JudgeAccessDenied as error:
                 raise HTTPException(status_code=403, detail={"code": str(error)}) from error
             except (ValueError, RuntimeError) as error:
