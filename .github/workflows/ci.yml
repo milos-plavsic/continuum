@@ -33,6 +33,8 @@ jobs:
           enable-cache: true
       - name: Run the repository's complete quality gate
         run: ./scripts/quality-gate.sh
+      - name: Verify independent TypeScript contract consumer
+        run: npm test --prefix interop/typescript
       - name: Assert generated state and credentials are absent
         run: |
           test -z "$(git ls-files '*.tfstate' '*.tfstate.*' '*.pem' '*.key' 'service-account*.json')"

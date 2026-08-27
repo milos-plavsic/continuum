@@ -352,6 +352,18 @@ class CloudAppTests(unittest.TestCase):
                 identity_resolver=lambda: "v18@example.com"))
             gateway.execute_vendor_create.side_effect = None
             self.assertEqual(lazy.post("/internal/attempt-action", json={}).status_code, 200)
+        provider = unittest.mock.Mock()
+        with patch.dict(os.environ, {"GOOGLE_CLOUD_PROJECT":"p",
+                "CONTINUUM_GITHUB_REPOSITORY":"o/r", "CONTINUUM_GITHUB_ISSUE_NUMBER":"7",
+                "CONTINUUM_GITHUB_PROVIDER_TOKEN":"token"}), \
+             patch("google.cloud.firestore.Client", return_value=object()), \
+             patch("continuum.external_queue.GitHubIssueWorkQueue", return_value=provider) as queue, \
+             patch("continuum.cloud_gateway.FirestoreActionGateway", return_value=gateway) as factory:
+            external = TestClient(create_cloud_app(role="agent-v19",
+                identity_resolver=lambda: "v19@example.com"))
+            self.assertEqual(external.post("/internal/attempt-action", json={}).status_code, 200)
+        queue.assert_called_once_with(repository="o/r", issue_number=7, token="token")
+        self.assertIs(factory.call_args.kwargs["external_queue"], provider)
 
     def test_pubsub_event_causally_resumes_scenario_and_missing_run_is_rejected(self):
         service = unittest.mock.Mock()

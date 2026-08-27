@@ -1,5 +1,11 @@
 # Minimum operational Agent Registry
 
+The Google binding publishes immutable candidate records owned by procurement,
+finance, and security into `continuity_fleet_catalog`. Discovery is broad and
+provider-neutral; deterministic eligibility checks tenant, lifecycle, health,
+capability, memory scope, authority domain, jurisdiction, contract profile, and
+trust floor before Gemini sees any candidate.
+
 The registry is an append-only event projection inside the Continuum control
 plane, not a decorative standalone microservice. A logical agent has immutable
 versions. Each version binds:

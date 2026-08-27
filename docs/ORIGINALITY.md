@@ -1,5 +1,16 @@
 # Originality and provenance
 
+## Submission hardening (August 27, 2026)
+
+The Model Armor boundary, fleet catalogue, reversible GitHub work-queue
+adapter, capability-scoped judge gateway, machine-checked release truth,
+TypeScript interoperability consumer, sparse judge diagram, deployment bindings,
+and tests were authored new in this repository during the submission period.
+No source was copied from RecallOps, LineageGuard, Fahim's unmerged pull
+requests, or another prior project. Google Model Armor, Google Cloud, and GitHub
+Issues are consumed through their public interfaces; their source is not
+incorporated.
+
 ## Supplier Assurance Agent extension (August 27, 2026)
 
 The Supplier Assurance & Onboarding Agent, including the server-owned sandbox

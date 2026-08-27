@@ -38,17 +38,25 @@ class Investigator:
     calls = 0
     def investigate(self, request):
         self.calls += 1
-        selected = max(request["eligible_candidates"], key=lambda item: item["trust_score"])
+        selected = min(request["eligible_candidates"],
+                       key=lambda item: item["recovery_time_seconds"])
+        manifest = sorted({reference for candidate in request["eligible_candidates"]
+                           for reference in candidate["evidence_refs"]})
         return {"evidence_ids": [item["event_id"] if "event_id" in item else item["type"]
                                  for item in request["evidence"]],
                 "hypothesis": "compromised",
                 "proposed_actions": ["initiate_governed_succession"],
                 "successor_choice": {"selected_candidate_id": selected["candidate_id"],
-                    "evidence_manifest_refs": selected["evidence_refs"],
+                    "evidence_manifest_refs": manifest,
                     "supporting_citations": [
-                        {"claim": "BUILD_PROVENANCE", "evidence_refs": [selected["evidence_refs"][0]]},
-                        {"claim": "HEALTH_ATTESTED", "evidence_refs": [selected["evidence_refs"][1]]}],
-                    "rationale": "highest verified trust", "objective": request["selection_objective"]}}
+                        {"claim": "RECOVERY_READINESS", "evidence_refs": [
+                            next(item for item in selected["evidence_refs"]
+                                 if item.startswith("recovery:"))]},
+                        {"claim": "ASSURANCE_PROFILE", "evidence_refs": [
+                            next(item for item in selected["evidence_refs"]
+                                 if item.startswith("assurance:"))]}],
+                    "rationale": "fast warm recovery with independently attested assurance",
+                    "objective": request["selection_objective"]["objective_id"]}}
 
 
 class Evidence:
@@ -203,6 +211,24 @@ class CloudScenarioServiceTests(unittest.TestCase):
         result = self.service.run("scheduled")
         self.assertEqual(result["phase"], "WAITING_FOR_DEADLINE")
         scheduler.schedule.assert_called_once()
+
+    def test_raw_attack_gate_fails_closed_and_explicit_catalog_survives_dormancy(self):
+        self.service.input_guard.sanitize = lambda **kwargs: {"allowed_to_model": True,
+                                                               "match_state": "NO_MATCH_FOUND"}
+        with self.assertRaisesRegex(ValueError, "RAW_PROMPT_INJECTION_NOT_BLOCKED"):
+            self.service.run("unguarded")
+        self.service.input_guard = __import__(
+            "continuum.model_armor", fromlist=["DeterministicInputGuard"]).DeterministicInputGuard()
+        catalog = Mock()
+        catalog.discover.return_value = canonical_successor_candidates()
+        self.service.fleet_catalog = catalog
+        self.service.run("dormant")
+        self.now += timedelta(days=21, seconds=9)
+        self.service.tick("dormant")
+        result = self.service.handle_event({"run_id":"dormant", "event_type":"expectation.missed"})
+        self.assertEqual(result["phase"], "VERIFIED")
+        self.assertGreaterEqual(result["durability"]["resumed_after_seconds"], 21 * 86400)
+        catalog.discover.assert_called_once()
 
     def test_control_api_fails_closed_without_production_ports(self):
         client = TestClient(create_cloud_app(role="control", scenario_service=None))

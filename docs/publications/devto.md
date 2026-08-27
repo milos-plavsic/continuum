@@ -99,7 +99,7 @@ Continuity Contract, so adopting the protocol does not require moving a domain
 model to Google Cloud. Google Cloud is the reference binding and the source of
 deployment evidence, not a portability claim.
 
-The complete quality gate runs in GitHub Actions, executes 151 tests, enforces
+The complete quality gate runs in GitHub Actions, executes 201 tests, enforces
 genuine 100.0% statement and branch coverage without exclusions, runs C0–C6
 contract conformance, checks release invariants, rejects committed credentials
 or generated cloud state, and builds the non-root container image.

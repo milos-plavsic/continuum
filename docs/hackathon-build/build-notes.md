@@ -1,5 +1,19 @@
 # Build notes
 
+## Submission hardening checkpoint — August 27
+
+- Added a quota-bound, expiring-capability judge gateway with no arbitrary
+  command surface.
+- Added Google Model Armor fail-closed raw-input screening, cross-department
+  Firestore fleet discovery, a real two-candidate Gemini recovery/assurance
+  trade-off, and a 21-day dormant-resume proof.
+- Added an idempotent, reversible GitHub Issues work-queue adapter; live provider
+  evidence remains gated on deployment in checklist item 56.
+- Added an independent TypeScript consumer, sparse judge architecture, and a
+  machine-audited release-truth manifest.
+- Complete gate: 201 tests, genuine 100.0% statement and branch coverage,
+  TypeScript interop, C0–C6 conformance, and release gate all PASS.
+
 ## Standards-readiness hardening — August 27
 
 - Moved incident classification and the allowed-remediation set entirely out of
@@ -258,3 +272,19 @@
 - PR #15 merged four green CI checks after 140 tests, genuine 100.0% statement
   and branch coverage, conformance C0–C6, release-gate PASS, and a reproducible
   runtime-image build.
+
+## Submission-truth and fleet-utility hardening — August 27
+
+- The participant explicitly authorized every non-video correction from the fierce
+  judge review. Video production is deliberately deferred until the new release truth
+  and fresh cloud run exist.
+- The autonomous checklist now covers a single release manifest, bounded judge access,
+  a genuine Gemini trade-off, cross-department fleet discovery, dormant recovery,
+  Google Model Armor on raw input, a reversible external work-queue effect,
+  independent-language interoperability, and a sparse judge diagram.
+- Scope remains one supplier-succession lifecycle. The additions deepen the same
+  obligation rather than create a second live demo or generic fleet product.
+- Item 51 established `docs/submission/current-release.json` as the only mutable
+  release-fact source and added a release-gate audit over README, Devpost draft,
+  compliance matrix and public showcase. The audit rejects every known superseded
+  run/count/revision marker; mutation and repository tests pass.

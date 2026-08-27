@@ -38,7 +38,8 @@ class SuccessorChoice(BaseModel):
 class SupportingCitation(BaseModel):
     model_config = ConfigDict(extra="forbid")
     claim: Literal[
-        "BUILD_PROVENANCE", "HEALTH_ATTESTED", "RUNTIME_IDENTITY", "SERVICE_REVISION"
+        "BUILD_PROVENANCE", "HEALTH_ATTESTED", "RUNTIME_IDENTITY", "SERVICE_REVISION",
+        "RECOVERY_READINESS", "ASSURANCE_PROFILE", "WARM_STATE"
     ]
     evidence_refs: list[str] = Field(min_length=1)
 
@@ -71,13 +72,18 @@ from that supplied set. Never derive, expand, reinterpret, or reproduce policy
 rules yourself.
 Return a structured proposal containing
 hypotheses, evidence_ids, unsupported_assumptions, risk, reversibility, and
-proposed_actions. Also choose exactly one record from eligible_candidates. Optimize
-the supplied selection_objective, preferring the highest trust_score. Copy the
-record's exact candidate_id and the complete, unique evidence_refs list into
-evidence_manifest_refs. Then create selective supporting_citations: cite only
+proposed_actions. Also choose exactly one record from eligible_candidates. The
+selection_objective is a code-authored object: follow its statement and explicitly
+compare every listed tradeoff dimension. Never reduce the decision to a maximum
+trust score. Copy the complete, unique union of evidence_refs from every eligible
+record into evidence_manifest_refs. Then create selective supporting_citations: cite only
 references that materially support each stated claim, using BUILD_PROVENANCE for
 build:/image:, HEALTH_ATTESTED for health:, RUNTIME_IDENTITY for identity:, and
-SERVICE_REVISION for cloud-run:. Do not repeat a claim or evidence reference.
+SERVICE_REVISION for cloud-run:, RECOVERY_READINESS for recovery:,
+ASSURANCE_PROFILE for assurance:, and WARM_STATE for warm-state:. Include every
+claim required by selection_objective.required_support_claims, cite evidence from
+the selected candidate, and set objective to the exact supplied objective_id. Do
+not repeat a claim or evidence reference.
 Never invent a candidate or cite a candidate filtered out by the control plane.
 Never claim to approve policy or execute an action. If cited evidence is missing
 or the receipt and bounded inputs disagree, select request_operator_review when

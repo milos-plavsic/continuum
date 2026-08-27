@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from continuum.conformance import run_conformance
+from continuum.release_truth import audit_judge_surfaces, load_release_truth
 from continuum.scenario import run_scenario
 from continuum.standard import build_contract_bundle, verify_bundle
 
@@ -54,10 +55,15 @@ def main() -> int:
     with TemporaryDirectory(prefix="continuum-release-") as temporary:
         local = evaluate_local(Path(temporary)) if tests.returncode == 0 else {
             "status": "FAIL", "assertions": {"unit_tests": False}}
+    truth = load_release_truth(ROOT / "docs/submission/current-release.json")
+    truth_failures = audit_judge_surfaces(ROOT, truth)
     report = {"schema": "continuum/release-gate/0.1", "unit_tests": {
                   "status": "PASS" if tests.returncode == 0 else "FAIL"},
+              "submission_truth": {"status": "PASS" if not truth_failures else "FAIL",
+                                   "reason_codes": list(truth_failures)},
               "reference_local": local, "google_cloud": cloud_readiness(),
-              "overall": "PASS" if tests.returncode == 0 and local["status"] == "PASS" else "FAIL"}
+              "overall": "PASS" if (tests.returncode == 0 and local["status"] == "PASS"
+                                      and not truth_failures) else "FAIL"}
     print(json.dumps(report, indent=2))
     return 0 if report["overall"] == "PASS" else 1
 

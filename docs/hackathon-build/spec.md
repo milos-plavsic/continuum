@@ -127,3 +127,29 @@ require separate evidence.
 - The production image is multi-stage, non-root, lockfile-built and OCI-labelled.
   CI generates an SPDX JSON SBOM from the final image and gates documented
   actionable HIGH/CRITICAL vulnerabilities with pinned scanner tooling.
+
+## Submission-truth and fleet-utility hardening
+
+- Mutable submission facts live in one machine-readable release manifest and are
+  checked against every judge-facing surface. Historical runs remain provenance,
+  never an unlabeled alternative current truth.
+- A separate public judge gateway has no generic proxy or arbitrary command surface.
+  It authorizes an expiring capability by digest, atomically accounts a small run
+  quota, invokes only the private server-owned canonical lifecycle, and exposes only
+  sanitized status.
+- Successor choice is a multi-attribute decision rather than a disguised maximum.
+  Code supplies the incident objective and admissible candidates; Gemini must make a
+  claim-linked trade-off that deterministic admission can verify but not preselect.
+- The registry is an independent fleet catalog port. Department publishers own
+  immutable version records and lineage; succession discovers compatible versions.
+  A persisted 21-day fixture proves recovery independent of process lifetime.
+- Raw untrusted input crosses Google Model Armor before classification or model
+  access. Only a successful, no-match sanitization receipt can admit it; unavailable,
+  skipped, malformed or matched results fail closed.
+- The reference business effect is one reversible synthetic ticket in an external
+  enterprise work queue. Firestore remains the transactional gateway ledger, not the
+  claimed external provider.
+- A first-party TypeScript consumer independently implements and verifies the public
+  contract. It is interoperability evidence, not a claim of third-party adoption.
+- The primary architecture asset explains one succession lifecycle; full cloud and
+  protocol topology is retained as secondary engineering evidence.

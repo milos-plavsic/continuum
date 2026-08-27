@@ -265,3 +265,90 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   What to build: Genuine 100% statement/branch coverage, all conformance/stress/container/security gates, protected PR, exact-commit deployment, fresh canonical capture, and public checksummed evidence.
   Acceptance: Code, CI, image, cloud run, proof release, and documentation identify the same hardened application release.
   Verify: Green required checks, offline PASS, signature verification, and clean `main`.
+
+## Submission-truth and fleet-utility hardening — autonomous
+
+- [x] **51. Establish one machine-checked release truth**
+  Spec ref: `spec.md > Submission-truth and fleet-utility hardening`
+  What to build: A versioned release manifest for application source, image, run,
+  evidence release, object/span/test counts and hosted revision, plus a release
+  audit that rejects stale judge-facing claims.
+  Acceptance: README, Devpost draft, compliance matrix, showcase and public copy
+  derive every mutable release fact from one manifest; incompatible historical
+  numbers are explicitly labelled archival or absent.
+  Verify: Mutation tests, release gate and repository-wide stale-claim scan.
+- [x] **52. Ship a bounded judge-executable cloud sandbox**
+  Spec ref: `spec.md > Submission-truth and fleet-utility hardening`
+  What to build: A separate least-privilege Cloud Run judge gateway that accepts
+  only the server-owned canonical command, requires an expiring capability token,
+  enforces an atomic quota, and exposes read-only phase polling.
+  Acceptance: Judges can start and observe a fresh run without control-plane IAM;
+  arbitrary payloads, replay beyond quota, internal routes and direct mutation fail
+  closed, while the public showcase identity retains zero project roles.
+  Verify: Auth/quota/abuse tests, IAM audit, live start/status smoke and cost cap.
+- [x] **53. Make Gemini resolve a genuine bounded trade-off**
+  Spec ref: `spec.md > Submission-truth and fleet-utility hardening`
+  What to build: Competing eligible successors with different recovery-time,
+  assurance, jurisdictional and warm-state evidence; a code-authored objective;
+  claim-linked model citations; and deterministic admission of either defensible
+  choice.
+  Acceptance: No scalar trust maximum predetermines the answer; changing the
+  incident objective can change the admitted successor, while malformed reasoning,
+  unsupported trade-offs and ineligible choices cannot advance authority.
+  Verify: Objective ablation, candidate permutation, counterfactual and cloud tests.
+- [x] **54. Implement an enterprise fleet catalog and dormant-resume proof**
+  Spec ref: `spec.md > Submission-truth and fleet-utility hardening`
+  What to build: Department-owned immutable agent publications, version lineage,
+  capability discovery and deterministic assessment through a portable registry
+  port, plus a 21-day dormant-obligation fixture resumed from persisted state.
+  Acceptance: The succession service discovers rather than owns candidates; at
+  least three departments can publish versions; an old obligation resumes without
+  process memory or timestamp fabrication.
+  Verify: Cross-department isolation, lineage, discovery, dormant restart and adapter tests.
+- [x] **55. Put Google Model Armor on the raw-input boundary**
+  Spec ref: `spec.md > Submission-truth and fleet-utility hardening`
+  What to build: A production Model Armor prompt-sanitization port, deterministic
+  fail-closed admission receipt, raw adversarial supplier document path and local
+  deterministic substitute.
+  Acceptance: The raw attack is submitted to Model Armor before classification or
+  model access; MATCH, skipped execution, malformed response and unavailable service
+  cannot reach context or Gemini; the exact template and result digest are evidenced.
+  Verify: Raw attack/clean input/mutation/outage tests and live Model Armor receipt.
+- [ ] **56. Execute a real reversible enterprise queue effect**
+  Spec ref: `spec.md > Submission-truth and fleet-utility hardening`
+  What to build: A provider-neutral work-item port and a GitHub Issues reference
+  adapter that creates or reconciles one synthetic supplier-review ticket with a
+  stable idempotency marker and reversible close operation.
+  Acceptance: Redelivery produces one external ticket, not one Firestore stand-in;
+  provider reconciliation is independently readable; no token or real supplier data
+  enters source, logs or evidence.
+  Verify: Contract tests, mocked API faults, live synthetic issue, duplicate delivery
+  and cleanup/close proof.
+- [x] **57. Publish an independent-language interoperability consumer**
+  Spec ref: `spec.md > Submission-truth and fleet-utility hardening`
+  What to build: A minimal TypeScript consumer that implements the public contract
+  without importing Python or Google packages, verifies the golden RFC 8785 vector,
+  registers a departmental agent, records a dormant obligation and executes an
+  idempotent effect against the local transport.
+  Acceptance: The independent client passes the same conformance artifacts and its
+  failures expose stable protocol reasons; it is described as first-party
+  interoperability evidence, not external adoption.
+  Verify: Locked Node test, cross-language digest equality and CI job.
+- [x] **58. Replace the judge diagram with one memorable lifecycle**
+  Spec ref: `spec.md > Submission-truth and fleet-utility hardening`
+  What to build: A sparse judge-facing diagram and narrative led by obligation,
+  fenced predecessor, bounded successor, one real queue effect and independent
+  proof; detailed service topology remains a secondary technical diagram.
+  Acceptance: The primary diagram is readable at 1080p and contains one sentence of
+  product meaning, while internal service names cannot obscure Succession Protocol.
+  Verify: Render dimensions, text audit, link audit and 13-inch readability check.
+- [ ] **59. Pass, deploy, recapture and synchronize the non-video submission truth**
+  Spec ref: `prd.md > Acceptance outcomes`
+  What to build: Full locked gates, protected merge, exact-commit cloud deployment,
+  fresh canonical run, public checksummed proof, current showcase, Devpost text and
+  all non-video form assets.
+  Acceptance: One release manifest agrees with code, CI, image, services, run,
+  Model Armor, external ticket, proof release, hosted access and public Devpost copy.
+  Video remains intentionally unset for the final production step.
+  Verify: Green required checks, offline PASS, live judge smoke, public-copy readback,
+  architecture asset check and clean `main`.

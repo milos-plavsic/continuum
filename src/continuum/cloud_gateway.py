@@ -10,9 +10,11 @@ from .contract import canonical_bytes
 class FirestoreActionGateway:
     """Atomically enforces authority, compliance, and idempotency before mutation."""
 
-    def __init__(self, client: Any, *, expected_actor: str | None = None):
+    def __init__(self, client: Any, *, expected_actor: str | None = None,
+                 external_queue: Any | None = None):
         self.client = client
         self.expected_actor = expected_actor
+        self.external_queue = external_queue
 
     def execute_vendor_create(self, request: dict[str, Any], *, actor: str) -> dict[str, Any]:
         if self.expected_actor is not None and actor != self.expected_actor:
@@ -78,4 +80,9 @@ class FirestoreActionGateway:
             txn.create(provider_ref, record)
             return {"state": "DISPATCHED", "provider_ref": record["provider_ref"]}
 
-        return {**commit(transaction), "actor": actor}
+        admitted = commit(transaction)
+        if self.external_queue is None:
+            return {**admitted, "actor": actor}
+        external = self.external_queue.converge(request)
+        provider_ref.set({"external_effect": external}, merge=True)
+        return {**admitted, **external, "actor": actor}
