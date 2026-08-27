@@ -62,7 +62,11 @@ class FirestoreFleetCatalog:
     def discover(self, requirements: SuccessionRequirements) -> tuple[SuccessorCandidate, ...]:
         snapshots = self.client.collection(self.COLLECTION).where(
             "candidate.tenant_id", "==", requirements.tenant_id).stream()
-        candidates = []
+        # Publications are immutable.  A redeploy may therefore leave several
+        # historical publications for one logical principal.  Discovery exposes
+        # exactly the newest publication per principal; the policy layer still
+        # rejects duplicate principals in its input as an integrity invariant.
+        newest: dict[str, tuple[Any, str, SuccessorCandidate]] = {}
         for snapshot in snapshots:
             body = snapshot.to_dict()["candidate"]
             for field in ("capabilities", "memory_scopes", "authority_domains", "jurisdictions",
@@ -70,5 +74,11 @@ class FirestoreFleetCatalog:
                 body[field] = tuple(body[field])
             from .models import AgentStatus
             body["status"] = AgentStatus(body["status"])
-            candidates.append(SuccessorCandidate(**body))
-        return tuple(sorted(candidates, key=lambda item: item.principal_id))
+            candidate = SuccessorCandidate(**body)
+            created_at = getattr(snapshot, "create_time", None)
+            ordering = (created_at or "", str(getattr(snapshot, "id", "")))
+            current = newest.get(candidate.principal_id)
+            if current is None or ordering > current[:2]:
+                newest[candidate.principal_id] = (*ordering, candidate)
+        return tuple(sorted((item[2] for item in newest.values()),
+                            key=lambda item: item.principal_id))

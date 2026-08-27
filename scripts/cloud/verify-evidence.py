@@ -23,6 +23,7 @@ MANDATORY = {
     "firestore-event", "firestore-projection", "firestore-outbox",
     "pubsub-publish", "pubsub-deliveries", "vertex-call", "trace-export",
     "supplier-assurance", "contract-export",
+    "model-armor", "external-work-item",
     "build-provenance",
 }
 BASE_NON_CLAIMS = {"third_party_interoperability", "universal_exactly_once",
@@ -199,6 +200,18 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
         errors.append("VERTEX_EVIDENCE_CITATION_MISSING")
     if vertex.get("proposed_actions") != ["initiate_governed_succession"]:
         errors.append("VERTEX_REMEDIATION_NOT_ADMITTED")
+
+    armor = objects["model-armor"]
+    _same(armor.get("run_id"), scope["run_id"], "RUN_ID_MISMATCH:model-armor", errors)
+    _same(armor.get("provider"), "google-model-armor", "MODEL_ARMOR_PROVIDER_INVALID", errors)
+    _same(armor.get("execution_state"), "EXECUTION_SUCCESS", "MODEL_ARMOR_EXECUTION_INVALID", errors)
+    _same(armor.get("match_state"), "MATCH_FOUND", "MODEL_ARMOR_ATTACK_NOT_DETECTED", errors)
+    _same(armor.get("allowed_to_model"), False, "MODEL_ARMOR_ATTACK_REACHED_MODEL", errors)
+    if not isinstance(armor.get("template"), str) or "/templates/" not in armor["template"]:
+        errors.append("MODEL_ARMOR_TEMPLATE_INVALID")
+    if not isinstance(armor.get("receipt_digest"), str) or not re.fullmatch(
+            r"[0-9a-f]{64}", armor["receipt_digest"]):
+        errors.append("MODEL_ARMOR_RECEIPT_INVALID")
     incident_digest = vertex.get("incident_assessment_digest")
     if not isinstance(incident_digest, str) or not re.fullmatch(r"[0-9a-f]{64}", incident_digest):
         errors.append("VERTEX_INCIDENT_ASSESSMENT_UNBOUND")
@@ -275,6 +288,19 @@ def _semantic(bundle: dict, objects: dict[str, dict]) -> list[str]:
              or not re.fullmatch(r"sha256:[0-9a-f]{64}", item["evidence_ref"])
              for item in tools):
         errors.append("SUPPLIER_TOOL_RECEIPT_INVALID")
+
+    external = objects["external-work-item"]
+    _same(external.get("run_id"), scope["run_id"], "RUN_ID_MISMATCH:external-work-item", errors)
+    _same(external.get("effect_count"), 1, "EXTERNAL_EFFECT_COUNT_INVALID", errors)
+    _same(external.get("provider"), "github-issues", "EXTERNAL_PROVIDER_INVALID", errors)
+    _same(external.get("state"), "OPEN", "EXTERNAL_WORK_ITEM_NOT_OPEN", errors)
+    provider_ref = external.get("provider_ref")
+    if (not isinstance(provider_ref, str)
+            or not re.fullmatch(r"https://github\.com/[^/]+/[^/]+/issues/\d+", provider_ref)):
+        errors.append("EXTERNAL_PROVIDER_REF_INVALID")
+    if not isinstance(external.get("request_digest"), str) or not re.fullmatch(
+            r"[0-9a-f]{64}", external["request_digest"]):
+        errors.append("EXTERNAL_REQUEST_DIGEST_INVALID")
 
     trace = objects["trace-export"]
     _same(trace.get("trace_id"), scope["trace_id"], "TRACE_ID_MISMATCH", errors)

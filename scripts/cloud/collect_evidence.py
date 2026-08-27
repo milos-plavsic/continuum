@@ -21,6 +21,7 @@ RUN_OBJECTS = (
     "firestore-event", "firestore-projection", "firestore-outbox",
     "pubsub-publish", "pubsub-deliveries", "vertex-call",
     "supplier-assurance", "contract-export",
+    "model-armor", "external-work-item",
 )
 
 

@@ -129,6 +129,10 @@ class FirestoreLifecycleEvidence:
             return event
 
     def record_initial(self, request: dict[str, Any]) -> list[dict[str, Any]]:
+        security = request.get("input_security_receipt")
+        if isinstance(security, dict):
+            _emit(request["run_id"], "model-armor",
+                  {"run_id": request["run_id"], **security})
         return [self._record(request, event_type) for event_type in sorted(self.INITIAL)]
 
     def detect_missing(self, request: dict[str, Any]) -> dict[str, Any] | None:
@@ -278,10 +282,16 @@ class FirestoreSandboxEffects:
         external = record.get("external_effect")
         provider_ref = (external.get("provider_ref") if isinstance(external, dict)
                         else record["provider_ref"])
-        return {"effect_count": 1, "provider_ref": provider_ref,
+        result = {"effect_count": 1, "provider_ref": provider_ref,
                 "provider": external.get("provider") if isinstance(external, dict) else "firestore-sandbox",
                 "request_digest": record["request_digest"],
                 "compliance_evidence_id": record["compliance_evidence_id"]}
+        if isinstance(external, dict):
+            result.update({key: external[key] for key in ("resource_id", "state")
+                           if key in external})
+            _emit(request["run_id"], "external-work-item",
+                  {"run_id": request["run_id"], **result})
+        return result
 
 
 class RoutedFirestoreSandboxEffects(FirestoreSandboxEffects):

@@ -31,8 +31,12 @@ mkdir -p "$private_dir"
 chmod 700 "$private_dir"
 if [[ ! -s "$secret_file" ]]; then
   umask 077
-  openssl rand -hex 32 >"$secret_file"
+  printf '%s' "$(openssl rand -hex 32)" >"$secret_file"
 fi
+secret="$(tr -d '\r\n' <"$secret_file")"
+[[ "$secret" =~ ^[0-9a-f]{64}$ ]] || {
+  echo "Judge secret must be exactly 32 random bytes encoded as hex" >&2; exit 2; }
+printf '%s' "$secret" >"$secret_file"
 
 gcloud services enable modelarmor.googleapis.com secretmanager.googleapis.com \
   --project "$CONTINUUM_PROJECT_ID" --quiet
@@ -87,7 +91,6 @@ gcloud run services set-iam-policy "${CONTINUUM_CONTROL_SERVICE:-continuum-contr
   "$policy_dir/control.yaml" --project "$CONTINUUM_PROJECT_ID" \
   --region "$CONTINUUM_REGION" --quiet >/dev/null
 
-secret="$(<"$secret_file")"
 CONTINUUM_JUDGE_HMAC_SECRET="$secret" uv run python scripts/issue_judge_capability.py \
   --jti devpost26 --hours "${CONTINUUM_JUDGE_TOKEN_HOURS:-720}" \
   --max-runs "${CONTINUUM_JUDGE_MAX_RUNS:-3}" >"$token_file"

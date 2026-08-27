@@ -99,8 +99,15 @@ class SubmissionHardeningTests(unittest.TestCase):
         class Snapshot:
             def __init__(self, key): self.key = key
             @property
+            def id(self): return self.key
+            @property
+            def create_time(self): return data[self.key].get("_created", "")
+            @property
             def exists(self): return self.key in data
-            def to_dict(self): return json.loads(json.dumps(data[self.key], default=lambda x: x.value))
+            def to_dict(self):
+                return {key: value for key, value in
+                        json.loads(json.dumps(data[self.key], default=lambda x: x.value)).items()
+                        if key != "_created"}
         class Doc:
             def __init__(self, key): self.key = key
             def get(self): return Snapshot(self.key)
@@ -120,6 +127,16 @@ class SubmissionHardeningTests(unittest.TestCase):
         requirements = SuccessionRequirements("acme", "old", "vendor.create", "vendor.approved",
                                               "procurement", "EU", "continuity/1")
         self.assertEqual(catalog.discover(requirements)[0].principal_id, "fleet")
+        newer = FleetPublication("finance", "fin", "2026-08-28T00:00:00Z",
+                                  candidate("fleet", 25, "HIGH", "finance"))
+        catalog.publish(newer)
+        data[publication.publication_id]["_created"] = "2026-08-27T00:00:00Z"
+        data[newer.publication_id]["_created"] = "2026-08-28T00:00:00Z"
+        stale = FleetPublication("finance", "fin", "2026-08-26T00:00:00Z",
+                                 candidate("fleet", 30, "HIGH", "finance"))
+        catalog.publish(stale)
+        data[stale.publication_id]["_created"] = "2026-08-26T00:00:00Z"
+        self.assertEqual(catalog.discover(requirements)[0].recovery_time_seconds, 25)
         data[publication.publication_id]["owner"] = "attacker"
         with self.assertRaisesRegex(ValueError, "CONFLICT"): catalog.publish(publication)
         with self.assertRaisesRegex(ValueError, "DUPLICATE"):

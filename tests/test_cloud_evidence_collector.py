@@ -90,9 +90,9 @@ class EvidenceCollectorTests(unittest.TestCase):
         runner = FakeRunner(self.scope)
         report = collector.collect(self.scope, self.destination, runner, services=self.services,
                                    trace_reader=FakeTraceReader(self.scope))
-        self.assertEqual(15, len(report["captured"]))
+        self.assertEqual(17, len(report["captured"]))
         self.assertEqual({}, report["unavailable"])
-        self.assertEqual(15, len([path for path in self.destination.glob("*.json")
+        self.assertEqual(17, len([path for path in self.destination.glob("*.json")
                                   if not path.name.startswith(".")]))
         for command in runner.commands:
             self.assertIn(command[1], {"run", "logging", "artifacts"})
