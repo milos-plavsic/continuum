@@ -356,3 +356,25 @@
   repeated 409 responses. The adapter now normalizes surrounding secret whitespace,
   rejects embedded whitespace at configuration time, and regression-tests the exact
   Authorization header before another fresh run is attempted.
+- Application commit `d4d7d52e56c3d3c123a708a279be6bda7189e647` was then built
+  as Google-signed image digest
+  `sha256:4c4b63c7ddaa9a77b26856cc5e99beae9531dac9aff92aac4d773d79b00aa595`
+  and deployed across all five private workload identities.
+- Fresh run `judge-final-d4d7d52-20260827T223700Z` reached independent
+  `VERIFIED`. The packet has all 17 mandatory objects and 174 correlated Cloud
+  Trace spans. GLEIF was `LIVE`; VIES was transparently
+  `CACHED_WITHIN_POLICY` from a still-fresh observation bound to the prior
+  independently verified attestation. Two Pub/Sub deliveries converged on one
+  reversible GitHub Issue #41 effect, v17 action and memory were denied, and the
+  independently recomputed selection-governance receipt approved the sandbox
+  deviation from deterministic baseline v18 to warm v19.
+- Credential-free/network-free offline verification returned `PASS` with report
+  digest `sha256:405be9a12df92369488b1a5da2b1f592a6eb9e9e962df23df2d1bc50bd7a5401`.
+  Public release `cloud-proof-d4d7d52` is archive-pinned at
+  `14d2005d1a1360528e2ae84ad72c485ff92963a5ecd9e48121cd56edf790d3f6`.
+- Devpost project version 7 was updated and read back with the exact application,
+  proof, availability modes, workflow companion, trust ceiling and 215-test gate;
+  video and formal submission remain unset. The no-role public showcase was
+  redeployed as `continuum-showcase-00006-drz` from source `5241941`; live
+  read-back matched the release, mutation returned `404`, and its identity has no
+  project role. Item 66 is complete; video remains deliberately deferred.

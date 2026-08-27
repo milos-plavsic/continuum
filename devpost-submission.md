@@ -162,9 +162,9 @@ private by design.
 
 Hosted URL: https://continuum-showcase-rdzvxiysbq-ew.a.run.app
 
-The live surface is revision `continuum-showcase-00005-bg9`, pinned to source
-commit `3e41cced560a9a9a05cbee75564dd4c8b5fc1208` and immutable image digest
-`sha256:c038974fa568514e25374e6ac04ebda6565b458a70a23f3d0aa6e445e565cb57`.
+The live surface is revision `continuum-showcase-00006-drz`, pinned to source
+commit `524194190d5360451e4784f48b14163e7bc6e5ee` and immutable image digest
+`sha256:9d171a0451382b935c000ec9dc7d9db9629351fd29180c1e6984786487d2d17d`.
 
 Judge-facing Devpost project page: https://devpost.com/software/continuum-lq35x2
 

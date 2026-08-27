@@ -239,9 +239,9 @@ privately first, and then replaces the service's invoker policy with only the
 intentional `allUsers` binding. The page exposes `/build-info`, but it has no
 credential, datastore role, mutation handler, or connection to the private
 control plane. The current deployment is
-`continuum-showcase-00005-bg9`, available at
+`continuum-showcase-00006-drz`, available at
 https://continuum-showcase-rdzvxiysbq-ew.a.run.app and pinned to image digest
-`sha256:c038974fa568514e25374e6ac04ebda6565b458a70a23f3d0aa6e445e565cb57`.
+`sha256:9d171a0451382b935c000ec9dc7d9db9629351fd29180c1e6984786487d2d17d`.
 
 ## Documentation
 
