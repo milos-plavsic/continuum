@@ -487,7 +487,7 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         class Response:
             def __enter__(self): return self
             def __exit__(self, *args): return None
-            def read(self): return b'{"sanitizationResult":{"filterMatchState":"MATCH_FOUND","filterResults":{"piAndJailbreakFilterResult":{"executionState":"EXECUTION_SUCCESS"}}}}'
+            def read(self): return b'{"sanitizationResult":{"filterMatchState":"MATCH_FOUND","filterResults":{"pi_and_jailbreak":{"piAndJailbreakFilterResult":{"executionState":"EXECUTION_SUCCESS"}}}}}'
         credentials = Credentials()
         with patch("google.auth.default", return_value=(credentials, "p")), \
              patch("continuum.cloud_scenario_adapters.urlopen", return_value=Response()):

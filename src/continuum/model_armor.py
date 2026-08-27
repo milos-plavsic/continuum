@@ -65,8 +65,8 @@ class GoogleModelArmorGuard:
         result = response.get("sanitizationResult")
         if not isinstance(result, dict):
             raise ValueError("MODEL_ARMOR_RESPONSE_INVALID")
-        execution = result.get("filterResults", {}).get("piAndJailbreakFilterResult", {}).get(
-            "executionState")
+        execution = result.get("filterResults", {}).get("pi_and_jailbreak", {}).get(
+            "piAndJailbreakFilterResult", {}).get("executionState")
         match = result.get("filterMatchState")
         if execution != "EXECUTION_SUCCESS" or match not in {"MATCH_FOUND", "NO_MATCH_FOUND"}:
             raise ValueError("MODEL_ARMOR_INCONCLUSIVE")
