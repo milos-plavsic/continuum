@@ -397,7 +397,7 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   Acceptance: The first judge path needs no internal jargon; complete architecture and
   evidence remain linked and unchanged in scope.
   Verify: README/showcase text audit, link check, release gate and clean full quality gate.
-- [ ] **66. Merge, deploy and recapture the resilient release**
+- [x] **66. Merge, deploy and recapture the resilient release**
   Spec ref: `prd.md > Acceptance outcomes`
   What to build: Protected PR, exact-commit deployment, fresh canonical run, proof bundle,
   showcase and Devpost synchronization; video remains deferred.
