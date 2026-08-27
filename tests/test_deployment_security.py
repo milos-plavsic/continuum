@@ -84,8 +84,10 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertNotIn('continuum-v17@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com" --role', self.bootstrap)
         self.assertIn('continuum-v18@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com', self.bootstrap)
         self.assertIn('continuum-v19@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com', self.bootstrap)
+        self.assertIn('for model_agent in continuum-v18 continuum-v19', self.bootstrap)
 
     def test_deployment_carries_immutable_and_observability_metadata(self):
+        self.assertIn('provider secret must be a non-empty single-line byte string', self.deploy)
         for name in ("GIT_SHA", "CONTINUUM_IMAGE_DIGEST", "CONTINUUM_DEPLOYMENT_ID",
                      "CONTINUUM_PROTOCOL", "OTEL_SERVICE_NAME", "CONTINUUM_OBSERVABILITY_ENABLED",
                      "GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_LOCATION", "GOOGLE_GENAI_USE_VERTEXAI",

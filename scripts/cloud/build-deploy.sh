@@ -107,6 +107,9 @@ if [[ -n "${CONTINUUM_GITHUB_PROVIDER_SECRET:-}" ]]; then
   : "${CONTINUUM_GITHUB_ISSUE_NUMBER:?set pre-provisioned sandbox issue number}"
   [[ "$CONTINUUM_GITHUB_ISSUE_NUMBER" =~ ^[1-9][0-9]*$ ]] || {
     echo "CONTINUUM_GITHUB_ISSUE_NUMBER must be positive" >&2; exit 2; }
+  gcloud secrets versions access latest --secret "$CONTINUUM_GITHUB_PROVIDER_SECRET" \
+    --project "$CONTINUUM_PROJECT_ID" | python3 -c \
+    'import sys; value=sys.stdin.buffer.read(); assert value and b"\r" not in value and b"\n" not in value, "provider secret must be a non-empty single-line byte string"'
   for identity in "$v18_identity" "$v19_identity"; do
     gcloud secrets add-iam-policy-binding "$CONTINUUM_GITHUB_PROVIDER_SECRET" \
       --project "$CONTINUUM_PROJECT_ID" --member "serviceAccount:$identity" \
