@@ -39,8 +39,8 @@ class SubmissionHardeningTests(unittest.TestCase):
         self.assertFalse(local["allowed_to_model"])
         google = GoogleModelArmorGuard(project="p", location="us-central1", template="t",
             post=lambda u, p: {"sanitizationResult": {"filterMatchState": "MATCH_FOUND",
-                "filterResults": {"piAndJailbreakFilterResult": {
-                    "executionState": "EXECUTION_SUCCESS"}}}})
+                "filterResults": {"pi_and_jailbreak": {"piAndJailbreakFilterResult": {
+                    "executionState": "EXECUTION_SUCCESS"}}}}})
         receipt = google.sanitize(text=RAW_ATTACK_FIXTURE, run_id="r")
         self.assertEqual(receipt["provider"], "google-model-armor")
         with self.assertRaisesRegex(ValueError, "INCONCLUSIVE"):
