@@ -136,7 +136,7 @@ PYTHONPATH=src python3 -m continuum --output artifacts/latest
 python3 examples/local_sdk_consumer.py
 ```
 
-The quality gate installs locked dependencies, executes 215 tests, enforces genuine 100.0% statement and branch coverage, runs C0–C6 conformance, and runs the release gate. The repository's GitHub Actions also builds and imports the locked non-root runtime image.
+The quality gate installs locked dependencies, executes 215 tests, enforces genuine 100.0% statement and branch coverage, runs C0–C6 conformance, and runs the release gate. The repository's GitHub Actions also builds and imports the locked non-root runtime image. The exact downloaded main-CI coverage packet—including XML, JSON, browsable HTML, complete source/measured inventories and nested checksums—is public at https://github.com/milos-plavsic/continuum/releases/tag/quality-proof-12e116b.
 
 For an authorized Google Cloud project, copy `deploy/cloud.env.example`, then run:
 

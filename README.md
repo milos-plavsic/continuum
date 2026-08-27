@@ -141,6 +141,11 @@ scope independently inspectable: the claim covers every Python module under
 for the unsuccessful cloud attempts that preceded the accepted proof and the functional
 PR lineage behind the final release pin.
 
+The exact downloaded main-CI packet passed every nested checksum and is permanently
+published as [`quality-proof-12e116b`](https://github.com/milos-plavsic/continuum/releases/tag/quality-proof-12e116b);
+the [quality-proof note](docs/QUALITY_PROOF.md) records its source-tree digest, archive
+digest, measured totals and precise non-claim.
+
 To generate a verifier-gated multimodal resilience brief in an authorized
 Google Cloud project:
 

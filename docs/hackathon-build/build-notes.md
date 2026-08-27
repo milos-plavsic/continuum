@@ -25,6 +25,11 @@
   and was immediately removed rather than mislabeled as proof. CI now explicitly includes
   hidden files; publication must repeat from a green exact-commit run and pass every nested
   checksum after download before a durable release is created.
+- PRs #56 and #57 passed protected CI and merged. Exact main run `33125745852`
+  uploaded the corrected complete packet; every nested checksum passed after download.
+  The deterministic archive is public as `quality-proof-12e116b`, with SHA-256
+  `192a0668c4176f81380aecf54daad2b3da67cd753480b00cf2c0d40e0e95cd76`.
+  Items 67–70 are complete; no product capability or current cloud-proof fact changed.
 
 ## Submission hardening checkpoint — August 27
 
