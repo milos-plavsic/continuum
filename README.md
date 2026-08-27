@@ -46,11 +46,11 @@ standard and not yet a third-party interoperability claim.
 The repository contains a deterministic reference and a production-composed
 Google Cloud slice using private Cloud Run identities, Firestore transactions,
 Cloud Tasks, Pub/Sub redelivery, Google ADK with Gemini 3.6 Flash, and a
-read-only verifier. Release `5e579f4` has a fresh 15-object Google Cloud evidence
-bundle with an offline semantic `PASS`; Cloud Trace contains 124 real
+read-only verifier. Release `a1e00ac` has a fresh 15-object Google Cloud evidence
+bundle with an offline semantic `PASS`; Cloud Trace contains 89 real
 OpenTelemetry spans read through the owning API. The capture includes distinct
 v18 and v19 warm-successor identities, Gemini's complete evidence manifest and
-selective claim-linked citations, the
+selective claim-linked citations, the formal policy-versioned incident-evidence chain, the
 minimum-context receipt, official GLEIF and EU VIES observations, the admitted
 supplier decision-pack binding, and one provider effect despite redelivery. Exact release
 identifiers and the validity boundary are recorded in
@@ -62,7 +62,7 @@ revision to a Google-signed SLSA v1 image subject; the assurance boundary and
 independent signature check are in [the provenance guide](docs/PROVENANCE.md).
 Local success is never relabelled as cloud proof.
 
-The practical Supplier Assurance extension is included in release `5e579f4`'s
+The practical Supplier Assurance extension is included in release `a1e00ac`'s
 exact-commit cloud proof. The offline verifier requires its successor identity,
 Gemini 3.6 model, official GLEIF/VIES receipt digests, `SANDBOX_ONLY` scope,
 `ONBOARD` admission and decision-pack digest to agree with the execution receipt.

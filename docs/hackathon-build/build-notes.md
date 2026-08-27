@@ -11,9 +11,19 @@
   contention proof, and a complete credential-free local lifecycle/container.
 - Bounded Google ADK, rebuilt the image as non-root multi-stage targets, and
   added pinned SPDX SBOM plus actionable HIGH/CRITICAL vulnerability gates.
-- Verification checkpoint: 180 tests at genuine 100.0% statement/branch
-  coverage and the full conformance/release gate pass. Exact cloud recapture
-  remains item 50 and is not claimed by this checkpoint.
+- Protected PRs #34–#36 passed both required checks. The final gate ran 181
+  tests at genuine 100.0% statement/branch coverage, plus conformance, release,
+  locked-image, SBOM and HIGH/CRITICAL vulnerability gates.
+- Exact application source `a1e00ac188c5597150fb7c6de142224d086c4995`
+  was deployed as image
+  `sha256:608e941c082a7d675db8ccf0d9bd9807026437958a91affd473abfbdef44c996`.
+  Fresh run `standards-a1e00ac-20260827T163808Z` reached independent
+  `VERIFIED`; all 15 mandatory objects and 89 correlated spans were captured.
+- The credential-free offline verifier returned `PASS` for bundle
+  `urn:uuid:b23e074f-4441-4e69-9b33-f12ebb316c5b`, and Google's Hosted Worker
+  DSSE signature independently returned `Verified OK`. The checksummed packet
+  is public as release `cloud-proof-a1e00ac`; capture provenance remains
+  explicitly outside the offline verifier's claim.
 
 ## Practical-agent golden cloud proof — August 27
 
