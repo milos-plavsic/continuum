@@ -30,6 +30,9 @@
   The deterministic archive is public as `quality-proof-12e116b`, with SHA-256
   `192a0668c4176f81380aecf54daad2b3da67cd753480b00cf2c0d40e0e95cd76`.
   Items 67–70 are complete; no product capability or current cloud-proof fact changed.
+- Devpost project version 8 was updated and read back through the authenticated API.
+  Its public description now links both `quality-proof-12e116b` and the failed-run
+  ledger, while `video_url` and formal hackathon `submitted_at` remain unset.
 
 ## Submission hardening checkpoint — August 27
 
