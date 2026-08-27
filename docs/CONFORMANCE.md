@@ -20,7 +20,7 @@ does not certify cloud workload identity, a production vector database,
 third-party interoperability, live Gemini behavior, or an external trust anchor.
 
 ```bash
-python3 scripts/run_conformance.py
+uv run python scripts/run_conformance.py
 ```
 
 The harness creates isolated stores, evaluates durable evidence, includes
@@ -34,4 +34,3 @@ digest to `artifacts/conformance/conformance-report.json`.
 - Every mandatory case and non-claim appears in the report.
 - Recorded model output cannot earn a live-model claim.
 - Cloud and local evidence cannot be combined across profiles.
-

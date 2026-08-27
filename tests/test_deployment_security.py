@@ -20,6 +20,7 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         cls.cloudbuild = (ROOT / "deploy/cloudbuild.yaml").read_text()
         cls.provenance_check = (ROOT / "scripts/cloud/verify-build-provenance.sh").read_text()
         cls.cloud_proof = (ROOT / "scripts/cloud/run-cloud-proof.sh").read_text()
+        cls.cloud_smoke = (ROOT / "scripts/cloud/run-smoke.sh").read_text()
 
     def test_services_are_private_digest_pinned_and_replace_invoker_policy(self):
         self.assertIn('--image "$image_ref"', self.deploy)
@@ -85,6 +86,8 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
                       self.provenance_check)
         self.assertIn('uv run python - "$run_id"', self.cloud_proof)
         self.assertNotIn('PYTHONPATH=src python3', self.cloud_proof)
+        self.assertIn('uv run python scripts/cloud/package-evidence.py', self.cloud_smoke)
+        self.assertIn('uv run python scripts/cloud/verify-evidence.py', self.cloud_smoke)
 
 
 class DeploymentReadinessTests(unittest.TestCase):
