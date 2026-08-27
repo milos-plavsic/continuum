@@ -16,7 +16,7 @@ class ReleaseTruthTests(unittest.TestCase):
     def test_current_repository_has_one_release_truth(self):
         truth = load_release_truth(ROOT / "docs/submission/current-release.json")
         self.assertEqual(audit_judge_surfaces(ROOT, truth), ())
-        self.assertIn("15 required objects", release_summary(truth))
+        self.assertIn("17 required objects", release_summary(truth))
 
     def test_manifest_and_surface_mutations_fail_closed(self):
         source = json.loads((ROOT / "docs/submission/current-release.json").read_text())

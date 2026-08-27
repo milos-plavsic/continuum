@@ -138,7 +138,7 @@ export CONTINUUM_EVIDENCE_DIR="artifacts/cloud/$(date -u +%Y%m%dT%H%M%SZ)"
 bash scripts/cloud/run-cloud-proof.sh
 ```
 
-The accepted exact-source proof is documented in `docs/CLOUD_PROOF.md`: 15 read-only objects, 89 correlated spans, and a network-free/credential-free offline semantic PASS. The complete security-audited packet is publicly downloadable from the checksum-pinned `cloud-proof-a1e00ac` GitHub Release. The separate `multimodal-proof-8bec862` release publishes the exact Gemma/Veo/Lyria receipt and both generated assets with SHA-256 checksums.
+The accepted exact-source proof is documented in `docs/CLOUD_PROOF.md`: 17 read-only objects, 43 correlated spans, and a network-free/credential-free offline semantic PASS. The complete security-audited packet is publicly downloadable from the checksum-pinned `cloud-proof-0d823369` GitHub Release. The separate `multimodal-proof-8bec862` release publishes the exact Gemma/Veo/Lyria receipt and both generated assets with SHA-256 checksums.
 
 ## Hosted Project
 
@@ -149,9 +149,9 @@ private by design.
 
 Hosted URL: https://continuum-showcase-rdzvxiysbq-ew.a.run.app
 
-The live surface is revision `continuum-showcase-00003-rql`, pinned to source
-commit `4a9af2622fb25c513c06d935be6dbb441cc6193b` and immutable image digest
-`sha256:0392920060f7ccfc516e8e47e6d3547330a0c56867d5c9f5f359b2630bda8e36`.
+The live surface is revision `continuum-showcase-00004-dcc`, pinned to source
+commit `0d8233695eeae0980088f3209f531181852a4a60` and immutable image digest
+`sha256:5f7d04a08e2818cca4a705560c9da95a1ecdd5a46be72a51ac84ab7f4211b11a`.
 
 Judge-facing Devpost project page: https://devpost.com/software/continuum-lq35x2
 
@@ -170,11 +170,11 @@ Canonical film scenario: `docs/video/06_REMARKABLE_SCENARIO.md`.
 ## Screenshot Shot List
 
 1. Cockpit hero: “The agent failed. The €250,000 promise did not.”
-2. Candidate panel: v18/v19 eligible, v20 rejected, Gemini-selected v18 with citations.
+2. Candidate panel: v18/v19 eligible, v20 rejected, Gemini-selected v19 with citations and an explicit recovery/assurance trade-off.
 3. Minimum-context receipt: two included, four excluded with reason codes.
 4. Continuity proof: two Pub/Sub deliveries, one provider effect, v17 denied, verifier-issued artifact six.
 5. Supplier decision pack: official GLEIF/VIES receipts, Gemini recommendation, deterministic sandbox admission.
-6. Google Cloud evidence: five Cloud Run revisions/identities, 15-object offline PASS, and the exact 89-span Cloud Trace.
+6. Google Cloud evidence: five Cloud Run revisions/identities, 17-object offline PASS, and the exact 43-span Cloud Trace.
 
 ## Submission Readiness Notes
 

@@ -57,13 +57,13 @@ packet instead of claiming to execute the historical run.
 
 The currently published judge surface is
 https://continuum-showcase-rdzvxiysbq-ew.a.run.app. Revision
-`continuum-showcase-00003-rql` runs source commit
-`4a9af2622fb25c513c06d935be6dbb441cc6193b` as immutable image digest
-`sha256:0392920060f7ccfc516e8e47e6d3547330a0c56867d5c9f5f359b2630bda8e36`.
+`continuum-showcase-00004-dcc` runs source commit
+`0d8233695eeae0980088f3209f531181852a4a60` as immutable image digest
+`sha256:5f7d04a08e2818cca4a705560c9da95a1ecdd5a46be72a51ac84ab7f4211b11a`.
 Its service identity is
 `continuum-showcase@project-0775d12a-00a3-48d2-b13.iam.gserviceaccount.com`;
 the identity has no project-level role. The page points to the exact hardened
-`cloud-proof-a1e00ac` packet. Its mutation probe returns `404`; the service IAM
+`cloud-proof-0d823369` packet. Its mutation probe returns `404`; the service IAM
 policy contains only the intentional `allUsers`/`roles/run.invoker` binding.
 
 ## Evidence interpretation
