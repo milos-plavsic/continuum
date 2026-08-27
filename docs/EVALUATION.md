@@ -26,5 +26,5 @@ cases as though one repeated fixture had executed all of them.
 - Consequential audit-link completeness.
 - Virtual detection and recovery steps.
 
-Run `python3 scripts/run_evaluation.py`. The generated report records only cases
+Run `uv run python scripts/run_evaluation.py`. The generated report records only cases
 actually executed and labels cloud/live-Gemini checks as pending until captured.

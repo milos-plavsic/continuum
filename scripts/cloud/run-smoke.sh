@@ -19,11 +19,11 @@ uv run --extra google python scripts/cloud/collect_evidence.py "$capture_dir" \
   --v19-service "${CONTINUUM_V19_SERVICE:-continuum-agent-v19}" \
   --verifier-service "${CONTINUUM_VERIFIER_SERVICE:-continuum-verifier}"
 
-python3 scripts/cloud/package-evidence.py "$capture_dir" "$CONTINUUM_EVIDENCE_DIR" \
+uv run python scripts/cloud/package-evidence.py "$capture_dir" "$CONTINUUM_EVIDENCE_DIR" \
   --project "$CONTINUUM_PROJECT_ID" --region "$CONTINUUM_REGION" \
   --run-id "$CONTINUUM_RUN_ID" --trace-id "$CONTINUUM_TRACE_ID" --git-commit "$CONTINUUM_GIT_SHA"
 
-python3 scripts/cloud/verify-evidence.py "$CONTINUUM_EVIDENCE_DIR"
+uv run python scripts/cloud/verify-evidence.py "$CONTINUUM_EVIDENCE_DIR"
 python3 - "$CONTINUUM_EVIDENCE_DIR/report.json" <<'PY'
 import json, pathlib, sys
 report = json.loads(pathlib.Path(sys.argv[1]).read_text())

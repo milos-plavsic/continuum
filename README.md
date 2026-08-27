@@ -130,9 +130,9 @@ Then regenerate the measured evaluation and portable artifacts when their
 fixtures change:
 
 ```bash
-python3 scripts/run_evaluation.py
-python3 scripts/run_conformance.py
-python3 scripts/generate_contract_bundle.py
+uv run python scripts/run_evaluation.py
+uv run python scripts/run_conformance.py
+uv run python scripts/generate_contract_bundle.py
 ```
 
 Or run the complete local release gate in one command. It proves the signature

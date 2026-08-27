@@ -67,7 +67,7 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   Spec ref: `spec.md > Continuity Contract extension`
   What to build: Isolated C0–C6 runner, report schema/digest, claims and non-claims.
   Acceptance: All 21 declared local cases pass without importing cloud/live-model evidence.
-  Verify: `python3 scripts/run_conformance.py`.
+  Verify: `uv run python scripts/run_conformance.py`.
 
 ## Google Cloud proof extension — autonomous
 
