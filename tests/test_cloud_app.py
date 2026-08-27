@@ -173,7 +173,7 @@ class CloudAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Public read-only showcase", response.text)
         self.assertIn("17 required objects", response.text)
-        self.assertIn("cloud-proof-0d823369", response.text)
+        self.assertIn("cloud-proof-d4d7d52", response.text)
         self.assertIn("v19 selected", response.text)
         self.assertIn("one GitHub issue", response.text)
         self.assertIn("default-src 'none'", response.headers["Content-Security-Policy"])

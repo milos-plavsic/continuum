@@ -136,7 +136,7 @@ PYTHONPATH=src python3 -m continuum --output artifacts/latest
 python3 examples/local_sdk_consumer.py
 ```
 
-The quality gate installs locked dependencies, executes 201 tests, enforces genuine 100.0% statement and branch coverage, runs C0–C6 conformance, and runs the release gate. The repository's GitHub Actions also builds and imports the locked non-root runtime image.
+The quality gate installs locked dependencies, executes 215 tests, enforces genuine 100.0% statement and branch coverage, runs C0–C6 conformance, and runs the release gate. The repository's GitHub Actions also builds and imports the locked non-root runtime image.
 
 For an authorized Google Cloud project, copy `deploy/cloud.env.example`, then run:
 
@@ -151,7 +151,7 @@ export CONTINUUM_EVIDENCE_DIR="artifacts/cloud/$(date -u +%Y%m%dT%H%M%SZ)"
 bash scripts/cloud/run-cloud-proof.sh
 ```
 
-The accepted exact-source proof is documented in `docs/CLOUD_PROOF.md`: 17 read-only objects, 43 correlated spans, and a network-free/credential-free offline semantic PASS. The complete security-audited packet is publicly downloadable from the checksum-pinned `cloud-proof-0d823369` GitHub Release. The separate `multimodal-proof-8bec862` release publishes the exact Gemma/Veo/Lyria receipt and both generated assets with SHA-256 checksums.
+The accepted application commit is `d4d7d52`. Its exact-source proof is documented in `docs/CLOUD_PROOF.md`: 17 read-only objects, 174 correlated spans, and a network-free/credential-free offline semantic PASS. GLEIF was live; the unavailable VIES call used a transparently labelled, freshness-bound observation from a prior independently verified live run. The complete security-audited packet is publicly downloadable from the checksum-pinned `cloud-proof-d4d7d52` GitHub Release. The separate `multimodal-proof-8bec862` release publishes the exact Gemma/Veo/Lyria receipt and both generated assets with SHA-256 checksums.
 
 ## Hosted Project
 

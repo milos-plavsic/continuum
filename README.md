@@ -63,17 +63,19 @@ standard and not yet a third-party interoperability claim.
 The repository contains a deterministic reference and a production-composed
 Google Cloud slice using private Cloud Run identities, Firestore transactions,
 Cloud Tasks, Pub/Sub redelivery, Google ADK with Gemini 3.6 Flash, and a
-read-only verifier. Release `0d82336` has a fresh 17-object Google Cloud evidence
-bundle with an offline semantic `PASS`; Cloud Trace contains 43 real
+read-only verifier. Release `d4d7d52` has a fresh 17-object Google Cloud evidence
+bundle with an offline semantic `PASS`; Cloud Trace contains 174 real
 OpenTelemetry spans read through the owning API. The capture includes distinct
 v18 and v19 warm-successor identities, Gemini's complete evidence manifest and
-selective claim-linked citations, the formal policy-versioned incident-evidence chain, the
-minimum-context receipt, official GLEIF and EU VIES observations, Google Model
+selective claim-linked citations, the independently recomputed selection-governance
+receipt, the formal policy-versioned incident-evidence chain, the
+minimum-context receipt, a live GLEIF observation and a transparently labelled
+freshness-bound VIES fallback from a prior independently verified live observation, Google Model
 Armor's raw-injection receipt, the admitted supplier decision-pack binding, and
 one real GitHub Issues work item despite redelivery. Exact release
 identifiers and the validity boundary are recorded in
 [the cloud proof](docs/CLOUD_PROOF.md). The complete evidence packet is a public,
-checksum-pinned [`cloud-proof-0d823369`](https://github.com/milos-plavsic/continuum/releases/tag/cloud-proof-0d823369)
+checksum-pinned [`cloud-proof-d4d7d52`](https://github.com/milos-plavsic/continuum/releases/tag/cloud-proof-d4d7d52)
 GitHub Release asset, so judges can run its semantic verifier
 without Google credentials. That verdict proves archive integrity and semantic
 consistency, not capture provenance. New deployments also bind every Cloud Run
@@ -81,7 +83,7 @@ revision to a Google-signed SLSA v1 image subject; the assurance boundary and
 independent signature check are in [the provenance guide](docs/PROVENANCE.md).
 Local success is never relabelled as cloud proof.
 
-The practical Supplier Assurance extension is included in release `0d82336`'s
+The practical Supplier Assurance extension is included in release `d4d7d52`'s
 exact-commit cloud proof. The offline verifier requires its successor identity,
 Gemini 3.6 model, official GLEIF/VIES receipt digests, `SANDBOX_ONLY` scope,
 `ONBOARD` admission and decision-pack digest to agree with the execution receipt.
@@ -126,7 +128,7 @@ excluded and there are no `pragma: no cover` shortcuts:
 ./scripts/quality-gate.sh
 ```
 
-The current gate executes 201 tests and reports genuine **100.0% statement and
+The current gate executes 215 tests and reports genuine **100.0% statement and
 branch coverage**.
 
 To generate a verifier-gated multimodal resilience brief in an authorized
