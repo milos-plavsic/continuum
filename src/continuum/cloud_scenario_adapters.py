@@ -289,6 +289,51 @@ class FirestoreCompliance:
         return record
 
 
+class RemoteSupplierAssurance:
+    """Invoke the admitted successor's practical agent and persist its decision pack."""
+    def __init__(self, client: Any, workload_client: AuthenticatedJsonClient,
+                 routes: dict[str, tuple[str, str]]):
+        self.client, self.workload_client, self.routes = client, workload_client, dict(routes)
+
+    def verify(self, request: dict[str, Any]) -> dict[str, Any]:
+        route = self.routes.get(str(request.get("successor")))
+        if route is None:
+            raise ValueError("SUPPLIER_ASSURANCE_ROUTE_NOT_CONFIGURED")
+        url, expected_identity = route
+        response = self.workload_client.post(
+            f"{url}/internal/assess-supplier", request, run_id=request["run_id"])
+        if response.get("actor") != expected_identity:
+            raise ValueError("SUPPLIER_ASSESSOR_IDENTITY_MISMATCH")
+        assurance = response.get("assurance")
+        if (not isinstance(assurance, dict) or assurance.get("status") != "VERIFIED"
+                or assurance.get("workflow") != "SUPPLIER_ASSURANCE_AGENT"
+                or assurance.get("decision_scope") != "SANDBOX_ONLY"
+                or assurance.get("vendor_id") != request["vendor_id"]):
+            raise ValueError("SUPPLIER_ASSURANCE_RESULT_INVALID")
+        record = {
+            **assurance,
+            "run_id": request["run_id"], "tenant_id": request["tenant_id"],
+            "obligation_id": request["obligation_id"], "vendor_id": request["vendor_id"],
+        }
+        ref = self.client.collection("continuity_compliance").document(request["run_id"])
+        existing = ref.get()
+        if existing.exists and existing.to_dict() != record:
+            raise ValueError("SUPPLIER_ASSURANCE_EVIDENCE_CONFLICT")
+        if not existing.exists:
+            ref.create(record)
+        _emit(request["run_id"], "supplier-assurance", {
+            "run_id": request["run_id"], "workflow": assurance["workflow"],
+            "model": "gemini-3.6-flash", "service_account": response["actor"],
+            "decision_scope": assurance["decision_scope"],
+            "recommendation": assurance.get("recommendation"),
+            "decision_pack_digest": assurance.get("decision_pack_digest"),
+            "tools": [{"tool": item.get("tool"), "source_url": item.get("source_url"),
+                       "evidence_ref": item.get("evidence_ref")}
+                      for item in assurance.get("tool_observations", [])],
+        })
+        return record
+
+
 class CloudTasksDeadlineScheduler:
     """Schedules the external Sentinel tick; request handling does not sleep."""
     def __init__(self, client: Any, *, project: str, region: str, queue: str,
@@ -329,7 +374,15 @@ class ObservedContractExporter:
         manifest = make_envelope("succession_manifest", f"{base}:manifest", self.issuer, at, {"succession_id": run["run_id"], "tenant_id": run["tenant_id"], "authority_domain": f"{base}:authority", "predecessor": {"principal_id": run["predecessor"], "epoch": run["predecessor_epoch"]}, "successor": {"principal_id": run["successor"], "epoch": run["successor_epoch"]}, "obligations": [artifact_ref(obligation)], "included_grants": [artifact_ref(grant)], "excluded_context": [{"reference_or_class": item["item_id"], "reason_code": item["reason_code"]} for item in run["context_reconstruction"]["decisions"] if not item["included"]], "in_flight_effects": [], "evidence_refs": [{"observation": item["sequence"], "kind": item["kind"]} for item in observations], "policy_decision": decision, "created_from_registry_revision": run["successor_epoch"], "state": "COMMITTED"}, extensions={"continuum.dev/successor-selection": run["candidate_assessment"], "continuum.dev/context-reconstruction": run["context_reconstruction"]})
         revocation = make_envelope("revocation_proof", f"{base}:revocation", self.issuer, at, {"tenant_id": run["tenant_id"], "authority_domain": f"{base}:authority", "revoked_principal": run["predecessor"], "revoked_through_epoch": run["predecessor_epoch"], "registry_revision": run["successor_epoch"], "effective_at": at, "revoked_grant_ids": [], "enforcement_points": [{"id": "action-gateway", "kind": "ACTION", "observation_ref": "predecessor.denials_observed"}, {"id": "memory-gateway", "kind": "MEMORY", "observation_ref": "predecessor.denials_observed"}], "policy_decision": decision, "status": "ENFORCED"})
         provider = run["provider_observation"]
-        receipt = make_envelope("execution_receipt", f"{base}:receipt", self.issuer, at, {"tenant_id": run["tenant_id"], "obligation": artifact_ref(obligation), "executing_principal": run["successor"], "authority_domain": f"{base}:authority", "epoch": run["successor_epoch"], "decision": decision, "idempotency_key": run["idempotency_key"], "request_digest": provider["request_digest"], "execution_id": run["run_id"], "provider": {"adapter": "firestore-sandbox/1", "operation": "vendor.create", "resource_ref": provider["provider_ref"]}, "disposition": "EXECUTED", "observed_at": at}, extensions={"continuum.dev/compliance": {"evidence_id": run["compliance"]["evidence_id"], "obligation_id": run["obligation_id"], "document_hash": run["compliance"]["document_hash"]}})
+        compliance_extension = {
+            "evidence_id": run["compliance"]["evidence_id"],
+            "obligation_id": run["obligation_id"],
+            "document_hash": run["compliance"]["document_hash"],
+        }
+        for key in ("workflow", "decision_scope", "recommendation", "decision_pack_digest"):
+            if key in run["compliance"]:
+                compliance_extension[key] = run["compliance"][key]
+        receipt = make_envelope("execution_receipt", f"{base}:receipt", self.issuer, at, {"tenant_id": run["tenant_id"], "obligation": artifact_ref(obligation), "executing_principal": run["successor"], "authority_domain": f"{base}:authority", "epoch": run["successor_epoch"], "decision": decision, "idempotency_key": run["idempotency_key"], "request_digest": provider["request_digest"], "execution_id": run["run_id"], "provider": {"adapter": "firestore-sandbox/1", "operation": "vendor.create", "resource_ref": provider["provider_ref"]}, "disposition": "EXECUTED", "observed_at": at}, extensions={"continuum.dev/compliance": compliance_extension})
         return {"profile": "reference-google-cloud", "protocol": "continuum/0.1-draft", "artifacts": [obligation, grant, manifest, revocation, receipt]}
 
 
@@ -401,7 +454,10 @@ def build_production_scenario_service() -> DurableCloudScenarioService | None:
         investigator=RemoteInvestigator(http, required["CONTINUUM_V18_URL"]),
         authority=FirestoreAuthority(db, http, required["CONTINUUM_V17_URL"],
                                      required["CONTINUUM_V17_IDENTITY"]),
-        compliance=FirestoreCompliance(db),
+        compliance=RemoteSupplierAssurance(db, http, {
+            "v18": (required["CONTINUUM_V18_URL"], required["CONTINUUM_V18_IDENTITY"]),
+            "v19": (required["CONTINUUM_V19_URL"], required["CONTINUUM_V19_IDENTITY"]),
+        }),
         effects=RoutedFirestoreSandboxEffects(db, http, {
             "v18": (required["CONTINUUM_V18_URL"], required["CONTINUUM_V18_IDENTITY"]),
             "v19": (required["CONTINUUM_V19_URL"], required["CONTINUUM_V19_IDENTITY"]),

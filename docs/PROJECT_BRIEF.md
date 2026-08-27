@@ -41,19 +41,23 @@ Judging weights:
    evidence.
 7. Succession Protocol transfers valid commitments and authorized memory to a
    replacement, then revokes and retires the compromised agent.
-8. The successor completes the original obligation with one externally observed
-   effect under the demonstrated gateway and provider failure model.
+8. The successor runs the practical Supplier Assurance Agent: it checks legal
+   identity through GLEIF, validates EU VAT through VIES, uses ADK and Gemini 3.6
+   to produce a cited decision pack, and passes deterministic admission.
+9. The successor completes the original obligation with one externally observed
+   sandbox onboarding effect under the demonstrated gateway and provider failure model.
 
 ## Four-minute demo narrative
 
-A procurement agent commits to onboarding a vendor. A required compliance
-document never arrives, but no explicit error is emitted. Continuum detects the
-absence, investigates it, blocks conflicting destructive actions, learns a
-verified defense against the triggering attack, retires the compromised agent,
-and transfers the legitimate commitment to a successor. The successor finishes
-the workflow with one verified provider effect while the former identity and
-revoked memory visibly fail. The UI presents the complete evidence, Continuity
-Attestation, and OpenTelemetry timeline.
+A procurement agent begins a concrete supplier-assurance case but a required
+event never arrives and no explicit error is emitted. Continuum detects the
+absence, investigates it, blocks conflicting destructive actions, retires the
+compromised agent, and transfers the legitimate commitment plus the synthetic
+sandbox application—not the poisoned context—to a successor. The successor
+uses official GLEIF and EU VIES lookups plus ADK/Gemini to create a cited
+decision pack, then completes exactly one sandbox onboarding effect. The former
+identity and revoked memory visibly fail; an independent verifier binds the
+decision pack, provider result, and Continuity Attestation.
 
 ## Scope discipline
 

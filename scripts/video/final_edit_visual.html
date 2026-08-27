@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Continuum final edit visual</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #061018; }
+    #canvas { position: fixed; inset: 0; background: #061018; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    .layer { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; object-fit: cover; transition: opacity 260ms ease; }
+    .layer.visible { opacity: 1; }
+    #live, #finalstate, #models { background: #061018; }
+    #slug {
+      position: absolute; z-index: 20; left: 34px; top: 30px; opacity: 0; transition: opacity 220ms ease;
+      border: 1px solid rgba(84,215,255,.48); border-radius: 8px; padding: 8px 11px;
+      color: #aeeeff; background: rgba(3,13,20,.82); font: 760 13px/1 ui-sans-serif, system-ui;
+      letter-spacing: .12em;
+    }
+    #slug.visible { opacity: 1; }
+    #highlight {
+      position: absolute; z-index: 18; opacity: 0; pointer-events: none;
+      border: 3px solid rgba(84,215,255,.92); border-radius: 15px;
+      box-shadow: 0 0 0 9999px rgba(1,8,13,.13), 0 0 28px rgba(84,215,255,.22);
+      transition: opacity 240ms ease;
+    }
+    #highlight.visible { opacity: 1; }
+    #highlight span {
+      position: absolute; left: -3px; top: -35px; padding: 7px 10px; border-radius: 7px 7px 7px 0;
+      background: #54d7ff; color: #031018; font: 800 13px/1 ui-sans-serif, system-ui; letter-spacing: .05em;
+      white-space: nowrap;
+    }
+    #cut {
+      position: absolute; z-index: 24; right: 32px; top: 30px; opacity: 0; transition: opacity 180ms ease;
+      color: #c4d4de; background: rgba(3,13,20,.8); border-radius: 7px; padding: 7px 10px;
+      font: 700 12px/1 ui-sans-serif, system-ui; letter-spacing: .09em;
+    }
+    #cut.visible { opacity: 1; }
+    #timecode {
+      position: absolute; z-index: 30; right: 26px; bottom: 22px; display: none;
+      color: #fff; background: rgba(0,0,0,.78); border-radius: 6px; padding: 7px 9px;
+      font: 15px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    body.review #timecode { display: block; }
+  </style>
+</head>
+<body>
+  <div id="canvas">
+    <img id="opening" class="layer" src="../../artifacts/video/graphics/rendered/opening-card.png" alt="">
+    <video id="live" class="layer" muted playsinline preload="auto" src="../../artifacts/video/capture/live-flow-20260826T235633Z/live-workflow-master.webm"></video>
+    <video id="finalstate" class="layer" muted playsinline preload="auto" src="../../artifacts/video/cutaway-20260827T020000Z/same-run-cutaway.webm"></video>
+    <img id="architecture" class="layer" src="../../artifacts/video/graphics/rendered/architecture-video.png" alt="">
+    <img id="cloud" class="layer" src="../../artifacts/video/graphics/rendered/cloud-proof-strip.png" alt="">
+    <video id="models" class="layer" muted playsinline preload="auto" src="../../artifacts/video/model-chain-20260827T004930Z/four-model-chain.webm"></video>
+    <img id="end" class="layer" src="../../artifacts/video/graphics/rendered/end-card.png" alt="">
+    <div id="slug"></div>
+    <div id="highlight"><span></span></div>
+    <div id="cut">TRANSPARENT JUMP CUT · SAME RUN</div>
+    <div id="timecode">00:00.000</div>
+  </div>
+  <script>
+    const S = {
+      scene1: 2.500, scene2: 25.793, scene3: 45.921, scene4: 64.936,
+      scene5: 89.621, scene6: 115.558, scene7: 134.851,
+      scene8: 159.605, scene9: 187.177, end: 203.300
+    };
+    const layers = [...document.querySelectorAll('.layer')];
+    const live = document.querySelector('#live');
+    const finalstate = document.querySelector('#finalstate');
+    const models = document.querySelector('#models');
+    const slug = document.querySelector('#slug');
+    const highlight = document.querySelector('#highlight');
+    const cut = document.querySelector('#cut');
+    let startedAt = 0;
+    let lastMode = '';
+    let liveBranch = '';
+    let finalBranch = '';
+
+    function show(id, label = '') {
+      layers.forEach((node) => node.classList.toggle('visible', node.id === id));
+      slug.textContent = label;
+      slug.classList.toggle('visible', Boolean(label));
+    }
+    function mark(label, x, y, w, h) {
+      highlight.querySelector('span').textContent = label;
+      Object.assign(highlight.style, {left:`${x}px`, top:`${y}px`, width:`${w}px`, height:`${h}px`});
+      highlight.classList.add('visible');
+    }
+    function clearMark() { highlight.classList.remove('visible'); }
+    function jumpFlash() {
+      cut.classList.add('visible');
+      setTimeout(() => cut.classList.remove('visible'), 900);
+    }
+    async function seek(video, time, play = false) {
+      if (Math.abs(video.currentTime - time) > .45) video.currentTime = time;
+      if (play && video.paused) await video.play();
+      if (!play && !video.paused) video.pause();
+    }
+    function setMode(mode, label = '') {
+      slug.textContent = label;
+      slug.classList.toggle('visible', Boolean(label));
+      if (mode === lastMode) return false;
+      lastMode = mode;
+      clearMark();
+      show(mode, label);
+      return true;
+    }
+    function tc(value) {
+      const m = Math.floor(value / 60); const s = value - m * 60;
+      return `${String(m).padStart(2,'0')}:${s.toFixed(3).padStart(6,'0')}`;
+    }
+    async function frame() {
+      const t = (performance.now() - startedAt) / 1000;
+      document.querySelector('#timecode').textContent = tc(t);
+
+      if (t < S.scene1) {
+        setMode('opening');
+      } else if (t < S.scene2) {
+        setMode('live', 'LIVE RUN · FRESH CANONICAL RECOVERY');
+        const local = t - S.scene1;
+        await seek(live, Math.min(8.45, 2.4 + local), local < 6.05);
+        if (local > 7 && local < 16) mark('€250,000 OBLIGATION AT RISK', 396, 316, 646, 242); else clearMark();
+      } else if (t < S.scene4 + 3) {
+        setMode('live', 'LIVE RUN · ONE CLICK, THEN AUTONOMY');
+        if (liveBranch !== 'continuous') { liveBranch = 'continuous'; await seek(live, 8.45, true); }
+        if (t > S.scene2 + 4 && t < S.scene3 - 1) mark('SERVER-OWNED RUN · BROWSER OBSERVES', 395, 491, 650, 68);
+        else if (t >= S.scene3 && t < S.scene4 - 1) mark('MISSING EVENT → PUB/SUB REDELIVERY', 1150, 565, 374, 218);
+        else clearMark();
+      } else if (t < S.scene5) {
+        setMode('finalstate', 'SAME-RUN STATE · BOUNDED SUCCESSOR SELECTION');
+        if (finalBranch !== 'candidate') {
+          finalBranch = 'candidate';
+          jumpFlash();
+          await seek(finalstate, 2.35, true);
+        }
+        const local = t - (S.scene4 + 3);
+        await seek(finalstate, Math.min(5.45, 2.35 + local), local < 3.1);
+        mark('v18 SELECTED · v20 REJECTED', 397, 593, 373, 271);
+      } else if (t < S.scene5 + 13) {
+        setMode('live', 'SAME-RUN PROOF · READ ONLY');
+        if (liveBranch !== 'proof-a') { liveBranch = 'proof-a'; jumpFlash(); await seek(live, 70.0, true); }
+        mark('PREDECESSOR v17 · DENIED', 208, 190, 496, 484);
+      } else if (t < S.scene6) {
+        setMode('finalstate', 'SAME-RUN STATE · MINIMUM CONTEXT');
+        if (finalBranch !== 'context') {
+          finalBranch = 'context';
+          jumpFlash();
+          await seek(finalstate, 5.55, true);
+        }
+        const local = t - (S.scene5 + 13);
+        await seek(finalstate, Math.min(9.0, 5.55 + local), local < 3.45);
+        mark('2 INCLUDED · 4 EXCLUDED', 774, 593, 373, 205);
+      } else if (t < S.scene7) {
+        setMode('finalstate', 'SAME-RUN STATE · ONE EFFECT');
+        if (finalBranch !== 'effect') {
+          finalBranch = 'effect';
+          jumpFlash();
+          await seek(finalstate, 9.05, true);
+        }
+        const local = t - S.scene6;
+        await seek(finalstate, Math.min(14.55, 9.05 + local), local < 5.5);
+        mark('2 DELIVERIES · 1 EFFECT · 0 DUPLICATES', 1045, 316, 478, 243);
+      } else if (t < S.scene8) {
+        setMode('live', 'SAME-RUN PROOF · INDEPENDENT VERIFIER');
+        if (liveBranch !== 'proof-b') { liveBranch = 'proof-b'; jumpFlash(); await seek(live, 70.0, true); }
+        if (t > S.scene7 + 7) mark('ARTIFACT 6 · VERIFIER ONLY', 1214, 190, 500, 484); else clearMark();
+      } else if (t < S.scene8 + 2.6) {
+        setMode('architecture', 'REFERENCE ARCHITECTURE · OBSERVE → GOVERN → PROVE');
+      } else if (t < S.scene8 + 5.0) {
+        setMode('cloud', 'SAME-RUN GOOGLE CLOUD PROOF');
+      } else if (t < S.scene9) {
+        if (setMode('models')) { models.currentTime = 0; await models.play(); }
+      } else {
+        setMode('end');
+        models.pause();
+      }
+
+      if (t < S.end) requestAnimationFrame(frame);
+      else window.__continuumFinalDone = true;
+    }
+    window.startContinuumFinal = async (review = false) => {
+      document.body.classList.toggle('review', review);
+      await Promise.all([
+        live.play().then(()=>live.pause()),
+        finalstate.play().then(()=>finalstate.pause()),
+        models.play().then(()=>models.pause())
+      ]);
+      live.currentTime = 2.4; finalstate.currentTime = 0; models.currentTime = 0;
+      startedAt = performance.now();
+      requestAnimationFrame(frame);
+    };
+  </script>
+</body>
+</html>

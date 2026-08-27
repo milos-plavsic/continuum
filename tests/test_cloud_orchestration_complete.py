@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from continuum.cloud_orchestration import (
     admit_remediation_plan, canonical_request, independent_contract_verifier, invoke, live_adk_investigator,
+    live_adk_supplier_assessor,
     validate_investigation, workload_service_account,
 )
 from continuum.standard import build_contract_bundle
@@ -75,7 +76,8 @@ class CloudOrchestrationCompleteTests(unittest.TestCase):
         genai_types = types.ModuleType("google.genai.types")
         genai_types.Content = lambda **kwargs: kwargs; genai_types.Part = lambda **kwargs: kwargs
         genai = types.ModuleType("google.genai"); genai.types = genai_types
-        app_agent = types.ModuleType("app.agent"); app_agent.root_agent = object()
+        app_agent = types.ModuleType("app.agent")
+        app_agent.root_agent = object(); app_agent.supplier_agent = object()
         return {"google.adk.runners": runners, "google.adk.sessions": sessions,
                 "google.genai": genai, "google.genai.types": genai_types, "app.agent": app_agent}
 
@@ -98,6 +100,38 @@ class CloudOrchestrationCompleteTests(unittest.TestCase):
                         asyncio.run(live_adk_investigator({"e": 1}, "worker@example.com"))
                 else:
                     self.assertEqual(asyncio.run(live_adk_investigator({"e": 1}, "worker@example.com"))["risk"], "low")
+
+    def test_live_supplier_agent_uses_external_tools_and_fails_closed(self):
+        with self.assertRaisesRegex(ValueError, "SUPPLIER_APPLICATION_REQUIRED"):
+            asyncio.run(live_adk_supplier_assessor({}, "worker@example.com"))
+        application = {"lei": "W38RGI023J3WT1HWRP32", "country_code": "DE",
+                       "vat_number": "129274202"}
+        with patch("continuum.cloud_orchestration.lookup_gleif", side_effect=OSError("offline")):
+            with self.assertRaisesRegex(RuntimeError, "SUPPLIER_TOOL_UNAVAILABLE"):
+                asyncio.run(live_adk_supplier_assessor({"application": application}, "worker@example.com"))
+        valid = json.dumps({"recommendation": "ONBOARD"})
+        cases = [
+            ([(True, valid, True)], None),
+            ([], "SUPPLIER_ASSESSMENT_MISSING"),
+            ([(True, "not-json", True)], "SUPPLIER_ASSESSMENT_NOT_JSON"),
+            ([(True, "[]", True)], "SUPPLIER_MODEL_RESULT_INVALID"),
+            ([(True, valid, False)], "SUPPLIER_ASSESSMENT_MISSING"),
+        ]
+        for outputs, error in cases:
+            with self.subTest(error=error), patch.dict(sys.modules, self._adk_modules(outputs)), \
+                 patch("continuum.cloud_orchestration.lookup_gleif", return_value={"evidence_ref": "g"}), \
+                 patch("continuum.cloud_orchestration.check_eu_vat", return_value={"evidence_ref": "v"}), \
+                 patch("continuum.cloud_orchestration.admit_supplier_assessment",
+                       return_value={"status": "VERIFIED"}) as admit:
+                if error:
+                    with self.assertRaisesRegex(ValueError, error):
+                        asyncio.run(live_adk_supplier_assessor(
+                            {"run_id": "r", "application": application}, "worker@example.com"))
+                else:
+                    result = asyncio.run(live_adk_supplier_assessor(
+                        {"run_id": "r", "application": application}, "worker@example.com"))
+                    self.assertEqual(result["status"], "VERIFIED")
+                    admit.assert_called_once()
 
     def test_independent_verifier_requires_pre_attestation_bundle_and_direct_reads(self):
         with self.assertRaisesRegex(ValueError, "CONTRACT_BUNDLE_REQUIRED"):

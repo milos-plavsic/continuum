@@ -89,7 +89,9 @@ class Effects:
 class Compliance:
     def verify(self, request):
         return {"status": "VERIFIED", "evidence_id": "compliance-1",
-                "document_hash": "sha256:document", "obligation_id": request["obligation_id"]}
+                "document_hash": "sha256:document", "obligation_id": request["obligation_id"],
+                "workflow": "SUPPLIER_ASSURANCE_AGENT", "decision_scope": "SANDBOX_ONLY",
+                "recommendation": "ONBOARD", "decision_pack_digest": "pack"}
 
 
 class Exporter:
@@ -139,6 +141,8 @@ class CloudScenarioServiceTests(unittest.TestCase):
         self.assertEqual(result["phase"], "VERIFIED")
         self.assertEqual(result["provider_observation"]["effect_count"], 1)
         self.assertEqual(result["verification"]["status"], "PASS")
+        self.assertEqual(result["supplier_assurance"]["workflow"], "SUPPLIER_ASSURANCE_AGENT")
+        self.assertEqual(result["business_impact"]["effect_scope"], "SANDBOX_ONLY")
         self.assertEqual([event["kind"] for event in self.store.events["run-001"]], [
             "expectation.persisted", "missing_event.published",
             "investigation.observed", "policy.decision_observed",

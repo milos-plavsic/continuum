@@ -126,22 +126,28 @@ identity or read-only role visible in the adjacent proof view.
 **Purpose:** Establish that execution and verification are separate trust
 boundaries, not self-attestation.
 
-## 8. Architecture as evidence — 3:16–3:43
+## 8. Architecture and verifier-gated learning — 3:16–3:43
 
-**Picture:** Transition to the clean architecture diagram, then the exact Cloud
-Trace view or compact cloud-proof panel for this run. Do not tour the console.
+**Picture:** Use the clean architecture and compact same-run Cloud proof first,
+then spend roughly twenty seconds on the separately released four-model learning
+proof. The proof must visibly present one causal chain: bounded Gemini decision →
+independent verification → cited Gemma plan → content-addressed Veo and Lyria
+media. Label the downstream result `DERIVED · NOT AUTHORITY OR EVIDENCE`; do not
+imply that the released learning receipt belongs to the fresh on-camera run.
 
 **Voice input:**
 
-> [confident and concise] This runs across five private Cloud Run services, with
-> Firestore transactions, Cloud Tasks deadlines, Pub Sub redelivery, a real A D
-> K and Gemini call, workload identities, and correlated OpenTelemetry spans in
-> Cloud Trace. The Google Cloud deployment is the reference binding; the
-> contract and conformance suite are portable. The agent failed. The two hundred
-> and fifty thousand euro promise did not.
+> [confident and concise, slightly brisk] This runs across five private Cloud
+> Run services, with Firestore, Cloud Tasks, Pub Sub redelivery, and correlated
+> Cloud Trace spans. Verification also gates learning. In a separately released
+> proof, Gemma four turns five admitted facts into a cited resilience plan. Veo
+> three point one and Lyria three render content-addressed training media. Useful
+> output—but explicitly derivative, never authority or evidence. The agent
+> failed. The two hundred and fifty thousand euro promise did not.
 
-**Purpose:** Convert the technology stack into concise production evidence and
-land the product signature.
+**Purpose:** Convert the technology stack into concise production evidence,
+show how all four Google generative models serve distinct roles without becoming
+an authority boundary, and land the product signature.
 
 ## 9. Personal standard — 3:43–3:58 maximum
 
@@ -177,3 +183,8 @@ wordplay consistent with the product.
   interoperability, or model determinism.
 - Gemini selects only from the deterministically eligible set; policy remains
   authoritative.
+- Describe Gemini, Gemma, Veo, and Lyria collectively as four Google generative
+  models. Veo and Lyria are not LLMs.
+- The public multimodal receipt is a separately released verified proof. Never
+  place its attestation or media identifiers under the fresh run's `SAME-RUN
+  PROOF` label.

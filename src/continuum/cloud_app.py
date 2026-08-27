@@ -14,8 +14,10 @@ from fastapi.responses import FileResponse, JSONResponse
 from pathlib import Path
 
 from .contract import canonical_bytes
-from .cloud_orchestration import (Investigator, Verifier, independent_contract_verifier, invoke, live_adk_investigator,
-                                  validate_investigation, workload_service_account)
+from .cloud_orchestration import (Investigator, SupplierAssessor, Verifier,
+                                  independent_contract_verifier, invoke, live_adk_investigator,
+                                  live_adk_supplier_assessor, validate_investigation,
+                                  workload_service_account)
 from .google_binding import FirestoreContinuityStore, GoogleBindingConfig, verify_cloud_run_identity_token
 from .observability import configure_cloud_tracing
 
@@ -72,6 +74,7 @@ def create_cloud_app(*, store: Any | None = None,
                      role: str | None = None,
                      identity_resolver: Callable[[], str] = workload_service_account,
                      investigator: Investigator | None = live_adk_investigator,
+                     supplier_assessor: SupplierAssessor | None = live_adk_supplier_assessor,
                      verifier: Verifier | None = independent_contract_verifier,
                      scenario_service: Any | None = None,
                      action_gateway: Any | None = None) -> FastAPI:
@@ -326,6 +329,19 @@ def create_cloud_app(*, store: Any | None = None,
         except (ValueError, RuntimeError, json.JSONDecodeError) as error:
             raise HTTPException(status_code=422, detail={"code": str(error)}) from error
         return {"actor": identity, "proposal": proposal}
+
+    @app.post("/internal/assess-supplier")
+    async def assess_supplier(request: Request) -> dict[str, Any]:
+        if active_role not in {"agent-v18", "agent-v19"}:
+            raise HTTPException(status_code=404, detail={"code": "NOT_FOUND"})
+        if supplier_assessor is None:
+            raise HTTPException(status_code=503, detail={"code": "SUPPLIER_ASSESSOR_NOT_CONFIGURED"})
+        try:
+            identity = identity_resolver()
+            assurance = await invoke(supplier_assessor, await request.json(), identity)
+        except (ValueError, RuntimeError, json.JSONDecodeError) as error:
+            raise HTTPException(status_code=422, detail={"code": str(error)}) from error
+        return {"actor": identity, "assurance": assurance}
 
     @app.post("/internal/verify")
     async def verify(request: Request) -> dict[str, Any]:

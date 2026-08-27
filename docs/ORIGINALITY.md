@@ -1,5 +1,38 @@
 # Originality and provenance
 
+## Supplier Assurance Agent extension (August 27, 2026)
+
+The Supplier Assurance & Onboarding Agent, including the server-owned sandbox
+application, GLEIF and European Commission VIES read-only adapters,
+content-addressed tool receipts, ADK/Gemini assessment schema, deterministic
+admission, successor-routed Cloud Run endpoint, Firestore decision-pack binding,
+independent verification extension, cockpit presentation, and tests, was
+authored new in this repository during the submission period. No source was
+copied from RecallOps, LineageGuard, Fahim's pull requests, or another project.
+
+The live demonstration uses public legal-entity and VAT identifiers only for a
+clearly labelled hackathon sandbox check. The supplier application and control
+declarations are synthetic, explicitly disclaim any real procurement decision
+or commercial relationship, and may create only a sandbox provider record.
+GLEIF and VIES responses remain third-party factual observations from their
+official public services; they are cited and content-addressed, not incorporated
+source code.
+
+## Submission thumbnail (August 27, 2026)
+
+`docs/submission/continuum-devpost-thumbnail.png` was generated new for this
+submission with OpenAI image generation from a text-only prompt authored for
+Continuum and recorded verbatim in
+`docs/submission/continuum-thumbnail-prompt.md`.
+`docs/submission/continuum-devto-cover.png` is a deterministic
+1000x420 crop of that same image for DEV Community's cover-image format. No
+reference image or pre-existing project asset was supplied. The prompt depicts
+a failed predecessor, a content-addressed promise crossing a fortified bridge,
+and an independently verified successor, with the headline "The agent failed.
+The promise did not." These images are presentation media only: they are not
+product evidence, authority state, or runtime outputs. Their use is governed by
+the applicable OpenAI terms.
+
 ## Verifier-gated multimodal extension (August 27, 2026)
 
 The Verified Resilience Brief implementation, including its bounded evidence

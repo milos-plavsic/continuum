@@ -8,7 +8,8 @@ from unittest.mock import patch
 from continuum.cloud_scenario_adapters import (
     AuthenticatedJsonClient, CloudTasksDeadlineScheduler, FirestoreAuthority, FirestoreLifecycleEvidence,
     FirestoreCompliance, FirestoreSandboxEffects, ObservedContractExporter, RemoteInvestigator,
-    RemoteVerifier, RoutedFirestoreSandboxEffects, build_production_scenario_service, google_id_token,
+    RemoteSupplierAssurance, RemoteVerifier, RoutedFirestoreSandboxEffects,
+    build_production_scenario_service, google_id_token,
 )
 from continuum.cloud_gateway import FirestoreActionGateway
 from continuum.contract import canonical_bytes
@@ -313,6 +314,40 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "COMPLIANCE_PRECONDITION_FAILED"):
             gateway.execute_vendor_create(changed(idempotency_key="other"), actor="v18@example")
 
+    def test_remote_supplier_agent_is_identity_bound_persisted_and_conflict_safe(self):
+        db = Firestore()
+        assurance = {"workflow": "SUPPLIER_ASSURANCE_AGENT", "status": "VERIFIED",
+            "decision_scope": "SANDBOX_ONLY", "recommendation": "ONBOARD",
+            "vendor_id": "vendor-042", "evidence_id": "e", "document_hash": "d",
+            "decision_pack_digest": "pack", "tool_observations": [
+                {"tool": "gleif", "source_url": "https://gleif", "evidence_ref": "g"}]}
+        class Client:
+            actor = "v18@example"
+            result = assurance
+            def post(self, url, payload, *, run_id):
+                self.last = (url, payload, run_id)
+                return {"actor": self.actor, "assurance": self.result}
+        client = Client()
+        adapter = RemoteSupplierAssurance(db, client,
+            {"v18": ("https://v18", "v18@example")})
+        request_value = {"run_id": "r", "tenant_id": "acme", "obligation_id": "o",
+                         "vendor_id": "vendor-042", "successor": "v18", "application": {}}
+        first = adapter.verify(request_value)
+        self.assertEqual(adapter.verify(request_value), first)
+        self.assertEqual(client.last[0], "https://v18/internal/assess-supplier")
+        with self.assertRaisesRegex(ValueError, "SUPPLIER_ASSURANCE_ROUTE_NOT_CONFIGURED"):
+            adapter.verify({**request_value, "successor": "unknown"})
+        client.actor = "other"
+        with self.assertRaisesRegex(ValueError, "SUPPLIER_ASSESSOR_IDENTITY_MISMATCH"):
+            adapter.verify({**request_value, "run_id": "other"})
+        client.actor = "v18@example"; client.result = {"status": "FAILED"}
+        with self.assertRaisesRegex(ValueError, "SUPPLIER_ASSURANCE_RESULT_INVALID"):
+            adapter.verify({**request_value, "run_id": "other"})
+        client.result = assurance
+        db.data["continuity_compliance/r"]["status"] = "FAILED"
+        with self.assertRaisesRegex(ValueError, "SUPPLIER_ASSURANCE_EVIDENCE_CONFLICT"):
+            adapter.verify(request_value)
+
     def test_observed_export_remote_verification_and_google_token(self):
         run = {**request(), "predecessor": "v17", "predecessor_epoch": 41,
                "successor": "v18", "successor_epoch": 42,
@@ -324,12 +359,24 @@ class CloudAdapterCompleteTests(unittest.TestCase):
                    "receipt_digest": "context", "decisions": [
                        {"item_id": "obligation", "included": True, "reason_code": "AUTHORIZED_MINIMUM"},
                        {"item_id": "raw", "included": False, "reason_code": "CLASS_RAW_UNTRUSTED_EXCLUDED"}]},
-               "compliance": {"evidence_id": "e1", "document_hash": "doc"},
+               "compliance": {"evidence_id": "e1", "document_hash": "doc",
+                   "workflow": "SUPPLIER_ASSURANCE_AGENT", "decision_scope": "SANDBOX_ONLY",
+                   "recommendation": "ONBOARD", "decision_pack_digest": "pack"},
                "decision": {"outcome": "APPROVE_SUCCESSION", "decision_id": "d"},
                "provider_observation": {"effect_count": 1, "provider_ref": "firestore://vendor/1", "request_digest": "digest", "compliance_evidence_id": "e1"}}
         exporter = ObservedContractExporter("mailto:control@example", "mailto:verifier@example")
         bundle = exporter.export(run, [{"sequence": 1, "kind": "observed"}])
         self.assertEqual(len(bundle["artifacts"]), 5)
+        receipt = next(item for item in bundle["artifacts"]
+                       if item["artifact_type"] == "execution_receipt")
+        self.assertEqual(receipt["extensions"]["continuum.dev/compliance"]
+                         ["decision_pack_digest"], "pack")
+        basic_run = deepcopy(run)
+        basic_run["compliance"] = {"evidence_id": "e1", "document_hash": "doc"}
+        basic_bundle = exporter.export(basic_run, [{"sequence": 1, "kind": "observed"}])
+        basic_receipt = next(item for item in basic_bundle["artifacts"]
+                             if item["artifact_type"] == "execution_receipt")
+        self.assertNotIn("workflow", basic_receipt["extensions"]["continuum.dev/compliance"])
         class Client:
             response = {"verification": {"status": "PASS", "outcome": "VERIFIED", "bundle": {"artifacts": []}}, "actor": "verifier@example"}
             def post(self, *args, **kwargs): return self.response
@@ -382,6 +429,7 @@ class CloudAdapterCompleteTests(unittest.TestCase):
         self.assertEqual("v18@example", service.successor_candidates[0].service_identity)
         self.assertEqual("sha256:" + "1" * 64, service.successor_candidates[1].artifact_digest)
         self.assertIn("https://v19", service.successor_candidates[1].evidence_refs[1])
+        self.assertIsInstance(service.compliance, RemoteSupplierAssurance)
 
 
 if __name__ == "__main__": unittest.main()
