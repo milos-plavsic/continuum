@@ -404,3 +404,37 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   Acceptance: Application, source, services, external modes, model-governance receipt,
   run, proof and public copy agree through the single release manifest.
   Verify: Required CI, live API-outage drill, fresh offline PASS, judge smoke and clean main.
+
+## Final auditability and rollback hardening — autonomous
+
+- [ ] **67. Publish durable, scope-complete coverage evidence**
+  Spec ref: `spec.md > Final auditability and rollback hardening`
+  What to build: Machine-readable XML/JSON, human-readable HTML/Markdown, measured-source
+  inventory, cryptographic manifest, CI job summary and retained workflow artifact.
+  Acceptance: A reviewer can verify that every Python module under `src/continuum` is
+  measured with statement and branch coverage, with no omissions or coverage pragmas;
+  the gate still fails below 100.0%.
+  Verify: Coverage-evidence unit tests, full quality gate and public CI artifact.
+- [ ] **68. Publish failed-run lineage and release-PR context**
+  Spec ref: `spec.md > Final auditability and rollback hardening`
+  What to build: A concise failure ledger for the two pre-canonical attempts, causal
+  lessons, fixes, non-claims and links to the functional implementation PR lineage.
+  Acceptance: Failed attempts remain visibly failed and the documentation-only release
+  pin cannot be mistaken for the implementation history.
+  Verify: Link/release audit, exact run identifiers and merged PR description read-back.
+- [ ] **69. Make the no-role security boundary self-explanatory**
+  Spec ref: `spec.md > Final auditability and rollback hardening`
+  What to build: A plain-language blast-radius statement and machine-checked IAM
+  expectations across README, runbook and threat model.
+  Acceptance: A judge can state exactly why public invocation is safe: compromise of the
+  showcase cannot read Firestore, call Vertex AI, publish Pub/Sub, invoke private agents,
+  or mutate the control plane through project IAM.
+  Verify: Documentation assertions, deployment-security tests and live IAM read-back.
+- [ ] **70. Ship a reversible, fail-closed showcase rollback**
+  Spec ref: `spec.md > Final auditability and rollback hardening`
+  What to build: An explicit-target, dry-run-by-default rollback command that validates
+  revision ownership/readiness, switches traffic only with `--apply`, and verifies build
+  identity, absent mutation surface, exact public invoker policy and zero project roles.
+  Acceptance: Invalid or ambiguous targets cannot mutate traffic; a known-good revision
+  can be restored and the current revision re-applied with an auditable local receipt.
+  Verify: Unit/static tests, shell syntax, dry-run against Cloud Run and a reversible live drill.

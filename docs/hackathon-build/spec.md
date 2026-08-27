@@ -179,3 +179,18 @@ require separate evidence.
 - The complete technical architecture remains intact. Primary judge surfaces explain
   promise, authority, memory and one effect first; named supporting services and
   multimodal bonus branches remain available as secondary depth.
+
+## Final auditability and rollback hardening
+
+- Coverage evidence includes the complete `src/continuum` source inventory, line and
+  branch totals, XML/JSON/HTML outputs and a SHA-256 manifest. CI retains that packet and
+  writes its summary into the workflow run; generated reports remain uncommitted.
+- Historical cloud attempts are an append-only failure ledger. Each entry names the exact
+  run, terminal phase/verdict, missing or rejected observation, corrective change and the
+  boundary it proved. A release-truth pin is labelled separately from functional PRs.
+- The public showcase's security claim is expressed as a concrete blast radius, not the
+  shorthand “no role”: its principal has no project IAM binding and therefore cannot read
+  Firestore, publish Pub/Sub, call Vertex AI, invoke private agents or mutate control state.
+- Showcase rollback is explicit-target and dry-run by default. It verifies revision
+  ownership/readiness before traffic mutation, then checks `/build-info`, the absent
+  mutation route, the exact public service IAM policy and zero project-level identity roles.

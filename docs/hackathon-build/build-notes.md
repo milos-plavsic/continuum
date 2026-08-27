@@ -1,5 +1,25 @@
 # Build notes
 
+## Final auditability and rollback plan — August 28
+
+- The participant requested every improvement from the release-PR critique while
+  explicitly preserving the complete technical architecture.
+- Items 67–70 add durable source-complete coverage evidence, an append-only failed-run
+  ledger with functional PR lineage, a plain-language no-role blast-radius proof and an
+  explicit-target rollback that is dry-run by default and verifies security after apply.
+- This is a proof-surface and operations hardening round. It does not remove, simplify or
+  replace any lifecycle, verifier, fleet, model, observability or multimodal capability.
+- The first complete local gate still ran all 215 tests at 100.0% statement and branch
+  coverage. Its new packet enumerated all 39 `src/continuum` modules, 4,152/4,152
+  statements and 1,154/1,154 branches. An initial metadata-only defect counted 162 tests
+  because an executed script lacked the repository root on `sys.path`; it did not affect
+  coverage or the test run, and the packager now fails on discovery errors and reports 215.
+- Both rollback targets passed read-only GCP preflight. A live reversible drill moved
+  100% traffic from `continuum-showcase-00006-drz` to `00005-bg9`, verified the exact
+  served revision, mutation `404`, exact public service policy and zero project roles,
+  then restored `00006-drz` and independently repeated every postcondition. Both local
+  receipts are generated cloud state and remain ignored.
+
 ## Submission hardening checkpoint — August 27
 
 - Added a quota-bound, expiring-capability judge gateway with no arbitrary
