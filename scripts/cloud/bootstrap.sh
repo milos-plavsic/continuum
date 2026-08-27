@@ -40,12 +40,11 @@ for account in continuum-control continuum-v17 continuum-v18 continuum-v19 conti
     gcloud iam service-accounts create "$account" --project "$CONTINUUM_PROJECT_ID" --display-name "$account"
   fi
 done
-gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
-  --member "serviceAccount:$control" --role roles/modelarmor.user --condition=None >/dev/null
-
 control="continuum-control@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
 verifier="continuum-verifier@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
 push_identity="continuum-pubsub-push@$CONTINUUM_PROJECT_ID.iam.gserviceaccount.com"
+gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" \
+  --member "serviceAccount:$control" --role roles/modelarmor.user --condition=None >/dev/null
 for role in roles/datastore.user roles/pubsub.publisher roles/cloudtasks.enqueuer roles/cloudtrace.agent; do
   gcloud projects add-iam-policy-binding "$CONTINUUM_PROJECT_ID" --member "serviceAccount:$control" --role "$role" --condition=None >/dev/null
 done
