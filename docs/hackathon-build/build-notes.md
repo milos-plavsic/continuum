@@ -1,5 +1,23 @@
 # Build notes
 
+## Practical-agent golden cloud proof — August 27
+
+- Protected PRs #21 and #22 added the practical Supplier Assurance & Onboarding
+  Agent and made its exact-run decision evidence mandatory; GitHub CI and the
+  local release gate passed 159 tests at genuine 100.0% statement/branch coverage.
+- Exact source `abb44720631cd54c6837b20d0b9870919f6a6b5b` was deployed across
+  five private, identity-separated Cloud Run services on image digest
+  `sha256:e3be7452fd1b619de5c0a0632a6f488f02938276e95313d7eea7e1fef6262021`.
+- Fresh run `supplier-golden-20260827T023539Z` completed autonomously: official
+  GLEIF and EU VIES observations fed an ADK + Gemini 3.6 decision pack,
+  deterministic policy admitted it only for `SANDBOX_ONLY`, v18 executed once
+  despite two Pub/Sub deliveries, v17 stayed fenced, and the verifier alone
+  issued the sixth artifact.
+- Read-only capture produced 14 content-addressed mandatory objects and 118
+  exact-trace spans. The network-free, credential-free verifier returned `PASS`
+  for bundle `urn:uuid:a3f1b86a-7f71-442d-be06-59f5c042d089`; the packet is
+  published as the `cloud-proof-abb4472` GitHub Release.
+
 ## Golden cloud proof — August 26
 
 - PRs #6–#9 passed protected-branch coverage/release and reproducible-image
