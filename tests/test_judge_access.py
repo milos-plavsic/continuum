@@ -142,7 +142,7 @@ class JudgeAccessTests(unittest.TestCase):
         self.assertEqual(client.post("/internal/investigate", json={}).status_code, 404)
         self.assertEqual(client.post("/cloud-smoke/start", json={"run_id": "x"}).status_code, 404)
         self.assertEqual(client.post("/judge/runs", json={}).status_code, 401)
-        token = self.token(); headers = {"Authorization": f"Bearer {token}"}
+        token = self.token(); headers = {"X-Continuum-Judge-Capability": token}
         self.assertEqual(client.post("/judge/runs", content=b"bad", headers=headers).status_code, 400)
         self.assertEqual(client.post("/judge/runs", json={"payload": "forbidden"}, headers=headers).status_code, 400)
         started = client.post("/judge/runs", json={}, headers=headers)
@@ -156,7 +156,7 @@ class JudgeAccessTests(unittest.TestCase):
             def start(self, token): raise JudgeAccessDenied("JUDGE_QUOTA_EXHAUSTED")
             def status(self, token, run): raise RuntimeError("upstream")
         client = TestClient(create_cloud_app(role="judge", judge_controller=Denied()))
-        headers = {"Authorization": "Bearer token"}
+        headers = {"X-Continuum-Judge-Capability": "token"}
         self.assertEqual(client.post("/judge/runs", json={}, headers=headers).status_code, 429)
         self.assertEqual(client.get("/judge/runs/judge-devpost26-000000000000", headers=headers).status_code, 502)
         Denied.start = lambda self, token: (_ for _ in ()).throw(RuntimeError("upstream"))
