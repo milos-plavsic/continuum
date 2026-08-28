@@ -2,18 +2,19 @@
 
 ## Selected approach
 
-Generate the English voice-over with Gemini 3.1 Flash TTS Preview in Google AI
-Studio. Produce the narration as nine scene-aligned clips rather than one
-four-minute file. Apply a 1.15x pitch-preserving tempo pass to approved raw
-clips. This permits exact timing, clean regeneration, and deliberate pauses
-without changing the delivery of already approved scenes.
+Generate the English voice-over with Gemini 3.1 Flash TTS Preview through
+Vertex AI. Produce the narration as nine scene-aligned clips rather than one
+four-minute file. Apply a 1.08x pitch-preserving tempo pass to approved raw
+clips, except Scene 08 at 1.12x to meet its picture window. This permits exact
+timing, clean regeneration, and deliberate pauses without changing the
+delivery of already approved scenes.
 
 ## Model and voice
 
 - Model: `gemini-3.1-flash-tts-preview`.
-- Selected voice: Orus.
-- AI Studio controls: Natural pace, Newscaster style, American (General)
-  accent.
+- Selected voice: Algenib.
+- Delivery controls are expressed in the locked sample context and per-scene
+  direction supplied to Gemini TTS.
 - Voice character: neutral international English; warm, mature, articulate,
   technically authoritative; restrained rather than theatrical.
 - Avoid voices described as trailer, epic, announcer, high-energy, dramatic,
@@ -82,9 +83,9 @@ The final TTS transcript should favor spoken forms:
 | EUR 250,000 | two hundred and fifty thousand euro |
 | ADK | A D K |
 | Pub/Sub | Pub Sub |
-| v17 / v18 | version seventeen / version eighteen |
-| 15/15 | all fifteen required evidence objects |
-| 124 spans | one hundred and twenty-four correlated spans |
+| v17 / v19 | version seventeen / version nineteen |
+| 17/17 | all seventeen required evidence objects |
+| 174 spans | one hundred and seventy-four correlated spans |
 | SHA-256 | S H A two fifty-six |
 | C0–C6 | conformance classes C zero through C six |
 
@@ -105,8 +106,8 @@ For each scene:
    quality lossless or highest-bitrate download offered.
 5. Preserve the untouched exported clip and record its model, voice, settings,
    generation date, and exact transcript in the production log.
-6. Apply a pitch-preserving 1.15x tempo pass, then edit silence and level only
-   after the picture rehearsal establishes timing.
+6. Apply the scene's documented pitch-preserving tempo pass, then edit silence
+   and level only after the picture rehearsal establishes timing.
 
 ## Audio target
 

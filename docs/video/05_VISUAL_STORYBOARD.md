@@ -78,7 +78,7 @@ merely stated by narration.
   early highlight over the preceding scene.
 - **01:19–01:29** — reveal v18 and v19 as eligible, then v20 as rejected with
   `HEALTH_UNVERIFIED · JURISDICTION_MISMATCH` legible.
-- **01:29–01:39** — hold `v18 selected by Gemini`; show its deployed endpoint,
+- **01:29–01:39** — hold `v19 selected by Gemini`; show its deployed endpoint,
   workload identity, and image digest in a same-run proof drawer. Reserve the
   exact serving revision for the independently read `/build-info` cutaway.
 - **01:39–01:46** — highlight the independent deterministic-policy admission.

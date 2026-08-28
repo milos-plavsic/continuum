@@ -189,7 +189,7 @@ Canonical film scenario: `docs/video/06_REMARKABLE_SCENARIO.md`.
 3. Minimum-context receipt: two included, four excluded with reason codes.
 4. Continuity proof: two Pub/Sub deliveries, one provider effect, v17 denied, verifier-issued artifact six.
 5. Supplier decision pack: official GLEIF/VIES receipts, Gemini recommendation, deterministic sandbox admission.
-6. Google Cloud evidence: five Cloud Run revisions/identities, 17-object offline PASS, and the exact 43-span Cloud Trace.
+6. Google Cloud evidence: five Cloud Run revisions/identities, 17-object offline PASS, and the exact 174-span Cloud Trace.
 
 ## Submission Readiness Notes
 

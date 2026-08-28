@@ -61,7 +61,7 @@ auditable role.
 ## 4. Dynamic successor selection — 1:13–1:46
 
 **Picture:** Center the successor panel. Reveal all three candidate outcomes,
-then settle on version eighteen. Make eligibility and rejection reasons legible.
+then settle on version nineteen. Make eligibility and rejection reasons legible.
 
 **Voice input:**
 
@@ -69,7 +69,7 @@ then settle on version eighteen. Make eligibility and rejection reasons legible.
 > records. Before Gemini sees them, a deterministic gate checks health,
 > capability, jurisdiction, contract compatibility, scope, and trust. Version
 > twenty is rejected. Versions eighteen and nineteen remain eligible. Gemini
-> selects version eighteen and cites its deployed endpoint, workload identity,
+> selects version nineteen and cites its deployed endpoint, workload identity,
 > and immutable image. The policy layer independently validates the choice.
 
 **Purpose:** Demonstrate genuinely agentic judgment without pretending the LLM
@@ -99,7 +99,7 @@ the provider observation. Hold on `1 provider effect · 0 duplicates`.
 
 **Voice input:**
 
-> [precise and matter-of-fact] Version eighteen obtains fresh compliance
+> [precise and matter-of-fact] Version nineteen obtains fresh compliance
 > evidence and enters the selected action gateway. Identity, epoch, policy,
 > compliance, context receipt, and idempotency are checked in one transaction.
 > Pub Sub delivered twice. The supplier is still created once. [with subtle dry
