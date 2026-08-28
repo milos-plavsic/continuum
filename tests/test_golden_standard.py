@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
@@ -13,6 +14,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from continuum.context_reconstruction import ContextItem, reconstruct_context
 from continuum.contract import canonical_bytes
+from continuum.external_witness import (
+    content_digest, validate_external_statement, validate_review_request,
+    verify_sigstore_statement,
+)
 from continuum.models import AgentStatus, Denied
 from continuum.sdk import ContinuumClient, InProcessContinuum
 from continuum.resilience import FaultResult, run_resilience_lab
@@ -260,6 +265,101 @@ class WitnessAggregationTests(unittest.TestCase):
         duplicate = self.verdict("a")
         result = aggregate_witnesses([duplicate, duplicate], bundle_digest="bundle", threshold=1)
         self.assertEqual(result["distinct_witnesses"], 1)
+
+        request = json.loads((Path(__file__).resolve().parents[1] /
+                              "docs/review/external-witness-request.json").read_text())
+        self.assertEqual(validate_review_request(request)["request_digest"], request["request_digest"])
+        reviewer = {"identity": "reviewer@example.com", "issuer": "https://accounts.example.test",
+                    "display_name": "Independent Reviewer", "affiliation": "",
+                    "relationship": "NO_PROJECT_ROLE", "conflicts": "none",
+                    "independence_declared": True}
+        statement = {
+            "schema": "continuum/external-witness-statement/1.0", "statement_id": "review-001",
+            "request_digest": request["request_digest"], "reviewer": reviewer,
+            "reviewed_at": "2026-08-28T01:00:00Z", "expires_at": "2026-09-01T01:00:00Z",
+            "verdict": "VERIFIED", "claim_results": [{
+                "claim": request["claim_scope"][0], "status": "PASS",
+                "evidence_refs": ["report.json"], "finding": "digest matched"}],
+            "findings": [], "statement_digest": ""}
+        statement["statement_digest"] = content_digest(statement, omitted="statement_digest")
+        now = datetime(2026, 8, 28, 2, tzinfo=timezone.utc)
+        self.assertEqual(validate_external_statement(
+            statement, request=request, expected_identity=reviewer["identity"],
+            expected_issuer=reviewer["issuer"], now=now)["verdict"], "VERIFIED")
+
+        def request_error(change, code):
+            value = json.loads(json.dumps(request)); change(value)
+            with self.assertRaisesRegex(ValueError, code): validate_review_request(value)
+        request_error(lambda value: value.update(extra=True), "REQUEST_SCHEMA")
+        request_error(lambda value: value.update(schema="old"), "REQUEST_SCHEMA")
+        request_error(lambda value: value.update(subject={}), "REQUEST_SUBJECT")
+        request_error(lambda value: value.update(claim_scope=[]), "REQUEST_SCOPE")
+        request_error(lambda value: value.update(review_tasks=[1]), "REQUEST_SCOPE")
+        request_error(lambda value: value.update(non_claims=[""]), "REQUEST_SCOPE")
+        request_error(lambda value: value.update(request_digest="bad"), "REQUEST_DIGEST")
+
+        def statement_error(change, code, *, identity=reviewer["identity"],
+                            issuer=reviewer["issuer"], clock=now):
+            value = json.loads(json.dumps(statement)); change(value)
+            if code != "STATEMENT_DIGEST":
+                value["statement_digest"] = content_digest(value, omitted="statement_digest")
+            with self.assertRaisesRegex(ValueError, code):
+                validate_external_statement(value, request=request, expected_identity=identity,
+                                            expected_issuer=issuer, now=clock)
+        statement_error(lambda value: value.update(extra=True), "STATEMENT_SCHEMA")
+        statement_error(lambda value: value.update(schema="old"), "STATEMENT_SCHEMA")
+        statement_error(lambda value: value.update(reviewer={}), "REVIEWER_SCHEMA")
+        statement_error(lambda value: None, "SIGNER_POLICY", identity="other")
+        statement_error(lambda value: None, "SIGNER_POLICY", issuer="https://other")
+        statement_error(lambda value: value["reviewer"].update(independence_declared=False),
+                        "INDEPENDENCE_UNDECLARED")
+        statement_error(lambda value: value.update(request_digest="sha256:" + "0" * 64),
+                        "SUBJECT_MISMATCH")
+        statement_error(lambda value: value.update(verdict="UNKNOWN"), "VERDICT_INVALID")
+        statement_error(lambda value: value.update(claim_results=[]), "CLAIMS_INVALID")
+        statement_error(lambda value: value.update(claim_results=["bad"]), "CLAIMS_INVALID")
+        statement_error(lambda value: value["claim_results"][0].update(extra=True), "CLAIMS_INVALID")
+        statement_error(lambda value: value["claim_results"][0].update(claim="OTHER"), "CLAIMS_INVALID")
+        statement_error(lambda value: value.update(claim_results=[value["claim_results"][0]] * 2),
+                        "CLAIMS_INVALID")
+        statement_error(lambda value: value["claim_results"][0].update(status="UNKNOWN"),
+                        "CLAIMS_INVALID")
+        statement_error(lambda value: value["claim_results"][0].update(evidence_refs="bad"),
+                        "CLAIMS_INVALID")
+        statement_error(lambda value: value["claim_results"][0].update(evidence_refs=["x", "x"]),
+                        "CLAIMS_INVALID")
+        statement_error(lambda value: value["claim_results"][0].update(evidence_refs=[1]),
+                        "CLAIMS_INVALID")
+        statement_error(lambda value: value.update(reviewed_at=1), "TIME_INVALID")
+        statement_error(lambda value: value.update(reviewed_at="bad"), "TIME_INVALID")
+        statement_error(lambda value: value.update(reviewed_at="garbageZ"), "TIME_INVALID")
+        statement_error(lambda value: value.update(expires_at=value["reviewed_at"]),
+                        "STATEMENT_EXPIRED")
+        statement_error(lambda value: None, "STATEMENT_EXPIRED",
+                        clock=datetime(2026, 9, 2, tzinfo=timezone.utc))
+        statement_error(lambda value: value.update(statement_digest="bad"), "STATEMENT_DIGEST")
+
+        with TemporaryDirectory() as temporary:
+            statement_path = Path(temporary) / "statement.json"
+            bundle_path = Path(temporary) / "bundle.json"
+            statement_path.write_text(json.dumps(statement)); bundle_path.write_text("{}")
+            calls = []
+            def runner(command, **kwargs):
+                calls.append((command, kwargs))
+                return subprocess.CompletedProcess(command, 0, "verified", "")
+            verified = verify_sigstore_statement(
+                statement_path=statement_path, bundle_path=bundle_path, request=request,
+                expected_identity=reviewer["identity"], expected_issuer=reviewer["issuer"],
+                runner=runner, now=now)
+            self.assertEqual(verified["statement_digest"], statement["statement_digest"])
+            self.assertEqual(calls[0][0][:2], ["cosign", "verify-blob"])
+            def failed_runner(command, **kwargs):
+                return subprocess.CompletedProcess(command, 1, "", "no")
+            with self.assertRaisesRegex(ValueError, "SIGSTORE_VERIFICATION_FAILED"):
+                verify_sigstore_statement(
+                    statement_path=statement_path, bundle_path=bundle_path, request=request,
+                    expected_identity=reviewer["identity"], expected_issuer=reviewer["issuer"],
+                    runner=failed_runner, now=now)
 
 
 class ResilienceLabTests(unittest.TestCase):

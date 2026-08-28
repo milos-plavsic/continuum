@@ -1,5 +1,13 @@
 # Evidence-backed claim matrix
 
+Regular GitHub CI is credential-free, uses deterministic provider ports/test doubles, and
+does not run or prove the real Google Cloud lifecycle. The separately captured exact-commit
+cloud packet is first-party evidence. Its offline verifier establishes archive integrity and
+declared semantic consistency, not capture provenance or uncompromised infrastructure.
+The external-witness protocol is available, but its current status is
+`AWAITING_EXTERNAL_WITNESS`; no independent endorsement is claimed. See
+`docs/CI_ASSURANCE.md` and `docs/EXTERNAL_REVIEW.md`.
+
 | Claim | Profile | Required evidence | Current repository status |
 |---|---|---|---|
 | Obligation survives succession | `reference-local` | deterministic scenario and linked contract | Verified by release gate |

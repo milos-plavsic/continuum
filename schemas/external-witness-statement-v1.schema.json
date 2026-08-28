@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/milos-plavsic/continuum/schemas/external-witness-statement-v1.schema.json",
+  "title": "Continuum external witness statement",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "statement_id", "request_digest", "reviewer", "reviewed_at", "expires_at", "verdict", "claim_results", "findings", "statement_digest"],
+  "properties": {
+    "schema": {"const": "continuum/external-witness-statement/1.0"},
+    "statement_id": {"type": "string", "minLength": 8},
+    "request_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity", "issuer", "display_name", "affiliation", "relationship", "conflicts", "independence_declared"],
+      "properties": {
+        "identity": {"type": "string", "minLength": 3},
+        "issuer": {"type": "string", "format": "uri"},
+        "display_name": {"type": "string", "minLength": 1},
+        "affiliation": {"type": "string"},
+        "relationship": {"enum": ["NO_PROJECT_ROLE", "DISCLOSED_PRIOR_REVIEW", "DISCLOSED_OTHER"]},
+        "conflicts": {"type": "string"},
+        "independence_declared": {"const": true}
+      }
+    },
+    "reviewed_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "verdict": {"enum": ["VERIFIED", "FAILED", "INCONCLUSIVE"]},
+    "claim_results": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["claim", "status", "evidence_refs", "finding"],
+        "properties": {
+          "claim": {"type": "string", "minLength": 3},
+          "status": {"enum": ["PASS", "FAIL", "NOT_ASSESSED"]},
+          "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+          "finding": {"type": "string"}
+        }
+      }
+    },
+    "findings": {"type": "array", "items": {"type": "string"}},
+    "statement_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+  }
+}

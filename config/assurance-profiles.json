@@ -1,0 +1,47 @@
+{
+  "$schema": "../schemas/assurance-profiles-v1.schema.json",
+  "schema": "continuum/assurance-profiles/1.0",
+  "profiles": [
+    {
+      "id": "external-witness",
+      "trigger": "independent-reviewer",
+      "credentials": false,
+      "billable": false,
+      "live_google_cloud": false,
+      "test_doubles": false,
+      "status": "AWAITING_EXTERNAL_WITNESS",
+      "witness_registry": "config/external-witnesses.json",
+      "evidence": ["canonical review request", "Sigstore bundle when supplied by an independent reviewer"],
+      "claims": ["the repository provides an identity-pinned external-review protocol"],
+      "non_claims": ["an external review has already occurred", "the maintainer is an independent witness", "Byzantine consensus"],
+      "trust_roots": ["reviewer independence declaration", "Sigstore Fulcio identity", "Sigstore Rekor transparency log"]
+    },
+    {
+      "id": "live-gcp-proof",
+      "trigger": "authorized-manual",
+      "credentials": true,
+      "billable": true,
+      "live_google_cloud": true,
+      "test_doubles": false,
+      "status": "ACTIVE",
+      "release_manifest": "docs/submission/current-release.json",
+      "evidence": ["exact-commit Cloud Run revisions", "Firestore and Pub/Sub observations", "Vertex AI and Cloud Trace observations", "content-addressed offline-verifier report"],
+      "claims": ["the manifest-bound application lifecycle executed on the named Google Cloud resources", "the captured bundle passed the declared offline semantic verifier"],
+      "non_claims": ["regular CI re-executes this cloud lifecycle", "capture provenance is independently authenticated", "Google infrastructure was uncompromised", "upstream GLEIF or VIES facts are legally correct", "Byzantine consensus"],
+      "trust_roots": ["authorized first-party capture operator", "Google Cloud control-plane APIs", "declared offline verifier"]
+    },
+    {
+      "id": "regular-ci",
+      "trigger": "github-event",
+      "credentials": false,
+      "billable": false,
+      "live_google_cloud": false,
+      "test_doubles": true,
+      "status": "ACTIVE",
+      "evidence": ["locked unit and integration tests", "credential-free local lifecycle", "contract conformance", "100% measured statement and branch coverage", "container, SBOM and vulnerability gates"],
+      "claims": ["declared source paths were executed by the measured tests", "deterministic fixtures satisfy the declared invariants", "the runtime image builds without cloud credentials"],
+      "non_claims": ["semantic correctness follows from coverage", "production fitness", "live Google Cloud execution", "complete threat coverage", "capture provenance", "uncompromised infrastructure", "upstream factual truth"],
+      "trust_roots": ["GitHub Actions runner", "commit-pinned actions", "locked dependency graph", "first-party deterministic fixtures and test doubles"]
+    }
+  ]
+}

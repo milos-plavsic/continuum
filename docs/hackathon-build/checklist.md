@@ -438,3 +438,55 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   Acceptance: Invalid or ambiguous targets cannot mutate traffic; a known-good revision
   can be restored and the current revision re-applied with an auditable local receipt.
   Verify: Unit/static tests, shell syntax, dry-run against Cloud Run and a reversible live drill.
+
+## Independent-audit closure — autonomous
+
+- [x] **71. Publish the community trust and governance surface**
+  Spec ref: `spec.md > Independent-audit closure`
+  What to build: Contribution, vulnerability-reporting, conduct and project-governance
+  policies, plus review ownership and pull-request provenance prompts.
+  Acceptance: A contributor can determine how to propose code, report a vulnerability,
+  resolve a governance dispute and preserve hackathon originality without private context.
+  Verify: Link, policy-content and repository-template checks.
+- [x] **72. Establish one machine-verifiable configuration inventory**
+  Spec ref: `spec.md > Independent-audit closure`
+  What to build: JSON Schema 2020-12, canonical inventory, generated operator reference and
+  a static scanner covering Python, shell, workflow, Docker and example environment usage.
+  Acceptance: Undeclared variables, duplicate names, secret defaults, unsafe evidence
+  exposure and stale generated documentation fail the release gate.
+  Verify: Schema validation, mutation fixtures, source scan and deterministic regeneration.
+- [x] **73. Make the complete test path warning-free**
+  Spec ref: `spec.md > Independent-audit closure`
+  What to build: Supported Starlette/httpx2 test transport and a warnings-as-errors gate.
+  Acceptance: The FastAPI test client emits no compatibility deprecation and any future
+  warning fails local and hosted CI instead of being normalized as noise.
+  Verify: Locked dependency audit and full suite with `PYTHONWARNINGS=error`.
+- [x] **74. Separate CI assurance from live-cloud assurance in code**
+  Spec ref: `spec.md > Independent-audit closure`
+  What to build: Versioned assurance-profile schema and manifest distinguishing mocked,
+  credential-free regular CI from manually captured exact-commit Google Cloud evidence.
+  Acceptance: CI cannot claim live GCP execution; cloud proof cannot inherit CI guarantees;
+  every profile states trust roots, evidence, non-claims, cost and credential boundary.
+  Verify: Machine mutation checks, release-gate integration and CI summary readback.
+- [x] **75. Bind coverage claims to their epistemic ceiling**
+  Spec ref: `spec.md > Independent-audit closure`
+  What to build: Machine-required non-claims and cross-links from coverage to conformance,
+  adversarial, stress, cloud and independent-verification evidence.
+  Acceptance: No release surface can present 100% execution coverage as proof of semantic
+  correctness, production fitness, live-cloud execution or complete threat coverage.
+  Verify: Assurance-schema validation and judge-surface claim audit.
+- [x] **76. Ship a cryptographically verifiable external-witness workflow**
+  Spec ref: `spec.md > Independent-audit closure`
+  What to build: Content-addressed review request, external statement schema, conflict and
+  scope declaration, Sigstore keyless verification command, witness registry and status gate.
+  Acceptance: Only the expected OIDC identity and issuer can authenticate a statement over
+  the exact release digest; unsigned first-party material remains explicitly `AWAITING` and
+  can never be labelled independent review.
+  Verify: Canonicalization, identity/issuer/digest/expiry mutation tests and offline status audit.
+- [ ] **77. Pass and merge the independent-audit release**
+  Spec ref: `prd.md > Acceptance outcomes`
+  What to build: Exhaustive warning-free quality, schema, conformance, release, container,
+  secret and supply-chain gates through a protected pull request.
+  Acceptance: Required checks pass, merged `main` contains every audit control, and no
+  generated credential, cloud state or fabricated third-party endorsement is committed.
+  Verify: Green GitHub checks, post-merge readback and clean worktree.

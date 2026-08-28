@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report
+    url: https://github.com/milos-plavsic/continuum/security/advisories/new
+    about: Report vulnerabilities or accidental secret/private-evidence exposure privately.
+  - name: Conduct report
+    url: mailto:milos.plavsic@googlemail.com?subject=%5BContinuum%20conduct%5D
+    about: Report Code of Conduct concerns privately.

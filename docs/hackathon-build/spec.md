@@ -194,3 +194,26 @@ require separate evidence.
 - Showcase rollback is explicit-target and dry-run by default. It verifies revision
   ownership/readiness before traffic mutation, then checks `/build-info`, the absent
   mutation route, the exact public service IAM policy and zero project-level identity roles.
+
+## Independent-audit closure
+
+- Repository participation is governed by public contribution, security, conduct and
+  decision policies. Protected changes require provenance disclosure, tests, review and
+  reversible release practice; vulnerability reports use a private channel.
+- `config/environment.json` is the sole inventory of supported environment variables and
+  validates against JSON Schema 2020-12. A deterministic scanner compares the inventory
+  with Python, shell, workflow, Docker and example usage, while a generated operator page
+  exposes type, owner, profiles, default, sensitivity and evidence-redaction policy.
+- The supported Starlette test transport is installed explicitly. The entire Python suite
+  runs with warnings promoted to errors so compatibility drift becomes a release failure.
+- A versioned assurance manifest defines separate regular-CI, live-GCP and external-witness
+  profiles. Regular CI is credential-free and uses deterministic ports/test doubles; the
+  exact cloud run remains a separately triggered, paid, first-party capture bound to its
+  application commit and evidence digest.
+- Coverage is execution evidence only. The assurance manifest requires explicit non-claims
+  for semantic correctness, production fitness, live-cloud execution and threat completeness,
+  and links the distinct conformance, adversarial, stress, cloud and verification controls.
+- External review uses a canonical, content-addressed statement and Sigstore keyless bundle.
+  Verification pins the expected OIDC identity and issuer and checks subject digest, scope,
+  verdict and expiry. Until a real independent person signs, status remains machine-readably
+  `AWAITING_EXTERNAL_WITNESS`; no local fixture upgrades the assurance claim.

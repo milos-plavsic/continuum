@@ -223,6 +223,14 @@ class DeploymentScriptSecurityTests(unittest.TestCase):
         self.assertIn("cat artifacts/coverage/README.md", self.ci)
         self.assertIn("include-hidden-files: true", self.ci)
         self.assertIn("retention-days: 90", self.ci)
+        self.assertIn("PYTHONWARNINGS=error", self.quality_gate)
+        self.assertIn("check_configuration.py --check", self.quality_gate)
+        self.assertIn("check_assurance_profiles.py", self.quality_gate)
+        self.assertIn("verify_external_witness.py", self.quality_gate)
+        self.assertIn("httpx2>=2.12,<3", self.pyproject)
+        self.assertNotIn('"httpx>=0.28,<1"', self.pyproject)
+        self.assertIn("sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6", self.ci)
+        self.assertIn("Regular CI is credential-free", self.ci)
 
     def _run_fake_slsa(self, output: str, status: int):
         with tempfile.TemporaryDirectory() as directory:
