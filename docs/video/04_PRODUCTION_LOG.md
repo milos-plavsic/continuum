@@ -3,7 +3,47 @@
 This log records generated media provenance, subjective acceptance decisions,
 and any production constraint that changes the canonical script.
 
-## Live workflow screen master — August 27, 2026
+## Canonical submission master — August 28, 2026
+
+- This section supersedes the earlier v18 candidates below as submission truth;
+  those entries remain only as an append-only production history.
+- Source: a fresh private IAM-authenticated `continuum-control` Cloud Run run
+  recorded from deployed commit
+  `d4d7d52cde010dd3e07be5ad06cf8ee858cb3a4f`, image
+  `sha256:4c4b1559d00aa12d66a4f7be253d6893524759e661291446732325543747249f`,
+  revision `continuum-control-00062-s6x`.
+- Fresh run: `demo-1787881932263`; trace
+  `c29c7692b9fc405acaaeca1dfb60d891`; terminal state `VERIFIED`; selected
+  successor `v19`; proof manifest all 17 required evidence objects and 174
+  correlated spans.
+- Raw live capture:
+  `artifacts/video/capture/final-v19-20260828T015202Z/live-workflow-master.webm`;
+  SHA-256
+  `459a35f99e606e44c2b29238fbb4b08443074d8685e0f1459b5a5b83541b3e8f`.
+- Narration: `gemini-3.1-flash-tts-preview`, Algenib voice; 1.08x
+  pitch-preserving masters except Scene 08 at 1.12x. The 236-second mono WAV
+  mix peaks at -1.50 dBFS; SHA-256
+  `f9e96dbd51a427eb270df4bc81ac69f63375588199b90a0d8f5eab8938dcb67c`.
+- Final master:
+  `artifacts/video/remarkable-v2/final-20260828T044500Z/continuum-remarkable-final.mp4`.
+  Runtime 3:59.88; 1920x1080, 25 fps, H.264 High Profile; 48 kHz mono AAC;
+  SHA-256
+  `d236cd9a8001f27764f1e7b48f0eaa3710e006d701989cfeec74da7f9afe1950`.
+- Visual acceptance sampled the opening, selection, handoff, supplier, effect,
+  verifier, cloud-proof, architecture, model-chain, and closing segments. The
+  accepted cut shows v19, 2/4 context, one effect with zero duplicates, the
+  independent `VERIFIED` verdict, and 17/17 objects with 174 spans at their
+  intended narration windows.
+- Two stale labels in the deployed d4 cockpit were presentation defects, not
+  run-state values: the handoff avatar said v18 while adjacent state said v19,
+  and the proof footer retained an older count. The edit masks only those two
+  labels with the authoritative same-run/release values. The repository cockpit
+  now renders the successor dynamically and carries the canonical proof count.
+- Earlier `final-20260828T015721Z`, `final-20260828T040700Z`, and
+  `final-20260828T042000Z` renders are rejected: frame review found a stale
+  avatar and then source-timestamp drift. They must not be uploaded.
+
+## Historical live workflow screen master — August 27, 2026
 
 - Source: private IAM-authenticated `continuum-control` Cloud Run cockpit.
 - Exact deployment: commit `b4a8163bfb74da583b01885fad106523ce65a1c6`,

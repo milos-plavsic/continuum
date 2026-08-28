@@ -135,7 +135,7 @@
         }
         const local = t - (S.scene4 + 3);
         await seek(finalstate, Math.min(5.45, 2.35 + local), local < 3.1);
-        mark('v18 SELECTED · v20 REJECTED', 397, 593, 373, 271);
+        mark('v19 SELECTED · v20 REJECTED', 397, 593, 373, 271);
       } else if (t < S.scene5 + 13) {
         setMode('live', 'SAME-RUN PROOF · READ ONLY');
         if (liveBranch !== 'proof-a') { liveBranch = 'proof-a'; jumpFlash(); await seek(live, 70.0, true); }

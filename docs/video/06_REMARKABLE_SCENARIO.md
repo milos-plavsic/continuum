@@ -19,11 +19,11 @@ independently verified completion.
 The signature moment happens at the authority handoff, not on the title card:
 
 1. v17 is visibly denied both action and memory.
-2. The €250,000 obligation remains open and moves to v18.
+2. The €250,000 obligation remains open and moves to warm successor v19.
 3. Two verified facts cross the boundary.
 4. Prompt injection, a predecessor secret, stale inference, and revoked memory
    visibly remain behind.
-5. v18 immediately resumes the actual supplier-assurance work.
+5. v19 immediately resumes the actual supplier-assurance work.
 
 Voice:
 
@@ -123,7 +123,7 @@ The candidate board enters as three native rows:
   `JURISDICTION_MISMATCH`.
 
 The cursor points to the deterministic gate first, then to the ADK/Gemini card:
-`gemini-3.6-flash · selected v18 · citations complete`. Finally it moves to the
+`gemini-3.6-flash · selected v19 · citations complete`. Finally it moves to the
 policy admission card. A three-part header makes the separation unmistakable:
 `ELIGIBILITY → MODEL CHOICE → AUTHORITY POLICY`.
 
@@ -132,7 +132,7 @@ policy admission card. A three-part header makes the separation unmistakable:
 > Continuum now discovers three registered successors. Deterministic checks
 > reject version twenty before the model sees it. Google ADK invokes Gemini
 > three point six over the eligible, deployment-backed set. Gemini cites the
-> evidence and selects v18. Policy independently validates that choice before
+> recovery and assurance evidence and selects warm successor v19. Policy independently validates that choice before
 > authority moves. Good reasoning gets a vote. It does not get the keys.
 
 **Judge payoff**
@@ -147,20 +147,20 @@ The screen becomes a clear left-to-right handoff inside the real cockpit:
 
 - left: `v17 · FENCED · EPOCH 41`;
 - center: the live obligation and minimum-context gate;
-- right: `v18 · ACTIVE · EPOCH 42`.
+- right: `v19 · ACTIVE · EPOCH 42`.
 
 The cursor touches the two v17 proof cards:
 
 - `ACTION DENIED · STALE_EPOCH`;
 - `MEMORY DENIED · 0 CANDIDATES EXAMINED`.
 
-Then it moves with the obligation to v18. Two green context chips cross. Four
+Then it moves with the obligation to v19. Two green context chips cross. Four
 red classes stop at the boundary. Hold this frame for two silent seconds.
 
 **Voice**
 
 > This is the moment Continuum exists for. Version seventeen is fenced before
-> v18 becomes active. Its action is stale. Its revoked memory is rejected before
+> v19 becomes active. Its action is stale. Its revoked memory is rejected before
 > retrieval. The obligation crosses. Two verified facts cross. A prompt
 > injection, a secret, stale inference, and revoked memory do not. The agent is
 > replaceable. Its promise is not.
@@ -182,12 +182,13 @@ The successor's Supplier Assurance work unfolds as a vertical decision pack:
 
 1. GLEIF receipt: exact LEI, legal name and country, entity `ACTIVE`, record
    `ISSUED`.
-2. European Commission VIES receipt: VAT `VALID`.
+2. European Commission VIES receipt: VAT `VALID`, transparently labelled
+   `CACHED_WITHIN_POLICY` from a still-fresh prior independently verified observation.
 3. Both normalized responses gain visible `sha256:` receipt chips.
 4. Google ADK + Gemini 3.6 returns a cited `ONBOARD` recommendation.
 5. Deterministic admission checks every citation, required control, requested
    action and `SANDBOX_ONLY` scope.
-6. The selected v18 workload identity persists the decision-pack digest.
+6. The selected v19 workload identity persists the decision-pack digest.
 
 The cursor moves GLEIF → VIES → Gemini → deterministic admission. The sandbox
 disclaimer remains visible but subordinate.
@@ -263,9 +264,9 @@ Change the slug to `SAME-RUN CLOUD PROOF`. Use fast, honest native cutaways:
 
 1. Cloud Run list: control, v17, v18, v19, verifier; five service identities;
    one immutable image digest.
-2. Cloud Trace: exact same trace ID and `118` spans, including Gemini and the
+2. Accepted-release Cloud Trace: `174` correlated spans, including Gemini and the
    verifier.
-3. Public proof packet: `14 / 14`, `PASS`, zero reason codes, verifier
+3. Public exact-commit proof packet: `17 / 17`, `PASS`, zero reason codes, verifier
    `network_used: false`, `credentials_used: false`.
 
 The cursor moves once per cutaway to the field being claimed. Every cutaway
@@ -273,10 +274,10 @@ retains the run or trace correlation banner.
 
 **Voice**
 
-> This is one correlated Google Cloud run: five private Cloud Run identities,
-> Firestore, Cloud Tasks, Pub/Sub, Vertex AI, and one hundred eighteen Trace
-> spans. Fourteen content-addressed evidence objects are published with the
-> exact commit and image. Anyone can run the offline verifier without Google
+> This live run uses the accepted Google Cloud release: five private Cloud Run
+> identities, Firestore, Cloud Tasks, Pub/Sub, and Vertex AI. Its published
+> exact-commit proof contains seventeen content-addressed objects and one hundred
+> seventy-four correlated Trace spans. Anyone can run the offline verifier without Google
 > credentials. It returns pass with no missing evidence and no reason codes.
 
 **Judge payoff**
@@ -335,7 +336,7 @@ to rescue a long page:
 2. Present the lifecycle as nine native stages populated only from server state.
    After the run completes, stage clicks inspect its persisted evidence; they
    never advance, retry, or mutate the backend workflow.
-3. Add the left-to-right v17 → context gate → v18 handoff scene.
+3. Add the left-to-right v17 → context gate → v19 handoff scene.
 4. Add a first-class Supplier Assurance decision-pack scene with official source
    names, hashed receipts, Gemini recommendation and deterministic admission.
 5. Add a two-delivery convergence scene and a verifier trust-boundary scene.
@@ -358,7 +359,7 @@ The cursor always carries meaning:
 - visit GLEIF → VIES → Gemini → deterministic admission;
 - connect two delivery IDs to one provider resource;
 - cross the verifier trust boundary only when narration does;
-- point to revision, trace ID and `15/15 PASS` in the proof cutaways.
+- point to revision, trace ID and `17/17 PASS` in the proof cutaways.
 
 Use a small 26–30 px soft halo, not a large click animation. The cursor never
 rests over text that the viewer must read.
@@ -389,7 +390,7 @@ Secondary line:
 > THE PROMISE DIDN'T.
 
 The image should show the live obligation crossing from a red fenced v17 to a
-green verified v18—not a generic robot, shield, or cloud-logo collage.
+green verified v19—not a generic robot, shield, or cloud-logo collage.
 
 ## Final review questions
 

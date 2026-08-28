@@ -20,7 +20,7 @@ SCENES = (
     (103.0, "05_supplier_work_algenib_108.wav"),
     (143.0, "06_one_effect_algenib_108.wav"),
     (162.0, "07_independent_verifier_algenib_108.wav"),
-    (186.0, "08_cloud_proof_algenib_108.wav"),
+    (186.0, "08_cloud_proof_algenib_112.wav"),
     (211.0, "09_portable_close_algenib_108.wav"),
 )
 MUSIC_WINDOWS = (

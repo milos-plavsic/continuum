@@ -166,6 +166,10 @@ class CloudAppTests(unittest.TestCase):
         self.assertIn("cursor-halo", response.text)
         self.assertIn("GLEIF and EU VIES receipts", response.text)
         self.assertIn("Two deliveries converge on one effect", response.text)
+        self.assertIn("id=successorAvatar", response.text)
+        self.assertIn("id=outcomeSuccessor", response.text)
+        self.assertIn("outcomeSuccessor.textContent=`Agent v17 → agent ${s.selected_successor}`", response.text)
+        self.assertNotIn("Agent v17 → agent v18</h3>", response.text)
 
     def test_public_showcase_is_static_hardened_and_has_no_mutation_surface(self):
         showcase = TestClient(create_cloud_app(role="showcase"))
