@@ -18,7 +18,7 @@
     "ai_usage": "",
     "codex_usage": ""
   },
-  "current_stage": "build",
+  "current_stage": "resources",
   "completed_stages": [
     "start-hackathon",
     "review",
@@ -26,8 +26,8 @@
   ],
   "rules_acknowledged": true,
   "learning": {
-    "status": "active",
-    "current_step": "build",
+    "status": "completed",
+    "current_step": "complete",
     "completed_steps": [
       "scope",
       "prd",
@@ -42,5 +42,5 @@
     "draft_file": "devpost-submission.md",
     "status": "drafting"
   },
-  "next_command": "build-project"
+  "next_command": "prepare-submission"
 }

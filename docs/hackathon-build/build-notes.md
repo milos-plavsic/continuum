@@ -435,3 +435,6 @@
 - The warning-free gate passed 215 tests over all 40 Python modules at 4,232/4,232 statements
   and 1,192/1,192 branches. These are branch-build observations, not a replacement for the
   existing exact-application cloud and quality releases.
+- PR #60 ran both protected workflows successfully for push and pull-request events before
+  the workflow state was finalized. Merge and post-merge readback are the final item-77
+  verification; this documentation commit triggers the same required checks again.

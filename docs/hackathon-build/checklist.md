@@ -483,7 +483,7 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   the exact release digest; unsigned first-party material remains explicitly `AWAITING` and
   can never be labelled independent review.
   Verify: Canonicalization, identity/issuer/digest/expiry mutation tests and offline status audit.
-- [ ] **77. Pass and merge the independent-audit release**
+- [x] **77. Pass and merge the independent-audit release**
   Spec ref: `prd.md > Acceptance outcomes`
   What to build: Exhaustive warning-free quality, schema, conformance, release, container,
   secret and supply-chain gates through a protected pull request.
