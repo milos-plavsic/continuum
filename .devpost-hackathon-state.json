@@ -22,7 +22,8 @@
   "completed_stages": [
     "start-hackathon",
     "review",
-    "prepare-submission"
+    "prepare-submission",
+    "submit-project"
   ],
   "rules_acknowledged": true,
   "learning": {
@@ -40,7 +41,9 @@
   },
   "submission": {
     "draft_file": "devpost-submission.md",
-    "status": "needs-work"
+    "status": "submitted",
+    "submission_id": 1133511,
+    "url": "https://devpost.com/software/continuum-lq35x2"
   },
-  "next_command": "prepare-submission"
+  "next_command": "hackathon-map"
 }

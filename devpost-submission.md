@@ -195,14 +195,21 @@ the correct title, and the opening metadata slate as the public thumbnail.
 5. Supplier decision pack: official GLEIF/VIES receipts, Gemini recommendation, deterministic sandbox admission.
 6. Google Cloud evidence: five Cloud Run revisions/identities, 17-object offline PASS, and the exact 174-span Cloud Trace.
 
-## Submission Readiness Notes
+## Verified Submission Status
 
 - Fortified Enterprise Fleet is the target category.
 - Public repository, reproducible README, architecture PNG, exact cloud identifiers, and a downloadable offline-verifiable proof packet are ready.
-- The Devpost project page is published as “Continuum” with the workflow-first description, technology stack, repository, and public proof-release links. Live `submitted_at` remains empty, so it is not yet a verified hackathon entry.
+- Devpost live readback on August 28, 2026 confirms that Continuum is entered in
+  the All Things Agentic Hackathon. Submission `1133511` has a populated
+  `submitted_at` value of `2026-08-28T11:52:39.893-04:00`; the public project
+  page is https://devpost.com/software/continuum-lq35x2.
 - Video production and publication are complete. Devpost project version 9
   contains the verified public URL.
-- The architecture asset is finalized at `docs/diagrams/architecture.png`; its required form upload and all drafted field answers will be applied with the final video submission because Devpost's submission API validates the complete form atomically.
+- The required architecture PNG, all applicable form answers, the public video,
+  bonus-content links, and all four Google model declarations are saved in the
+  submitted form. Five captioned proof-first screenshots are live in the public
+  project gallery. Startup Excellence fields are intentionally blank because
+  this is an individual submission.
 - A 1920×1080, 25 fps, 3:54.04 H.264/AAC clean candidate has passed encoded-frame
   review for its metadata opening, click, successor selection, handoff,
   supplier, non-obscuring cut disclosures, effect, verifier, exact-release,
