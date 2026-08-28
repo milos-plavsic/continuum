@@ -1,5 +1,17 @@
 # Build notes
 
+## Accepted submission-video production — August 28
+
+- The final 3:54.04 H.264/AAC master, timed narration, gentle transition music,
+  opening and closing metadata slates, two transparent-cut disclosures, and
+  extended four-stage learning-proof sequence passed creator review.
+- The master SHA-256 is
+  `fb8795fdddf7bc5bac7314c94a5564e737bd761f5e947db08954e26d08395617`;
+  captions are locked in `docs/video/10_PROOF_FIRST_CAPTIONS.srt`.
+- Production is complete. Public YouTube/Vimeo hosting, hosted-playback
+  verification, the required Devpost architecture upload, and formal submission
+  remain outstanding and must not be reported as complete before live readback.
+
 ## Final auditability and rollback plan — August 28
 
 - The participant requested every improvement from the release-PR critique while

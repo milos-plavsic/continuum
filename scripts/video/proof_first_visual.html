@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Continuum proof-first edit</title>
+  <style>
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#061019;color:#f4f8f7;font-family:Inter,system-ui,sans-serif}
+    .media,.panel{position:absolute;inset:0;width:100%;height:100%}.media{object-fit:cover;background:#061019}.panel{display:none;background:radial-gradient(circle at 18% 0,#16425a,#061019 48%);align-items:center;justify-content:center}.panel.on{display:flex}
+    #poster{z-index:5}#live{transform-origin:center;transition:transform 220ms ease}.question{position:absolute;z-index:30;right:38px;top:30px;max-width:680px;padding:12px 16px;border:1px solid rgba(125,189,255,.72);border-radius:10px;background:rgba(4,15,24,.94);font-size:19px;font-weight:900;letter-spacing:.055em;text-align:right}.slug{position:absolute;z-index:30;left:38px;bottom:30px;padding:9px 13px;border:1px solid rgba(102,225,168,.7);border-radius:999px;background:rgba(4,15,24,.94);color:#9ff0c8;font:800 14px ui-monospace,monospace}.cut{position:absolute;z-index:40;left:38px;top:30px;display:none;padding:9px 13px;border:1px solid rgba(185,220,250,.72);border-radius:999px;background:rgba(4,15,24,.94);color:#b9dcfa;font:900 14px ui-monospace,monospace;letter-spacing:.08em}.cut.on{display:block}.architecture img{width:92%;height:83%;object-fit:contain}.architecture:after{content:'ACCEPTED RELEASE d4d7d52 · 17 / 17 OBJECTS · 174 TRACE SPANS · OFFLINE PASS';position:absolute;bottom:50px;color:#66e1a8;font:850 19px ui-monospace,monospace}.proof{flex-direction:column;align-items:stretch;padding:92px 120px 100px}.proof h1{font-size:54px;margin:0 0 12px}.proof .lead{font-size:22px;color:#a9bdc6;margin:0 0 34px}.proof-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:24px;flex:1}.proof-card{border:1px solid #2c5265;border-radius:20px;background:#0c202d;padding:28px}.services{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}.service{border:1px solid #356177;border-radius:12px;padding:16px;color:#dce9ee;font-weight:750}.service.verifier{border-color:#66e1a8;color:#8df0c3}.facts{display:grid;grid-template-columns:1fr 1fr;gap:16px}.fact{border:1px solid #356177;border-radius:14px;padding:20px}.fact strong{display:block;color:#66e1a8;font:900 30px ui-monospace,monospace;margin-bottom:8px}.fact span{color:#a9bdc6}.digest{margin-top:24px;color:#afc4ce;font:16px ui-monospace,monospace}.opening,.end{z-index:70;flex-direction:column;text-align:center}.opening .kicker,.meta{font:800 16px ui-monospace,monospace;letter-spacing:.1em;color:#b9dcfa}.opening .mark,.end .mark{display:grid;place-items:center;width:76px;height:76px;border:2px solid #7dbdff;border-radius:21px;color:#7dbdff;font-size:39px;font-weight:950;margin-bottom:24px}.opening h1,.end h1{font-size:70px;letter-spacing:-.05em;margin:0}.opening h2,.end h2{font-size:31px;color:#66e1a8;margin:18px 0 24px}.opening .meta,.end .meta{margin-top:18px;line-height:1.8}.end p{font:18px ui-monospace,monospace;color:#b9dcfa;margin:7px}.timecode{position:absolute;z-index:80;right:30px;bottom:30px;display:none;padding:7px 9px;background:#000c;color:#ffc66d;font:15px ui-monospace,monospace}.review .timecode{display:block}
+  </style>
+</head>
+<body>
+  <section id="opening" class="panel opening on"><div class="mark">C</div><div class="kicker">ALL THINGS AGENTIC HACKATHON</div><h1>CONTINUUM</h1><h2>The agent failed. The promise did not.</h2><div class="meta">MILOS PLAVSIC · AUGUST 28, 2026</div></section>
+  <img id="poster" class="media" src="../../artifacts/video/proof-first-assets/live-ready-source-004.jpg" alt="">
+  <video id="live" class="media" muted playsinline hidden></video>
+  <video id="models" class="media" muted playsinline hidden></video>
+  <section id="architecture" class="panel architecture"><img src="../../docs/diagrams/architecture-video.svg" alt=""></section>
+  <section id="proof" class="panel proof">
+    <h1>One accepted release. Evidence from the owning Google APIs.</h1>
+    <p class="lead">Five private Cloud Run identities share one immutable image; a separate verifier reads authority, supplier, provider, and trace evidence.</p>
+    <div class="proof-grid">
+      <div class="proof-card"><strong>PRIVATE CLOUD RUN SERVICES</strong><div class="services"><div class="service">CONTROL</div><div class="service">PREDECESSOR · v17</div><div class="service">SUCCESSOR · v18</div><div class="service">WARM SUCCESSOR · v19</div><div class="service verifier">INDEPENDENT VERIFIER</div></div><p class="digest">image sha256:4c4b63c7ddaa…aa595</p></div>
+      <div class="proof-card"><div class="facts"><div class="fact"><strong>17 / 17</strong><span>required objects</span></div><div class="fact"><strong>174</strong><span>correlated Trace spans</span></div><div class="fact"><strong>PASS</strong><span>offline semantic verifier</span></div><div class="fact"><strong>d4d7d52</strong><span>exact source release</span></div></div><p class="digest">run judge-final-d4d7d52-20260827T223700Z<br>trace ff88d5ebd20687d1b468cd5f5f66a7c1</p></div>
+    </div>
+  </section>
+  <section id="end" class="panel end"><div class="mark">C</div><div class="meta">ALL THINGS AGENTIC HACKATHON</div><h1>CONTINUUM</h1><h2>The agent failed. The promise did not.</h2><p>Milos Plavsic · August 28, 2026</p><p>github.com/milos-plavsic/continuum</p><p>cloud-proof-d4d7d52 · C0–C6 PASS</p></section>
+  <div id="question" class="question">CAN IT CATCH A FAILURE WITH NO ERROR?</div>
+  <div id="slug" class="slug">CONTINUOUS LIVE GOOGLE CLOUD CAPTURE · ONE START</div>
+  <div id="cut" class="cut">SAME-RUN TRANSPARENT CUT</div>
+  <div id="timecode" class="timecode"></div>
+  <script>
+    const p=new URLSearchParams(location.search),opening=document.querySelector('#opening'),poster=document.querySelector('#poster'),live=document.querySelector('#live'),models=document.querySelector('#models'),question=document.querySelector('#question'),slug=document.querySelector('#slug'),cut=document.querySelector('#cut'),proof=document.querySelector('#proof'),architecture=document.querySelector('#architecture'),end=document.querySelector('#end'),timecode=document.querySelector('#timecode');
+    live.src=p.get('live');models.src=p.get('models');if(p.get('review')==='1')document.body.classList.add('review');
+    const chapters=[
+      {at:4,source:4,rate:1,q:'CAN IT CATCH A FAILURE WITH NO ERROR?',s:'CONTINUOUS LIVE GOOGLE CLOUD CAPTURE · ONE START',zoom:'scale(1)',origin:'center'},
+      {at:32,source:114,rate:.22,q:'WHO IS ALLOWED TO TAKE OVER?',s:'SAME-RUN EVIDENCE · ELIGIBILITY → GEMINI → POLICY',zoom:'scale(1.03)',origin:'center'},
+      {at:60,source:124,rate:.22,q:'WHAT CROSSES THE HANDOFF?',s:'SAME-RUN EVIDENCE · 2 INCLUDED · 4 EXCLUDED',zoom:'scale(1.6)',origin:'left center'},
+      {at:89,source:131,rate:.20,q:'DOES THE SUCCESSOR FINISH REAL WORK?',s:'SAME-RUN EVIDENCE · GLEIF + VIES → CITED DECISION PACK',zoom:'scale(1.06)',origin:'center'},
+      {at:124,source:140,rate:.20,q:'CAN A RETRY DUPLICATE THE EFFECT?',s:'SAME-RUN EVIDENCE · 2 DELIVERIES · 1 EFFECT · 0 DUPLICATES',zoom:'scale(1.08)',origin:'center'},
+      {at:145,source:144,rate:.24,q:'WHO IS ALLOWED TO DECLARE SUCCESS?',s:'SAME-RUN EVIDENCE · INDEPENDENT VERIFIER · ARTIFACT 6',zoom:'scale(1.06)',origin:'center'}
+    ];
+    function ready(v){if(v.readyState>=1)return Promise.resolve();return new Promise(r=>v.addEventListener('loadedmetadata',r,{once:true}))}
+    function flash(){cut.classList.add('on');setTimeout(()=>cut.classList.remove('on'),1400)}
+    function showChapter(c,index){opening.classList.remove('on');if(index)flash();poster.hidden=true;proof.classList.remove('on');live.hidden=false;live.currentTime=c.source;live.playbackRate=c.rate;live.style.transformOrigin=c.origin;live.style.transform=c.zoom;live.play();question.textContent=c.q;slug.textContent=c.s}
+    window.startContinuumProofFirst=async review=>{if(review)document.body.classList.add('review');await Promise.all([ready(live),ready(models)]);live.currentTime=4;await new Promise(r=>live.addEventListener('seeked',r,{once:true}));const origin=performance.now();chapters.forEach((c,i)=>setTimeout(()=>showChapter(c,i),c.at*1000));setTimeout(()=>{live.pause();live.hidden=true;proof.classList.add('on');question.textContent='IS THIS ACTUALLY RUNNING ON GOOGLE CLOUD?';slug.textContent='EXACT-RELEASE GOOGLE CLOUD PROOF · d4d7d52 · 17 / 17 · 174 SPANS · PASS'},175000);setTimeout(()=>{proof.classList.remove('on');architecture.classList.add('on');question.textContent='WHAT IS THE PORTABLE BOUNDARY?';slug.textContent='REFERENCE ARCHITECTURE · GOOGLE CLOUD BINDING'},192000);setTimeout(()=>{architecture.classList.remove('on');models.hidden=false;models.currentTime=4;models.playbackRate=1;models.play();question.textContent='CAN A VERIFIED FAILURE TEACH?';slug.textContent='RELEASED DERIVATIVE PROOF · NEVER AUTHORITY OR EVIDENCE'},204000);setTimeout(()=>{models.pause();models.hidden=true;end.classList.add('on');question.style.display='none';slug.textContent='CONTINUUM · FORTIFIED ENTERPRISE FLEET'},220000);const timer=setInterval(()=>{const t=(performance.now()-origin)/1000;timecode.textContent=t.toFixed(1)+' / 234.0';if(t>=234){clearInterval(timer);window.__continuumProofFirstDone=true}},100)};
+  </script>
+</body>
+</html>

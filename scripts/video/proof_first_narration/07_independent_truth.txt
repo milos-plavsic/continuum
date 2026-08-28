@@ -1,0 +1,1 @@
+Execution is still only a claim. The control plane exports five content-addressed artifacts. A separately deployed read-only verifier resolves every digest and rereads authority, supplier state, and provider state. Only that identity may issue artifact six: verified, failed, or inconclusive. This run is verified.

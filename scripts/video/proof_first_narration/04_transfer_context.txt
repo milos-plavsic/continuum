@@ -1,0 +1,1 @@
+v17 is fenced at the new authority epoch. Its action is stale, and revoked memory is rejected before retrieval. Continuum reconstructs context for the purpose: the obligation and two verified facts cross. Prompt injection, a predecessor secret, stale inference, and revoked memory stay behind. The agent is replaceable. Its promise is not.

@@ -1,0 +1,1 @@
+Cloud Tasks crosses the persisted deadline. Continuum checks Firestore for the evidence that should exist, proves it is absent, and publishes that negative-space signal. The first Pub/Sub attempt fails deliberately; the same durable workflow resumes on redelivery.

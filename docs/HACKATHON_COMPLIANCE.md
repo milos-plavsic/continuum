@@ -27,7 +27,7 @@ submitted.
 | Reproducible spin-up/testing instructions | 100% | README, locked dependencies, CI, C0–C6 conformance, local container, release gate, 215 tests and genuine 100.0% branch coverage; public `quality-proof-12e116b` retains XML/JSON/HTML, complete measured-source inventory and nested SHA-256 manifest. Regular CI is credential-free and uses deterministic cloud ports/test doubles; it does not execute or prove the separately captured live-GCP lifecycle. |
 | Architecture diagram | 80% | Clean PNG/SVG and Mermaid source exist. The PNG still must be uploaded to form field 28092. |
 | Hosted project URL | 100% | Public read-only Cloud Run showcase is live; a separate release-scoped judge runner permits bounded execution through a private capability supplied only in testing instructions. |
-| Public demo video, at most about four minutes | 0% | Not yet recorded/uploaded. Must be public (not private or unlisted), English or subtitled, and show problem, value, live action and visible Google Cloud proof. |
+| Public demo video, at most about four minutes | 70% | The accepted 3:54.04 English master and sidecar captions are complete and checksum-pinned. It still must be published publicly (not private or unlisted), checked through hosted playback, and attached to Devpost. |
 | Required form answers | 90% | Answers are drafted in `devpost-submission.md`; architecture upload and video URL remain missing. |
 | Teammates accepted | N/A | Live project membership currently shows the author only. If a teammate is added, acceptance must occur before submission. |
 | Formal Devpost submission | 0% | Project page is published, but live `submitted_at` is empty. |
@@ -61,7 +61,7 @@ formally claimed until these URLs and models are included in the submitted form.
 |---|---:|---:|---|
 | Innovation & operational utility | 40% | 9.2/10 | The video must make the causal autonomous action obvious before explaining protocol depth. |
 | Architectural discipline & tech stack | 30% | 9.8/10 | Keep the sparse succession lifecycle primary and the detailed topology secondary. |
-| Demo & production readiness | 30% | 6.0/10 | Required public video and architecture form upload are still absent. |
+| Demo & production readiness | 30% | 8.5/10 | The accepted video is complete; its required public hosting and the architecture form upload are still absent. |
 
 ## Final lock rule
 

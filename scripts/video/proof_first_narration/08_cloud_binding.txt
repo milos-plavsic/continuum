@@ -1,0 +1,1 @@
+The accepted release runs across five private Cloud Run identities with Firestore, Cloud Tasks, Pub/Sub, Vertex AI, and Cloud Trace. Its public packet contains seventeen required objects and one hundred seventy-four correlated spans. The credential-free offline verifier returns pass.
