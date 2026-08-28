@@ -1,0 +1,1 @@
+The gateway rechecks identity, epoch, policy, decision pack, context, and idempotency in one transaction. Pub/Sub delivers twice. The external queue still contains one reversible synthetic work item: one effect, zero duplicates under this demonstrated boundary.

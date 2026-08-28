@@ -1,0 +1,1 @@
+v19 resumes the actual job. It checks the legal entity through GLEIF and European Union VAT through VIES. Each normalized observation is hashed before Gemini sees it. Gemini produces a cited decision pack; deterministic admission rechecks the sources, controls, requested action, and sandbox scope. This is a synthetic supplier case, not a commercial decision.

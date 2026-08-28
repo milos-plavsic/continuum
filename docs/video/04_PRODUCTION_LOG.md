@@ -3,10 +3,93 @@
 This log records generated media provenance, subjective acceptance decisions,
 and any production constraint that changes the canonical script.
 
-## Canonical submission master — August 28, 2026
+## Proof-first replacement production — August 28, 2026
 
-- This section supersedes the earlier v18 candidates below as submission truth;
-  those entries remain only as an append-only production history.
+- Final cleanup retained only the accepted 3:54 master, its mixed WAV, the
+  canonical live capture and manifest/proof frame, the final model-chain source
+  and manifest, and the decode poster. Superseded renders, timecoded reviews,
+  one-frame-per-second review exports, duplicate Playwright recordings,
+  seekable transcodes, rough cuts, and video caches were moved to the system
+  trash. Historical paths below remain as append-only provenance and are not
+  expected to exist in the cleaned workspace.
+
+- A wholly new 3:42 judge-first production was started after re-reading the live
+  submission guidance. It opens on the working Cloud Run cockpit, places the
+  start click at roughly five seconds, and uses six operational questions as its
+  chapter grammar.
+- New sources are `docs/video/07_PROOF_FIRST_PRODUCTION.md`,
+  `docs/video/08_PROOF_FIRST_SCRIPT.md`, and
+  `docs/video/09_PROOF_FIRST_RUNBOOK.md`; the visual scaffold is
+  `scripts/video/proof_first_visual.html` with the fail-closed renderer
+  `scripts/video/capture_proof_first_edit.py`.
+- First timecoded review artifact:
+  `artifacts/video/proof-first-review-20260828T131500Z/continuum-proof-first-review.webm`;
+  1920×1080, 25 fps, 3:42.96. It is rejected as a final candidate because the
+  first decoded frame was blank, the handoff crop exposed the obsolete v18
+  presentation label, and the old cockpit cloud-proof footer conflicted with the
+  accepted 17-object/174-span release truth.
+- Corrections use a frame extracted directly from the canonical source as the
+  decode poster, exclude the obsolete label region through an editorial crop,
+  and replace the stale cockpit proof frame with an exact-release evidence panel
+  derived from `docs/submission/current-release.json`. No runtime value is
+  overwritten or relabelled.
+- Corrected timecoded visual review:
+  `artifacts/video/proof-first-review-20260828T133000Z/continuum-proof-first-review.webm`;
+  1920×1080, 25 fps, 3:43.04. Checkpoint review accepted the frame-one product,
+  click at five seconds, supplier pack, one-effect result, verifier boundary,
+  exact-release panel, architecture, model chain, and close. A final 210 px
+  handoff crop adjustment removes the remaining edge of the obsolete avatar;
+  this affects only framing and does not replace a runtime value.
+- First complete clean candidate, now superseded by the revision below:
+  `artifacts/video/proof-first-candidate-20260828T140000Z/continuum-proof-first-candidate.mp4`;
+  1920×1080, 25 fps, H.264 High Profile with mono AAC, 3:42.12; SHA-256
+  `c11da6f44cf0f2c594fa985c096023f69c54dda2fd0fd4b268d9da69f2f426e8`.
+- Narration was generated as ten independently replaceable takes with Vertex AI
+  `gemini-3.1-flash-tts-preview`, Algenib voice. The standard tempo pass is
+  1.08x; the opening is 1.20x and the cloud-proof passage is 1.25x so neither
+  collides with its evidence window. The 222-second narration mix peaks at
+  -1.50 dBFS; SHA-256
+  `e550d5b8f9c1d339c7a178e0c280775e8dabad5bdd8c2dd8cc56af91a7efd7ab`.
+- Captions are locked at `docs/video/10_PROOF_FIRST_CAPTIONS.srt`. They match
+  the spoken text but are intentionally sidecar captions rather than burned-in
+  graphics, preserving the native evidence surface.
+- Encoded-frame review sampled all 223 seconds at one frame per second and
+  inspected the opening, click, successor gate, corrected handoff, supplier
+  pack, idempotent effect, independent verdict, exact-release receipt,
+  architecture, derivative proof, and close. All passed visual review. Public
+  playback and human listening approval remain publication gates.
+- Revised preferred local candidate:
+  `artifacts/video/proof-first-candidate-v2-20260828T150000Z/continuum-proof-first-candidate.mp4`;
+  1920×1080, 25 fps, H.264 High Profile with mono AAC, 3:54.04; SHA-256
+  `fb8795fdddf7bc5bac7314c94a5564e737bd761f5e947db08954e26d08395617`.
+- The opening and closing slates now identify Continuum, its motto, Milos
+  Plavsic, the All Things Agentic Hackathon, and August 28, 2026. The product
+  appears at second four and the single start click remains visible at second
+  nine.
+- Full-screen time-cut cards were rejected after review. Same-run jumps at
+  2:04 and 2:25 now use a small 1.4-second disclosure badge while the evidence
+  remains visible. The creator accepted this final cut and its audio on August
+  28, 2026.
+- The released learning proof now runs from 3:24 to 3:40. Encoded frames prove
+  that it progresses through Gemini, independent verification, Gemma, and the
+  active Veo 3.1 + Lyria 3 step before the closing slate.
+- Narration tempos are now assigned per take: 1.00x for naturally paced scenes,
+  1.08x for scenes 1 and 8, 1.10x for scene 7, and 1.15x for the deliberately
+  slower scene 6. This narrows delivery to approximately 118–133 words per
+  minute. The earlier 1.20x and 1.25x fast takes are superseded.
+- The verifier-gated Lyria 3 cue is mixed only into nine narration-free
+  transition windows at restrained gain with 0.9-second fade-in and fade-out.
+  The 234-second narration/music master peaks at -1.50 dBFS; SHA-256
+  `071b042ae4824558fd30ac49054fe73bde6d04302f58795a021c9736833ce10e`.
+- All 234 encoded seconds were decoded at one frame per second. The metadata
+  slates, click, cut badges, core workflow evidence, exact-release proof,
+  learning steps 2–4, and final hold passed visual review. Creator listening
+  approval is complete; public-host playback remains the final publication gate.
+
+## Superseded remarkable production — August 28, 2026
+
+- This section records the earlier remarkable production. It is superseded by
+  the proof-first master above and its local media was removed during cleanup.
 - Source: a fresh private IAM-authenticated `continuum-control` Cloud Run run
   recorded from deployed commit
   `d4d7d52cde010dd3e07be5ad06cf8ee858cb3a4f`, image

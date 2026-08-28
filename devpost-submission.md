@@ -180,7 +180,12 @@ TODO: add the final **public** YouTube/Vimeo URL after recording the live,
 unedited, no-longer-than-four-minute run. Unlisted is not sufficient under the
 host's final checklist.
 
-Canonical film scenario: `docs/video/06_REMARKABLE_SCENARIO.md`.
+Current replacement production: `docs/video/07_PROOF_FIRST_PRODUCTION.md`,
+with the locked timed narration in `docs/video/08_PROOF_FIRST_SCRIPT.md` and
+the capture/publication gate in `docs/video/09_PROOF_FIRST_RUNBOOK.md`.
+The revised clean 3:54.04 local candidate has been rendered and accepted;
+captions are ready at `docs/video/10_PROOF_FIRST_CAPTIONS.srt`. The public URL
+remains deliberately unset until publication and hosted-playback verification.
 
 ## Screenshot Shot List
 
@@ -196,9 +201,16 @@ Canonical film scenario: `docs/video/06_REMARKABLE_SCENARIO.md`.
 - Fortified Enterprise Fleet is the target category.
 - Public repository, reproducible README, architecture PNG, exact cloud identifiers, and a downloadable offline-verifiable proof packet are ready.
 - The Devpost project page is published as “Continuum” with the workflow-first description, technology stack, repository, and public proof-release links. Live `submitted_at` remains empty, so it is not yet a verified hackathon entry.
-- Remaining required asset: record/upload the approximately four-minute live demo and add its URL.
+- Remaining required asset work: publish the accepted master publicly, upload
+  the sidecar captions, verify hosted playback, and add its URL.
 - The architecture asset is finalized at `docs/diagrams/architecture.png`; its required form upload and all drafted field answers will be applied with the final video submission because Devpost's submission API validates the complete form atomically.
-- The final video URL remains intentionally unset until the rebuilt film is approved.
+- A 1920×1080, 25 fps, 3:54.04 H.264/AAC clean candidate has passed encoded-frame
+  review for its metadata opening, click, successor selection, handoff,
+  supplier, non-obscuring cut disclosures, effect, verifier, exact-release,
+  architecture, all four derivative-proof stages, and metadata close.
+  Its SHA-256 is
+  `fb8795fdddf7bc5bac7314c94a5564e737bd761f5e947db08954e26d08395617`.
+  The final URL remains intentionally unset until public playback is verified.
 
 ## Known Limitations
 

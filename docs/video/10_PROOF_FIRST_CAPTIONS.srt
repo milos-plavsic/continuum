@@ -1,0 +1,110 @@
+1
+00:00:04,200 --> 00:00:10,300
+This agent owns a two-hundred-and-fifty-thousand-euro
+supplier obligation. The required evidence never arrives.
+
+2
+00:00:10,300 --> 00:00:16,867
+No crash. No exception. I click once;
+from here, the browser only watches.
+
+3
+00:00:17,200 --> 00:00:25,200
+Cloud Tasks crosses the persisted deadline. Continuum checks
+Firestore for the evidence that should exist and proves it is absent.
+
+4
+00:00:25,200 --> 00:00:33,880
+It publishes that negative-space signal. The first Pub/Sub attempt fails
+deliberately; the same durable workflow resumes on redelivery.
+
+5
+00:00:36,000 --> 00:00:45,000
+Three departments have published immutable successor records.
+Code rejects v20 for health and jurisdiction before the model sees it.
+
+6
+00:00:45,000 --> 00:00:53,500
+Google ADK gives Gemini 3.6 only the eligible set and incident objective.
+Gemini chooses warm successor v19 and cites the trade-off.
+
+7
+00:00:53,500 --> 00:01:02,280
+Deterministic policy validates that recommendation before authority moves.
+The model can reason; it cannot mint permission.
+
+8
+00:01:04,000 --> 00:01:12,500
+v17 is fenced at the new authority epoch. Its action is stale,
+and revoked memory is rejected before retrieval.
+
+9
+00:01:12,500 --> 00:01:21,000
+Continuum reconstructs context for the purpose:
+the obligation and two verified facts cross.
+
+10
+00:01:21,000 --> 00:01:29,160
+Prompt injection, a predecessor secret, stale inference, and revoked memory
+stay behind. The agent is replaceable. Its promise is not.
+
+11
+00:01:33,000 --> 00:01:41,500
+v19 resumes the actual job. It checks the legal entity through GLEIF
+and European Union VAT through VIES.
+
+12
+00:01:41,500 --> 00:01:50,000
+Each normalized observation is hashed before Gemini sees it.
+Gemini produces a cited decision pack.
+
+13
+00:01:50,000 --> 00:01:58,360
+Deterministic admission rechecks the sources, controls, requested action,
+and sandbox scope. This is a synthetic supplier case, not a commercial decision.
+
+14
+00:02:08,000 --> 00:02:16,500
+The gateway rechecks identity, epoch, policy, decision pack,
+context, and idempotency in one transaction.
+
+15
+00:02:16,500 --> 00:02:25,809
+Pub/Sub delivers twice. The external queue still contains one reversible
+synthetic work item: one effect, zero duplicates under this demonstrated boundary.
+
+16
+00:02:29,000 --> 00:02:38,000
+Execution is still only a claim. The control plane exports
+five content-addressed artifacts.
+
+17
+00:02:38,000 --> 00:02:50,927
+A separately deployed read-only verifier resolves every digest and rereads
+authority, supplier, and provider state. Only it may issue artifact six.
+This run is verified.
+
+18
+00:02:59,000 --> 00:03:08,500
+The accepted release runs across five private Cloud Run identities with
+Firestore, Cloud Tasks, Pub/Sub, Vertex AI, and Cloud Trace.
+
+19
+00:03:08,500 --> 00:03:18,037
+Its public packet contains seventeen required objects and one hundred
+seventy-four correlated spans. The offline verifier returns pass.
+
+20
+00:03:20,000 --> 00:03:28,500
+Google Cloud is the reference binding;
+the Continuity Contract is the portable proposal.
+
+21
+00:03:28,500 --> 00:03:37,400
+Only a verified incident may teach: Gemma creates a cited drill, and Veo plus
+Lyria render derivative training media, never authority or evidence.
+
+22
+00:03:44,000 --> 00:03:53,800
+Continuum keeps an institution's promise alive when the agent responsible
+for it fails. The agent failed. The promise did not.
