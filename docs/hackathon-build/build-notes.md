@@ -412,3 +412,29 @@
   redeployed as `continuum-showcase-00006-drz` from source `5241941`; live
   read-back matched the release, mutation returned `404`, and its identity has no
   project role. Item 66 is complete; video remains deliberately deferred.
+
+## Independent-audit closure — August 28
+
+- Public contribution, vulnerability, conduct and governance policies now define
+  originality, decision, review, disclosure, rollback, maintainer-succession and external-
+  witness responsibilities. CODEOWNERS, pull-request and structured issue templates make
+  those policies actionable at the repository boundary.
+- `config/environment.json` is the canonical 68-variable inventory. JSON Schema 2020-12,
+  static source scanning, secret/default/evidence-policy checks and deterministic generation
+  of `docs/CONFIGURATION.md` are mandatory release controls.
+- The direct test dependency moved from deprecated `httpx` compatibility to Starlette's
+  supported `httpx2` transport. `PYTHONWARNINGS=error` now covers the entire measured suite
+  and the nested release-gate test execution; no Starlette compatibility warning remains.
+- Regular CI, manual live-GCP capture and external witness are distinct machine-readable
+  assurance profiles. The first is credential-free and mocked at cloud ports; the second is
+  billable, first-party and exact-commit; the third remains honestly
+  `AWAITING_EXTERNAL_WITNESS` until a real independent Sigstore identity signs.
+- The identity-pinned witness flow binds reviewer relationship, conflicts, scope, claim-level
+  findings, expiry and exact release request digest before invoking `cosign verify-blob`.
+  CI installs pinned Cosign 3.1.3 but cannot promote a maintainer or fixture to independent.
+- The warning-free gate passed 215 tests over all 40 Python modules at 4,232/4,232 statements
+  and 1,192/1,192 branches. These are branch-build observations, not a replacement for the
+  existing exact-application cloud and quality releases.
+- PR #60 ran both protected workflows successfully for push and pull-request events before
+  the workflow state was finalized. Merge and post-merge readback are the final item-77
+  verification; this documentation commit triggers the same required checks again.

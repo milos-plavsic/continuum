@@ -16,6 +16,9 @@ class ReleaseGateTests(unittest.TestCase):
             result = MODULE.evaluate_local(Path(temporary))
         self.assertEqual(result["status"], "PASS")
         self.assertTrue(all(result["assertions"].values()))
+        controls = MODULE.repository_controls()
+        self.assertEqual(controls["status"], "PASS")
+        self.assertTrue(all(value == "PASS" for value in controls["controls"].values()))
 
     def test_cloud_readiness_names_external_prerequisites(self):
         with patch.dict(os.environ, {}, clear=True), patch.object(MODULE.shutil, "which", return_value=None):

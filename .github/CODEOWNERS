@@ -1,0 +1,10 @@
+# Trust boundaries and public protocol require maintainer review.
+* @milos-plavsic
+/schemas/ @milos-plavsic
+/src/continuum/contract.py @milos-plavsic
+/src/continuum/verification.py @milos-plavsic
+/src/continuum/google_binding.py @milos-plavsic
+/scripts/cloud/ @milos-plavsic
+/.github/workflows/ @milos-plavsic
+/SECURITY.md @milos-plavsic
+/GOVERNANCE.md @milos-plavsic

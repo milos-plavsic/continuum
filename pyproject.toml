@@ -28,7 +28,8 @@ web = [
 ]
 test = [
   "coverage[toml]>=7.10,<8",
-  "httpx>=0.28,<1"
+  "httpx2>=2.12,<3",
+  "jsonschema>=4.25,<5"
 ]
 
 [tool.coverage.run]

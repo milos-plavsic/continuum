@@ -136,7 +136,9 @@ PYTHONPATH=src python3 -m continuum --output artifacts/latest
 python3 examples/local_sdk_consumer.py
 ```
 
-The quality gate installs locked dependencies, executes 215 tests, enforces genuine 100.0% statement and branch coverage, runs C0–C6 conformance, and runs the release gate. The repository's GitHub Actions also builds and imports the locked non-root runtime image. The exact downloaded main-CI coverage packet—including XML, JSON, browsable HTML, complete source/measured inventories and nested checksums—is public at https://github.com/milos-plavsic/continuum/releases/tag/quality-proof-12e116b.
+The quality gate installs locked dependencies, executes 215 tests, enforces genuine 100.0% statement and branch coverage, runs C0–C6 conformance, and runs the release gate. The repository's GitHub Actions also builds and imports the locked non-root runtime image. Regular CI deliberately has no GCP credentials or billable cloud authority and uses deterministic provider ports/test doubles; it does not re-execute or prove the separate exact-commit live-GCP capture. The exact downloaded main-CI coverage packet—including XML, JSON, browsable HTML, complete source/measured inventories and nested checksums—is public at https://github.com/milos-plavsic/continuum/releases/tag/quality-proof-12e116b. Coverage proves measured execution, not semantic correctness, production fitness, complete threat coverage, live-cloud behavior, capture provenance, or uncompromised infrastructure.
+
+The published cloud packet is first-party evidence. Its offline verifier checks integrity and declared semantic consistency, not capture provenance. A Sigstore keyless, identity-pinned external-witness workflow is available, but its current status is `AWAITING_EXTERNAL_WITNESS`; no independent external endorsement is claimed.
 
 For an authorized Google Cloud project, copy `deploy/cloud.env.example`, then run:
 

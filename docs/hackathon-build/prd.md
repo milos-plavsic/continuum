@@ -63,3 +63,14 @@ context moved to a successor without duplicating the external effect.
     production-impact approval boundary would require human review.
 32. Public proof language distinguishes internal consistency from upstream factual truth,
     capture provenance and compromise of a declared trust root.
+33. Public contribution, security, conduct and governance rules make ownership, review,
+    vulnerability reporting, originality and release decisions independently legible.
+34. Every supported environment variable is declared once with machine-checked type,
+    profile, sensitivity, default and evidence-exposure policy; code cannot add a hidden knob.
+35. The locked complete suite emits no warnings, and a future dependency deprecation fails CI.
+36. Regular CI, live-GCP proof and external witness are separate assurance profiles whose
+    evidence and non-claims cannot be silently promoted across boundaries.
+37. Coverage evidence explicitly proves measured execution only and never semantic
+    correctness, production fitness, live-cloud behavior or complete threat coverage.
+38. A third party can sign an exact-release review statement with Sigstore keyless identity;
+    until that happens, every public and machine-readable surface says it is awaiting review.

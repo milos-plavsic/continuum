@@ -1,0 +1,35 @@
+name: Design or feature proposal
+description: Propose a scoped, reversible improvement to the continuity lifecycle
+title: "proposal: "
+labels: ["proposal", "triage"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User and assurance outcome
+      description: What becomes possible or safer, and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Trust boundary and alternatives
+      description: Identify authority, state, evidence, failure, compatibility, and simpler alternatives.
+    validations:
+      required: true
+  - type: textarea
+    id: proof
+    attributes:
+      label: Acceptance evidence
+      description: Deterministic, adversarial, cloud, or independent proof needed before the claim is made.
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This deepens the succession lifecycle rather than adding a disconnected demonstration.
+          required: true
+        - label: Any incorporated material and license will be recorded in docs/ORIGINALITY.md.
+          required: true

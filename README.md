@@ -2,6 +2,9 @@
 
 [![Continuum CI](https://github.com/milos-plavsic/continuum/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/milos-plavsic/continuum/actions/workflows/ci.yml)
 
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) ·
+[Governance](GOVERNANCE.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
+
 Continuum is a vendor-neutral continuity layer for autonomous agents: when an
 agent silently fails or must be retired, its verified obligations move to an
 evidence-selected, fenced successor without transferring poisoned context or
@@ -286,6 +289,9 @@ https://continuum-showcase-rdzvxiysbq-ew.a.run.app and pinned to image digest
 - [Evidence and incident admission profile](docs/EVIDENCE.md)
 - [Credential-free local runtime](docs/LOCAL_RUNTIME.md)
 - [Runtime supply-chain policy](docs/SUPPLY_CHAIN.md)
+- [Canonical configuration inventory](docs/CONFIGURATION.md)
+- [CI versus live-cloud assurance boundary](docs/CI_ASSURANCE.md)
+- [External witness protocol and current status](docs/EXTERNAL_REVIEW.md)
 
 ## License
 

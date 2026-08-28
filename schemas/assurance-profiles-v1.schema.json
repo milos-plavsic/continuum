@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/milos-plavsic/continuum/schemas/assurance-profiles-v1.schema.json",
+  "title": "Continuum assurance profiles",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "profiles"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schema": {"const": "continuum/assurance-profiles/1.0"},
+    "profiles": {"type": "array", "minItems": 3, "items": {"$ref": "#/$defs/profile"}}
+  },
+  "$defs": {
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "trigger", "credentials", "billable", "live_google_cloud", "test_doubles", "evidence", "claims", "non_claims", "trust_roots"],
+      "properties": {
+        "id": {"enum": ["regular-ci", "live-gcp-proof", "external-witness"]},
+        "trigger": {"enum": ["github-event", "authorized-manual", "independent-reviewer"]},
+        "credentials": {"type": "boolean"},
+        "billable": {"type": "boolean"},
+        "live_google_cloud": {"type": "boolean"},
+        "test_doubles": {"type": "boolean"},
+        "status": {"enum": ["ACTIVE", "AWAITING_EXTERNAL_WITNESS", "ATTESTED"]},
+        "release_manifest": {"type": "string"},
+        "witness_registry": {"type": "string"},
+        "evidence": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "claims": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "non_claims": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "trust_roots": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}
+      }
+    }
+  }
+}

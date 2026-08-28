@@ -18,7 +18,7 @@
     "ai_usage": "",
     "codex_usage": ""
   },
-  "current_stage": "prepare-submission",
+  "current_stage": "resources",
   "completed_stages": [
     "start-hackathon",
     "review",

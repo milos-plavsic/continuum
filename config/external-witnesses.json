@@ -1,0 +1,6 @@
+{
+  "schema": "continuum/external-witness-registry/1.0",
+  "status": "AWAITING_EXTERNAL_WITNESS",
+  "request": "docs/review/external-witness-request.json",
+  "accepted_witnesses": []
+}

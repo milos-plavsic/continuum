@@ -26,3 +26,7 @@ with SHA-256
 This packet proves execution and measured coverage of the declared source scope. It does
 not claim that coverage alone proves semantic correctness; conformance, adversarial,
 stress, cloud, supply-chain and independent-verification evidence remain separate gates.
+It also does not prove production fitness, complete threat coverage, live Google Cloud
+execution, capture provenance, uncompromised infrastructure, or upstream factual truth.
+Those separations are machine-enforced in `config/assurance-profiles.json` and explained in
+`docs/CI_ASSURANCE.md`.

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export PYTHONWARNINGS=error
 npm test --prefix interop/typescript
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -16,6 +17,9 @@ coverage_dir="$ROOT_DIR/artifacts/coverage"
 rm -rf "$coverage_dir"
 mkdir -p "$coverage_dir"
 uv run "${UV_ARGS[@]}" coverage erase
+uv run "${UV_ARGS[@]}" python scripts/check_configuration.py --check
+uv run "${UV_ARGS[@]}" python scripts/check_assurance_profiles.py
+uv run "${UV_ARGS[@]}" python scripts/verify_external_witness.py
 uv run "${UV_ARGS[@]}" coverage run -m unittest discover -s tests -v
 uv run "${UV_ARGS[@]}" coverage report
 uv run "${UV_ARGS[@]}" coverage json --pretty-print -o "$coverage_dir/coverage.json"

@@ -1,5 +1,13 @@
 # Originality and provenance
 
+## Community policy incorporation (August 28, 2026)
+
+`CODE_OF_CONDUCT.md` is an adapted and condensed form of Contributor Covenant 2.1,
+copyright the Contributor Covenant community and licensed under CC BY 4.0. It supplies the
+project's community-behavior and enforcement baseline; the project-specific reporting and
+scope language is new. `CONTRIBUTING.md`, `SECURITY.md`, `GOVERNANCE.md`, CODEOWNERS and the
+pull-request template were authored new for Continuum during the submission period.
+
 ## Final auditability and rollback hardening (August 28, 2026)
 
 The coverage-evidence packager, fail-closed public-showcase rollback command, failed-run

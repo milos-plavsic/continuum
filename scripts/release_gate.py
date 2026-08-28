@@ -52,21 +52,39 @@ def cloud_readiness() -> dict:
             "missing": missing}
 
 
+def repository_controls() -> dict:
+    commands = {
+        "configuration_inventory": [sys.executable, "scripts/check_configuration.py", "--check"],
+        "assurance_profiles": [sys.executable, "scripts/check_assurance_profiles.py"],
+        "external_witness": [sys.executable, "scripts/verify_external_witness.py"],
+    }
+    results = {}
+    for name, command in commands.items():
+        completed = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+        results[name] = "PASS" if completed.returncode == 0 else "FAIL"
+    return {"status": "PASS" if all(value == "PASS" for value in results.values()) else "FAIL",
+            "controls": results}
+
+
 def main() -> int:
+    warning_environment = {**os.environ, "PYTHONWARNINGS": "error"}
     tests = subprocess.run(
-        [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], cwd=ROOT)
+        [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], cwd=ROOT,
+        env=warning_environment)
     with TemporaryDirectory(prefix="continuum-release-") as temporary:
         local = evaluate_local(Path(temporary)) if tests.returncode == 0 else {
             "status": "FAIL", "assertions": {"unit_tests": False}}
     truth = load_release_truth(ROOT / "docs/submission/current-release.json")
     truth_failures = audit_judge_surfaces(ROOT, truth)
+    controls = repository_controls()
     report = {"schema": "continuum/release-gate/0.1", "unit_tests": {
                   "status": "PASS" if tests.returncode == 0 else "FAIL"},
               "submission_truth": {"status": "PASS" if not truth_failures else "FAIL",
                                    "reason_codes": list(truth_failures)},
-              "reference_local": local, "google_cloud": cloud_readiness(),
+              "repository_controls": controls, "reference_local": local,
+              "google_cloud": cloud_readiness(),
               "overall": "PASS" if (tests.returncode == 0 and local["status"] == "PASS"
-                                      and not truth_failures) else "FAIL"}
+                                      and not truth_failures and controls["status"] == "PASS") else "FAIL"}
     print(json.dumps(report, indent=2))
     return 0 if report["overall"] == "PASS" else 1
 

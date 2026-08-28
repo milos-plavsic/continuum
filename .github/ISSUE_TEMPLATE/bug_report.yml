@@ -1,0 +1,43 @@
+name: Bug report
+description: Report a reproducible non-security defect or failed invariant
+title: "bug: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Do not report vulnerabilities, credentials, private evidence, or personal data here.
+        Use the private process in SECURITY.md.
+  - type: input
+    id: commit
+    attributes:
+      label: Exact commit or release
+      description: Full source commit, release tag, or image digest.
+    validations:
+      required: true
+  - type: dropdown
+    id: profile
+    attributes:
+      label: Assurance profile
+      options: [regular-ci, local-runtime, live-gcp-proof, public-showcase, external-witness]
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Commands, fixture identifiers, expected result, and actual stable reason code.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence
+      description: Digests or public links only; redact secrets and personal data.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: This is not a security vulnerability and contains no secret or private evidence.
+          required: true
