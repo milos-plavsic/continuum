@@ -11,8 +11,9 @@
 - Production and publication are complete at https://youtu.be/bvrgXMApekk.
   Signed-out readback verified listed public playback, duration, chapters,
   captions and thumbnail; Devpost project version 9 contains the URL. The
-  required Devpost architecture upload and formal submission remain outstanding
-  and must not be reported as complete before live readback.
+  architecture diagram, complete form, and five captioned gallery images were
+  subsequently saved. Authenticated Devpost readback confirms submission
+  `1133511` at `2026-08-28T11:52:39.893-04:00`.
 
 ## Final auditability and rollback plan — August 28
 
@@ -426,7 +427,9 @@
 - Devpost project version 7 was updated and read back with the exact application,
   proof, availability modes, workflow companion, trust ceiling and 215-test gate;
   video and formal submission were unset at that checkpoint. Version 9 later
-  attached the verified public video; formal submission remains unset. The no-role public showcase was
+  attached the verified public video; formal submission was still unset at that
+  checkpoint and was subsequently verified complete as submission `1133511` on
+  August 28. The no-role public showcase was
   redeployed as `continuum-showcase-00006-drz` from source `5241941`; live
   read-back matched the release, mutation returned `404`, and its identity has no
   project role. Item 66 is complete; the deferred video was subsequently
