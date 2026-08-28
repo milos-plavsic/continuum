@@ -8,9 +8,11 @@
 - The master SHA-256 is
   `fb8795fdddf7bc5bac7314c94a5564e737bd761f5e947db08954e26d08395617`;
   captions are locked in `docs/video/10_PROOF_FIRST_CAPTIONS.srt`.
-- Production is complete. Public YouTube/Vimeo hosting, hosted-playback
-  verification, the required Devpost architecture upload, and formal submission
-  remain outstanding and must not be reported as complete before live readback.
+- Production and publication are complete at https://youtu.be/bvrgXMApekk.
+  Signed-out readback verified listed public playback, duration, chapters,
+  captions and thumbnail; Devpost project version 9 contains the URL. The
+  required Devpost architecture upload and formal submission remain outstanding
+  and must not be reported as complete before live readback.
 
 ## Final auditability and rollback plan — August 28
 
@@ -44,7 +46,8 @@
   Items 67–70 are complete; no product capability or current cloud-proof fact changed.
 - Devpost project version 8 was updated and read back through the authenticated API.
   Its public description now links both `quality-proof-12e116b` and the failed-run
-  ledger, while `video_url` and formal hackathon `submitted_at` remain unset.
+  ledger. At that checkpoint `video_url` and formal hackathon `submitted_at`
+  remained unset; version 9 subsequently added the verified public video URL.
 
 ## Submission hardening checkpoint — August 27
 
@@ -360,7 +363,8 @@
 - Devpost project version 6 was updated and read back through the authenticated
   API. It contains the same application commit, 17-object/43-span proof, 201-test
   gate, v19 trade-off, Model Armor receipt, GitHub Issue #41 and proof release;
-  the video remains unset and the hackathon submission remains a draft.
+  the video was unset at that historical checkpoint. It was later published and
+  attached in version 9; the hackathon submission remains a draft.
 
 ## External resilience and positioning plan — August 27
 
@@ -380,7 +384,8 @@
 - The full gate now executes 215 Python tests plus the cross-language suite at
   genuine 100.0% statement and branch coverage. Item 66 remains active: protected
   merge, exact-commit deployment, fresh proof, release/showcase/Devpost truth sync.
-  Video remains deliberately deferred.
+  Video was deliberately deferred at this checkpoint and was subsequently
+  completed, published and attached in Devpost project version 9.
 - The first post-merge cloud attempt `judge-final-ec17dcc-20260827T215707Z`
   stopped safely at `CONTEXT_RECONSTRUCTED`: GLEIF produced a LIVE cached record,
   while VIES returned its structured `MS_UNAVAILABLE` outage response. That response
@@ -420,10 +425,12 @@
   `14d2005d1a1360528e2ae84ad72c485ff92963a5ecd9e48121cd56edf790d3f6`.
 - Devpost project version 7 was updated and read back with the exact application,
   proof, availability modes, workflow companion, trust ceiling and 215-test gate;
-  video and formal submission remain unset. The no-role public showcase was
+  video and formal submission were unset at that checkpoint. Version 9 later
+  attached the verified public video; formal submission remains unset. The no-role public showcase was
   redeployed as `continuum-showcase-00006-drz` from source `5241941`; live
   read-back matched the release, mutation returned `404`, and its identity has no
-  project role. Item 66 is complete; video remains deliberately deferred.
+  project role. Item 66 is complete; the deferred video was subsequently
+  completed and published.
 
 ## Independent-audit closure — August 28
 
