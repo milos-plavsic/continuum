@@ -349,7 +349,8 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
   all non-video form assets.
   Acceptance: One release manifest agrees with code, CI, image, services, run,
   Model Armor, external ticket, proof release, hosted access and public Devpost copy.
-  Video remains intentionally unset for the final production step.
+  Video was intentionally unset at this non-video checkpoint; final production
+  and public YouTube publication were subsequently completed.
   Verify: Green required checks, offline PASS, live judge smoke, public-copy readback,
   architecture asset check and clean `main`.
 
@@ -400,7 +401,8 @@ Wow moment: retired v17 is denied twice while v18 produces one externally observ
 - [x] **66. Merge, deploy and recapture the resilient release**
   Spec ref: `prd.md > Acceptance outcomes`
   What to build: Protected PR, exact-commit deployment, fresh canonical run, proof bundle,
-  showcase and Devpost synchronization; video remains deferred.
+  showcase and Devpost synchronization; video was deferred at this checkpoint
+  and was subsequently completed, published and attached to Devpost.
   Acceptance: Application, source, services, external modes, model-governance receipt,
   run, proof and public copy agree through the single release manifest.
   Verify: Required CI, live API-outage drill, fresh offline PASS, judge smoke and clean main.

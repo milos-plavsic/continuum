@@ -84,7 +84,10 @@ and any production constraint that changes the canonical script.
 - All 234 encoded seconds were decoded at one frame per second. The metadata
   slates, click, cut badges, core workflow evidence, exact-release proof,
   learning steps 2–4, and final hold passed visual review. Creator listening
-  approval is complete; public-host playback remains the final publication gate.
+  approval is complete. The master was published publicly on YouTube at
+  https://youtu.be/bvrgXMApekk; signed-out playback, duration, chapters,
+  English captions, title, visibility and opening-slate thumbnail passed the
+  final publication gate.
 
 ## Superseded remarkable production — August 28, 2026
 
